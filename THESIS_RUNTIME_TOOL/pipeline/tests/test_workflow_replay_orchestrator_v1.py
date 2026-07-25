@@ -255,9 +255,17 @@ class _SnapshotAdapter:
     def validate_and_snapshot(
         self, component_root: Path, *, workflow_run_id: str
     ) -> ComponentSnapshotV1:
-        assert component_root == self.executor.root
+        assert component_root != self.executor.root
+        assert component_root.name == "component"
         assert workflow_run_id == WORKFLOW_ID
         snapshot = self.executor.snapshot
+        for file_input in snapshot.files:
+            captured = component_root / file_input.relative_path
+            assert captured.is_file()
+            assert (
+                physical_sha256(captured.read_bytes())
+                == file_input.physical_sha256
+            )
         if self.terminal and snapshot.status != "succeeded":
             raise ValueError("terminal snapshot required")
         return snapshot

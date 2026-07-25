@@ -4,6 +4,7 @@ import copy
 import json
 import os
 import stat
+import tempfile
 import threading
 import uuid
 from contextlib import contextmanager
@@ -176,40 +177,53 @@ class WorkflowRelayV1:
         adapter: ValidatedComponentAdapterV1,
     ) -> dict[str, Any]:
         source_root = Path(component_root).resolve()
-        snapshot = adapter.validate_and_snapshot(
-            source_root, workflow_run_id=self.workflow_run_id
-        )
-        if snapshot.validator_id != adapter.validator_id:
-            raise WorkflowReplayContractError(
-                "validator_identity",
-                "$.validator_id",
-                "adapter and validation receipt disagree",
+        with tempfile.TemporaryDirectory(
+            prefix="workflow_component_capture_v1_"
+        ) as temporary:
+            captured_root = Path(temporary) / "component"
+            _capture_component_tree(source_root, captured_root)
+            snapshot = adapter.validate_and_snapshot(
+                captured_root, workflow_run_id=self.workflow_run_id
             )
-        if snapshot.validator_revision != adapter.validator_revision:
-            raise WorkflowReplayContractError(
-                "validator_identity",
-                "$.validator_revision",
-                "adapter and validation receipt disagree",
+            if snapshot.validator_id != adapter.validator_id:
+                raise WorkflowReplayContractError(
+                    "validator_identity",
+                    "$.validator_id",
+                    "adapter and validation receipt disagree",
+                )
+            if snapshot.validator_revision != adapter.validator_revision:
+                raise WorkflowReplayContractError(
+                    "validator_identity",
+                    "$.validator_revision",
+                    "adapter and validation receipt disagree",
+                )
+            normalized = self._normalize_snapshot(
+                snapshot, source_root=captured_root
             )
-        normalized = self._normalize_snapshot(snapshot, source_root=source_root)
-        with self._exclusive():
-            imports = self._load_imports()
-            snapshot_sha = normalized["snapshot_sha256"]
-            for record in imports:
-                if record["snapshot_sha256"] == snapshot_sha:
-                    self._project(imports=imports)
-                    return self.load_manifest()
-            self._validate_union(imports + [self._preview_import(normalized, imports)])
-            self._materialize_component_files(normalized, source_root=source_root)
-            accepted_at = self._clock()
-            record = self._preview_import(normalized, imports, accepted_at=accepted_at)
-            record_path = self.root / "relay_imports" / (
-                f"{record['acceptance_ordinal']:08d}_{record['import_sha256']}.json"
-            )
-            _write_json_absent_or_equal(record_path, record)
-            imports.append(record)
-            self._project(imports=imports)
-            return self.load_manifest()
+            with self._exclusive():
+                imports = self._load_imports()
+                snapshot_sha = normalized["snapshot_sha256"]
+                for record in imports:
+                    if record["snapshot_sha256"] == snapshot_sha:
+                        self._project(imports=imports)
+                        return self.load_manifest()
+                self._validate_union(
+                    imports + [self._preview_import(normalized, imports)]
+                )
+                self._materialize_component_files(
+                    normalized, source_root=captured_root
+                )
+                accepted_at = self._clock()
+                record = self._preview_import(
+                    normalized, imports, accepted_at=accepted_at
+                )
+                record_path = self.root / "relay_imports" / (
+                    f"{record['acceptance_ordinal']:08d}_{record['import_sha256']}.json"
+                )
+                _write_json_absent_or_equal(record_path, record)
+                imports.append(record)
+                self._project(imports=imports)
+                return self.load_manifest()
 
     def publish_scoring_handoff(
         self,
@@ -1800,6 +1814,39 @@ def _resolve_component_file(root: Path, relative: str) -> Path:
     if not stat.S_ISREG(mode):
         raise WorkflowReplayContractError("component_file", relative, "special files are forbidden")
     return path
+
+
+def _capture_component_tree(source_root: Path, destination_root: Path) -> None:
+    if not source_root.is_dir() or source_root.is_symlink():
+        raise WorkflowReplayContractError(
+            "component_root",
+            "$.component_root",
+            "expected a real component directory",
+        )
+    for source in sorted(source_root.rglob("*")):
+        if source.is_symlink():
+            raise WorkflowReplayContractError(
+                "component_file",
+                str(source),
+                "component capture forbids symlinks",
+            )
+        if source.is_dir():
+            continue
+        if not source.is_file() or not stat.S_ISREG(source.stat().st_mode):
+            raise WorkflowReplayContractError(
+                "component_file",
+                str(source),
+                "component capture accepts regular files only",
+            )
+        relative = source.relative_to(source_root).as_posix()
+        if PurePosixPath(relative).name.endswith(".tmp"):
+            raise WorkflowReplayContractError(
+                "component_capture_incomplete",
+                relative,
+                "component package contains an unfinished temporary write",
+            )
+        destination = _resolve_under(destination_root, relative)
+        _write_bytes_absent_or_equal(destination, source.read_bytes())
 
 
 def _resolve_under(root: Path, relative: str) -> Path:

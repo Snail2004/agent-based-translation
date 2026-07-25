@@ -46,6 +46,32 @@ class FixtureAdapter:
         return self.snapshot
 
 
+class MutatingSourceAdapter(FixtureAdapter):
+    def __init__(
+        self,
+        snapshot: ComponentSnapshotV1,
+        *,
+        live_source: Path,
+    ) -> None:
+        super().__init__(snapshot)
+        self.live_source = live_source
+        self.captured_root: Path | None = None
+
+    def validate_and_snapshot(
+        self, component_root: Path, *, workflow_run_id: str
+    ) -> ComponentSnapshotV1:
+        self.captured_root = component_root
+        assert component_root != self.live_source
+        snapshot = super().validate_and_snapshot(
+            component_root,
+            workflow_run_id=workflow_run_id,
+        )
+        (self.live_source / "artifacts" / "output.json").write_bytes(
+            b'{"changed_after_capture":true}'
+        )
+        return snapshot
+
+
 class Clock:
     def __init__(self) -> None:
         self.index = 0
@@ -290,6 +316,62 @@ def test_ingest_projects_parent_sequence_hash_chain_and_stage(tmp_path: Path) ->
     assert index["artifacts"][0]["created_event_id"] == "workflow_event_00000003"
     assert index["artifacts"][0]["binding"]["artifact_ref"].startswith("components/translation/")
     assert validate_workflow_parent_package_v1(relay.root) == manifest
+
+
+def test_ingest_validates_and_materializes_one_captured_component_tree(
+    tmp_path: Path,
+) -> None:
+    relay = _relay(tmp_path)
+    source = tmp_path / "translation"
+    snapshot = _write_snapshot(
+        source,
+        component_id="translation",
+        run_id="translation_run_1",
+        local_stage="translate",
+    )
+    adapter = MutatingSourceAdapter(snapshot, live_source=source)
+
+    relay.ingest_component(source, adapter=adapter)
+
+    assert adapter.captured_root is not None
+    import_record = json.loads(
+        next((relay.root / "relay_imports").glob("*.json")).read_text(
+            encoding="utf-8"
+        )
+    )
+    imported = (
+        relay.root
+        / "components"
+        / "translation"
+        / "translation_run_1"
+        / "snapshots"
+        / import_record["snapshot_sha256"]
+        / "artifacts"
+        / "output.json"
+    )
+    assert imported.read_bytes() == b'{"ok":true}'
+    assert (source / "artifacts" / "output.json").read_bytes() != imported.read_bytes()
+    validate_workflow_parent_package_v1(relay.root)
+
+
+def test_ingest_rejects_unfinished_component_temp_file_before_validation(
+    tmp_path: Path,
+) -> None:
+    relay = _relay(tmp_path)
+    source = tmp_path / "translation"
+    snapshot = _write_snapshot(
+        source,
+        component_id="translation",
+        run_id="translation_run_1",
+        local_stage="translate",
+    )
+    (source / "component_manifest.json.tmp").write_bytes(b'{"partial":true}')
+
+    with pytest.raises(WorkflowReplayContractError) as exc:
+        relay.ingest_component(source, adapter=FixtureAdapter(snapshot))
+
+    assert exc.value.code == "component_capture_incomplete"
+    assert not list((relay.root / "relay_imports").glob("*.json"))
 
 
 def test_parent_package_rederivation_rejects_materialized_artifact_drift(

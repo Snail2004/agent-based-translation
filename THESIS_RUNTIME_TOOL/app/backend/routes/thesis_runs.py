@@ -1,11 +1,13 @@
 """Routes for thesis run control (APP-C01)."""
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sqlite3
 import subprocess
 import sys
+from functools import wraps
 from io import BytesIO
 from pathlib import Path
 
@@ -45,8 +47,12 @@ from services.thesis_runs import (
     generate_prompt_preview,
     issue_estimate_token_for_argv,
     one_button_paths,
+    pre_spawn_pause_binding,
     read_events,
     read_log,
+    resume_admission_guard,
+    resume_operation_sha256,
+    resume_run_id,
     resolve_job_db,
     spawn_run,
     validate_api_gate,
@@ -787,6 +793,12 @@ def _is_sha256(value: object) -> bool:
     )
 
 
+def _file_sha256(path: Path) -> str | None:
+    if not path.is_file() or path.is_symlink():
+        return None
+    return hashlib.sha256(path.read_bytes()).hexdigest().upper()
+
+
 def _append_resume_repair_reason(
     argv: list[str], value: object
 ) -> list[str]:
@@ -807,6 +819,98 @@ def _append_resume_repair_reason(
             400,
         )
     return [*argv, "--repair-reason", reason]
+
+
+def _existing_resume_child(
+    registry: RunRegistry,
+    source: dict,
+    *,
+    resume_argv: list[str],
+    repair_reason: str | None,
+) -> dict | None:
+    children = registry.find_resume_children(source["run_id"])
+    if not children:
+        return None
+    if len(children) != 1:
+        raise RunControlError(
+            "resume_lineage_ambiguous",
+            "The source run already has multiple Resume children; recovery is required.",
+            409,
+        )
+    child = children[0]
+    identity_fields = (
+        "script",
+        "job_id",
+        "run_dir",
+        "manifest_path",
+        "event_log_path",
+        "workflow_run_id",
+        "component_id",
+        "component_run_id",
+        "selected_chapter_ids",
+        "source_binding_sha256",
+        "launch_binding_sha256",
+        "evaluation_selection",
+        "evaluation_selection_sha256",
+        "evaluation_settings_template_sha256",
+    )
+    drift = [
+        field for field in identity_fields if child.get(field) != source.get(field)
+    ]
+    if child.get("resume_repair_reason") != repair_reason:
+        drift.append("resume_repair_reason")
+    if child.get("argv") != resume_argv:
+        drift.append("argv")
+    operation_sha256 = child.get("resume_operation_sha256")
+    if (
+        not _is_sha256(operation_sha256)
+        or child.get("run_id") != resume_run_id(str(operation_sha256))
+    ):
+        drift.append("resume_operation_sha256")
+    if drift:
+        raise RunControlError(
+            "resume_child_binding_drift",
+            "Existing Resume child differs from the requested source identity: "
+            + ", ".join(drift),
+            409,
+        )
+    return child
+
+
+def _ensure_resume_child_started(
+    registry: RunRegistry,
+    child: dict,
+) -> dict:
+    if child.get("status") in {"pending", "launching"}:
+        if _is_pid_alive(child.get("pid")):
+            return child
+        if child.get("script") in _D2L_COMPONENT_SCRIPTS:
+            manifest_path = _manifest_path_for_entry(child)
+            if (
+                component_writer_is_active(manifest_path.parent)
+                or stage_writer_is_active(manifest_path.parent)
+            ):
+                raise RunControlError(
+                    "component_writer_still_active",
+                    "The Translation writer is still active; reclaim is unsafe.",
+                    409,
+                )
+        spawn_run(registry, child["run_id"])
+        return registry.get_run(child["run_id"]) or child
+    return child
+
+
+def _resume_admission_locked(handler):
+    @wraps(handler)
+    def wrapped(run_id: str):
+        registry = _get_registry()
+        try:
+            with resume_admission_guard(registry.runs_root, run_id):
+                return handler(run_id)
+        except RunControlError as exc:
+            return error(exc.code, exc.message, exc.status)
+
+    return wrapped
 
 
 @bp.get("/thesis/runs")
@@ -1264,8 +1368,15 @@ def pause_thesis_run(run_id: str):
     try:
         entry = _run_entry(run_id)
         pause_path = _pause_file_for_run(run_id)
-        pause_path.parent.mkdir(parents=True, exist_ok=True)
-        pause_path.write_text("paused_by_user\n", encoding="utf-8", newline="\n")
+        registry = _get_registry()
+        prepared = registry.pause_prepared_run(run_id, pause_path)
+        if prepared is None:
+            pause_path.parent.mkdir(parents=True, exist_ok=True)
+            pause_path.write_text(
+                "paused_by_user\n",
+                encoding="utf-8",
+                newline="\n",
+            )
         if entry.get("script") in _D2L_COMPONENT_SCRIPTS:
             return ok({"run_id": run_id, "paused": True})
         return ok({"run_id": run_id, "paused": True, "pause_file": str(pause_path)})
@@ -1278,7 +1389,9 @@ def unpause_thesis_run(run_id: str):
     try:
         entry = _run_entry(run_id)
         pause_path = _pause_file_for_run(run_id)
-        if pause_path.exists():
+        registry = _get_registry()
+        prepared = registry.unpause_prepared_run(run_id, pause_path)
+        if prepared is None and pause_path.exists():
             pause_path.unlink()
         if entry.get("script") in _D2L_COMPONENT_SCRIPTS:
             return ok({"run_id": run_id, "paused": False})
@@ -1437,6 +1550,7 @@ def run_full_report(run_id: str):
 
 
 @bp.post("/thesis/runs/<run_id>/resume")
+@_resume_admission_locked
 def resume_thesis_run(run_id: str):
     try:
         body = request.get_json(force=True) or {}
@@ -1444,6 +1558,17 @@ def resume_thesis_run(run_id: str):
         entry = registry.get_run(run_id)
         if entry is None:
             raise RunControlError("run_not_found", f"Run {run_id} not found.", 404)
+        script = entry.get("script") or "run_one_button"
+        argv = _append_resume_repair_reason(
+            build_resume_argv_from_entry(entry),
+            body.get("repair_reason"),
+        )
+        repair_reason = (
+            str(body.get("repair_reason")).strip()
+            if body.get("repair_reason") is not None
+            and str(body.get("repair_reason")).strip()
+            else None
+        )
         if _is_pid_alive(entry.get("pid")):
             raise RunControlError(
                 "run_still_active",
@@ -1451,6 +1576,36 @@ def resume_thesis_run(run_id: str):
                 409,
             )
         resume_root = _resolve_resume_root(registry, entry)
+        existing_child = _existing_resume_child(
+            registry,
+            entry,
+            resume_argv=argv,
+            repair_reason=repair_reason,
+        )
+        if existing_child is not None:
+            existing_child = _ensure_resume_child_started(
+                registry,
+                existing_child,
+            )
+            if (
+                script == WORKFLOW_ORCHESTRATOR_SCRIPT
+                and entry.get("component_id") == EVALUATION_COMPONENT_ID
+            ):
+                return ok(
+                    _evaluation_launch_response(existing_child, reused=True)
+                )
+            if script in _D2L_COMPONENT_SCRIPTS:
+                return ok(_d2l_launch_response(existing_child, reused=True))
+            return ok(
+                {
+                    "run_id": existing_child["run_id"],
+                    "resumed_from": run_id,
+                    "status": existing_child["status"],
+                    "attempt_index": existing_child.get("attempt_index"),
+                    "manifest_path": existing_child.get("manifest_path"),
+                    "reused": True,
+                }
+            )
         manifest_path = _manifest_path_for_entry(entry)
         manifest = {}
         if manifest_path.exists():
@@ -1461,7 +1616,6 @@ def resume_thesis_run(run_id: str):
                 "Resume manifest must be a JSON object.",
                 409,
             )
-        script = entry.get("script") or "run_one_button"
         is_translation_component = (
             script == D2L_PROJECT_CAMPAIGN_SCRIPT
             or (
@@ -1481,10 +1635,6 @@ def resume_thesis_run(run_id: str):
                 "The previous Translation writer is still active; Resume is unsafe.",
                 409,
             )
-        argv = _append_resume_repair_reason(
-            build_resume_argv_from_entry(entry),
-            body.get("repair_reason"),
-        )
         job_id = validate_job_id(entry.get("job_id"), required=True)
         pause_path = _pause_file_from_entry(entry)
         if script in _D2L_COMPONENT_SCRIPTS:
@@ -1641,79 +1791,166 @@ def resume_thesis_run(run_id: str):
                 job_id=job_id,
                 argv=argv,
             )
-        new_run_id = registry.new_run_id()
-        if not (
+        is_evaluation_resume = (
             script == WORKFLOW_ORCHESTRATOR_SCRIPT
             and entry.get("component_id") == EVALUATION_COMPONENT_ID
-        ):
+        )
+        async_d2l_prepare = is_translation_component and not is_evaluation_resume
+        pause_binding = (
+            pre_spawn_pause_binding(
+                pause_path,
+                runs_root=registry.runs_root,
+            )
+            if async_d2l_prepare
+            else None
+        )
+        prestate = {
+            "manifest_sha256": _file_sha256(manifest_path),
+            "event_log_sha256": _file_sha256(
+                Path(str(entry.get("event_log_path") or ""))
+            ),
+            "manifest_attempt": manifest.get("component_attempt_id")
+            if is_translation_component
+            else manifest.get("attempt"),
+            "manifest_status": manifest.get("status"),
+            "pause_marker_binding": pause_binding,
+        }
+        if is_translation_component and not is_evaluation_resume:
+            prestate.update(
+                {
+                    "artifact_index_sha256": validation[
+                        "artifact_index_sha256"
+                    ],
+                    "validated_manifest_sha256": validation[
+                        "component_manifest_sha256"
+                    ],
+                    "validated_event_count": validation["event_count"],
+                    "validated_checkpoint_reference_count": validation[
+                        "checkpoint_reference_count"
+                    ],
+                }
+            )
+        operation_sha256 = resume_operation_sha256(
+            source_run_id=run_id,
+            job_id=job_id,
+            script=script,
+            argv=argv,
+            attempt_index=attempt_index,
+            workflow_run_id=entry.get("workflow_run_id"),
+            component_id=entry.get("component_id"),
+            component_run_id=entry.get("component_run_id"),
+            prestate=prestate,
+        )
+        new_run_id = resume_run_id(operation_sha256)
+        if not async_d2l_prepare and not is_evaluation_resume:
             freeze_managed_runtime_for_run(
                 job_id,
                 resume_root["run_id"],
                 jobs_root=registry.runs_root,
             )
-        if pause_path.exists():
+        if not async_d2l_prepare and pause_path.exists():
             pause_path.unlink()
         new_log_path = registry.runs_root / "run_logs" / f"{new_run_id}.log"
-        new_entry = registry.create_run(
-            script=script,
-            argv=argv,
-            cwd=entry.get("cwd"),
-            job_id=job_id,
-            experiment=entry.get("experiment"),
-            allow_api=(
-                bool(entry.get("allow_api"))
-                if script in _D2L_COMPONENT_SCRIPTS
-                else True
-            ),
-            prompt_preview_token=consumed_token,
-            dry_run_policy=(
-                "api_enabled_confirmed_resume"
-                if bool(entry.get("allow_api"))
-                else "preflight_only_resume"
-            ),
-            event_log_path=entry.get("event_log_path"),
-            run_dir=entry.get("run_dir"),
-            manifest_path=entry.get("manifest_path"),
-            run_id=new_run_id,
-            attempt_index=attempt_index,
-            resumed_from=run_id,
-            attempt_log_path=str(new_log_path),
-            workflow_run_id=entry.get("workflow_run_id"),
-            component_id=entry.get("component_id"),
-            component_run_id=entry.get("component_run_id"),
-            component_attempt_id=(
-                evaluation_component_attempt_id(attempt_index)
-                if (
-                    script == WORKFLOW_ORCHESTRATOR_SCRIPT
-                    and entry.get("component_id") == EVALUATION_COMPONENT_ID
+        try:
+            new_entry = registry.create_run(
+                script=script,
+                argv=argv,
+                cwd=entry.get("cwd"),
+                job_id=job_id,
+                experiment=entry.get("experiment"),
+                allow_api=(
+                    bool(entry.get("allow_api"))
+                    if script in _D2L_COMPONENT_SCRIPTS
+                    else True
+                ),
+                prompt_preview_token=consumed_token,
+                dry_run_policy=(
+                    "api_enabled_confirmed_resume"
+                    if bool(entry.get("allow_api"))
+                    else "preflight_only_resume"
+                ),
+                event_log_path=entry.get("event_log_path"),
+                run_dir=entry.get("run_dir"),
+                manifest_path=entry.get("manifest_path"),
+                run_id=new_run_id,
+                attempt_index=attempt_index,
+                resumed_from=run_id,
+                attempt_log_path=str(new_log_path),
+                workflow_run_id=entry.get("workflow_run_id"),
+                component_id=entry.get("component_id"),
+                component_run_id=entry.get("component_run_id"),
+                component_attempt_id=(
+                    evaluation_component_attempt_id(attempt_index)
+                    if is_evaluation_resume
+                    else attempt_index
+                    if script in _D2L_COMPONENT_SCRIPTS
+                    else None
+                ),
+                selected_chapter_ids=entry.get("selected_chapter_ids"),
+                profile_id=entry.get("profile_id"),
+                source_binding_sha256=entry.get("source_binding_sha256"),
+                campaign_config_sha256=entry.get("campaign_config_sha256"),
+                campaign_seal_sha256=entry.get("campaign_seal_sha256"),
+                launch_binding_sha256=entry.get("launch_binding_sha256"),
+                evaluation_selection=entry.get("evaluation_selection"),
+                evaluation_selection_sha256=entry.get(
+                    "evaluation_selection_sha256"
+                ),
+                evaluation_settings_template_sha256=entry.get(
+                    "evaluation_settings_template_sha256"
+                ),
+                workflow_phase=entry.get("workflow_phase"),
+                parent_manifest_sha256=entry.get("parent_manifest_sha256"),
+                scoring_handoff_sha256=entry.get("scoring_handoff_sha256"),
+                evaluation_settings_sha256=entry.get(
+                    "evaluation_settings_sha256"
+                ),
+                workflow_runtime_registration_sha256=entry.get(
+                    "workflow_runtime_registration_sha256"
+                ),
+                resume_operation_sha256=operation_sha256,
+                resume_repair_reason=repair_reason,
+                pre_spawn_freeze_run_id=(
+                    resume_root["run_id"] if async_d2l_prepare else None
+                ),
+                pre_spawn_pause_path=(
+                    str(pause_path) if async_d2l_prepare else None
+                ),
+                pre_spawn_pause_binding=pause_binding,
+                reject_if_exists=True,
+            )
+        except RunControlError as exc:
+            if exc.code != "run_already_exists":
+                raise
+            existing = registry.get_run(new_run_id)
+            if (
+                existing is None
+                or existing.get("resume_operation_sha256")
+                != operation_sha256
+                or existing.get("resumed_from") != run_id
+            ):
+                raise RunControlError(
+                    "resume_operation_collision",
+                    "Resume operation ID is already bound to different bytes.",
+                    409,
+                ) from exc
+            existing = _ensure_resume_child_started(registry, existing)
+            if is_evaluation_resume:
+                return ok(
+                    _evaluation_launch_response(existing, reused=True)
                 )
-                else attempt_index
-                if script in _D2L_COMPONENT_SCRIPTS
-                else None
-            ),
-            selected_chapter_ids=entry.get("selected_chapter_ids"),
-            profile_id=entry.get("profile_id"),
-            source_binding_sha256=entry.get("source_binding_sha256"),
-            campaign_config_sha256=entry.get("campaign_config_sha256"),
-            campaign_seal_sha256=entry.get("campaign_seal_sha256"),
-            launch_binding_sha256=entry.get("launch_binding_sha256"),
-            evaluation_selection=entry.get("evaluation_selection"),
-            evaluation_selection_sha256=entry.get(
-                "evaluation_selection_sha256"
-            ),
-            evaluation_settings_template_sha256=entry.get(
-                "evaluation_settings_template_sha256"
-            ),
-            workflow_phase=entry.get("workflow_phase"),
-            parent_manifest_sha256=entry.get("parent_manifest_sha256"),
-            scoring_handoff_sha256=entry.get("scoring_handoff_sha256"),
-            evaluation_settings_sha256=entry.get(
-                "evaluation_settings_sha256"
-            ),
-            workflow_runtime_registration_sha256=entry.get(
-                "workflow_runtime_registration_sha256"
-            ),
-        )
+            if script in _D2L_COMPONENT_SCRIPTS:
+                return ok(_d2l_launch_response(existing, reused=True))
+            return ok(
+                {
+                    "run_id": existing["run_id"],
+                    "resumed_from": run_id,
+                    "status": existing["status"],
+                    "attempt_index": existing.get("attempt_index"),
+                    "manifest_path": existing.get("manifest_path"),
+                    "reused": True,
+                }
+            )
         spawn_run(registry, new_entry["run_id"])
         if (
             script == WORKFLOW_ORCHESTRATOR_SCRIPT

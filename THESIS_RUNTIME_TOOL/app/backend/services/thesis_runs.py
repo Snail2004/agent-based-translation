@@ -33,6 +33,89 @@ _SHELL_META_RE = re.compile(r"[;&|`$(){}!<>'\"\n\r]")
 _JOB_ID_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 _RUN_ID_RE = _JOB_ID_RE
 _CONFIRM_TOKEN_TTL_SECONDS = 30 * 60
+_PREPARED_GUARD_READY_TIMEOUT_SECONDS = 15.0
+
+_PREPARED_RUN_GUARD_CODE = r"""
+import ctypes
+from ctypes import wintypes
+import hashlib
+import json
+import os
+from pathlib import Path
+import signal
+import subprocess
+import sys
+import time
+
+parent_pid = int(sys.argv[1])
+ready_path = Path(sys.argv[2])
+barrier_path = Path(sys.argv[3])
+token = sys.argv[4]
+command_path = Path(sys.argv[5])
+command_sha256 = sys.argv[6]
+child = None
+
+def parent_alive():
+    if os.name == "nt":
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.OpenProcess.restype = wintypes.HANDLE
+        kernel32.WaitForSingleObject.restype = wintypes.DWORD
+        kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+        handle = kernel32.OpenProcess(0x00100000, False, parent_pid)
+        if not handle:
+            return False
+        try:
+            return kernel32.WaitForSingleObject(handle, 0) == 0x00000102
+        finally:
+            kernel32.CloseHandle(handle)
+    if os.getppid() != parent_pid:
+        return False
+    try:
+        os.kill(parent_pid, 0)
+    except OSError:
+        return False
+    return True
+
+def stop_child(_signum=None, _frame=None):
+    global child
+    if child is not None and child.poll() is None:
+        child.terminate()
+        try:
+            child.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            child.kill()
+            child.wait(timeout=5)
+    if _signum is not None:
+        raise SystemExit(143)
+
+signal.signal(signal.SIGTERM, stop_child)
+signal.signal(signal.SIGINT, stop_child)
+command_bytes = command_path.read_bytes()
+if hashlib.sha256(command_bytes).hexdigest().upper() != command_sha256:
+    raise SystemExit(125)
+payload = json.loads(command_bytes.decode("utf-8"))
+command = payload["argv"]
+cwd = payload["cwd"] or None
+ready_tmp = ready_path.with_name("." + ready_path.name + ".tmp")
+ready_tmp.write_text(token, encoding="ascii")
+os.replace(ready_tmp, ready_path)
+deadline = time.monotonic() + 30.0
+while True:
+    if barrier_path.is_file():
+        if barrier_path.read_text(encoding="ascii") != token:
+            raise SystemExit(126)
+        break
+    if not parent_alive():
+        raise SystemExit(143)
+    if time.monotonic() >= deadline:
+        raise SystemExit(124)
+    time.sleep(0.02)
+child = subprocess.Popen(command, cwd=cwd, shell=False)
+try:
+    raise SystemExit(child.wait())
+finally:
+    stop_child()
+""".strip()
 
 ALLOWLIST = frozenset(
     {
@@ -131,16 +214,30 @@ def _registry_file_guard(registry_path: Path):
     lock_path = registry_path.with_suffix(registry_path.suffix + ".lock")
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     lock_path.touch(exist_ok=True)
+    if os.name == "nt":
+        # msvcrt byte locks require one physical byte. Initialize it before
+        # opening the handle that will contend for the lock; reading a byte
+        # already locked by another Windows handle raises PermissionError.
+        for _attempt in range(100):
+            try:
+                with lock_path.open("ab") as initializer:
+                    if initializer.tell() == 0:
+                        initializer.write(b"0")
+                        initializer.flush()
+                break
+            except PermissionError:
+                time.sleep(0.01)
+        else:
+            raise RunControlError(
+                "run_registry_lock_unavailable",
+                "Run registry lock file could not be initialized.",
+                503,
+            )
     with lock_path.open("r+b") as handle:
         handle.seek(0)
         if os.name == "nt":
             import msvcrt
 
-            if handle.read(1) == b"":
-                handle.seek(0)
-                handle.write(b"0")
-                handle.flush()
-            handle.seek(0)
             msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
         else:
             import fcntl
@@ -158,6 +255,17 @@ def _registry_file_guard(registry_path: Path):
                 import fcntl
 
                 fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+@contextmanager
+def resume_admission_guard(runs_root: Path, source_run_id: str):
+    """Serialize one source run's Resume admission across backend processes."""
+
+    run_id = validate_run_id(source_run_id, required=True)
+    root = Path(runs_root).resolve()
+    lock_target = root / "run_control" / "resume_admission" / run_id
+    with _registry_file_guard(lock_target):
+        yield
 
 
 def _latest_registry_entry(
@@ -235,6 +343,8 @@ class RunRegistry:
     def _append(self, entry: dict[str, Any]) -> None:
         with open(self._registry_path, "a", encoding="utf-8") as fh:
             fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
+            fh.flush()
+            os.fsync(fh.fileno())
 
     def create_run(
         self,
@@ -278,6 +388,11 @@ class RunRegistry:
         scoring_handoff_sha256: str | None = None,
         evaluation_settings_sha256: str | None = None,
         workflow_runtime_registration_sha256: str | None = None,
+        resume_operation_sha256: str | None = None,
+        resume_repair_reason: str | None = None,
+        pre_spawn_freeze_run_id: str | None = None,
+        pre_spawn_pause_path: str | None = None,
+        pre_spawn_pause_binding: dict[str, Any] | None = None,
         reject_if_exists: bool = False,
     ) -> dict[str, Any]:
         run_id = validate_run_id(run_id) if run_id else self.new_run_id()
@@ -331,6 +446,15 @@ class RunRegistry:
             "workflow_runtime_registration_sha256": (
                 workflow_runtime_registration_sha256
             ),
+            "resume_operation_sha256": resume_operation_sha256,
+            "resume_repair_reason": resume_repair_reason,
+            "pre_spawn_freeze_run_id": pre_spawn_freeze_run_id,
+            "pre_spawn_pause_path": pre_spawn_pause_path,
+            "pre_spawn_pause_binding": (
+                None
+                if pre_spawn_pause_binding is None
+                else json.loads(json.dumps(pre_spawn_pause_binding))
+            ),
             "status": "pending",
             "pid": None,
             "started_at": now,
@@ -359,6 +483,30 @@ class RunRegistry:
                 self._append(entry)
         return dict(entry)
 
+    def find_resume_children(self, resumed_from: str) -> list[dict[str, Any]]:
+        """Return latest registry rows that already consume one Resume source run."""
+
+        source_run_id = validate_run_id(resumed_from, required=True)
+        rows: dict[str, dict[str, Any]] = {}
+        with self._lock:
+            with _registry_file_guard(self._registry_path):
+                if self._registry_path.exists():
+                    with self._registry_path.open(encoding="utf-8") as handle:
+                        for line in handle:
+                            try:
+                                row = json.loads(line)
+                            except (json.JSONDecodeError, TypeError):
+                                continue
+                            if isinstance(row, dict) and row.get("run_id"):
+                                rows[str(row["run_id"])] = row
+                self._runs = rows
+            children = [
+                dict(row)
+                for row in rows.values()
+                if row.get("resumed_from") == source_run_id
+            ]
+        return sorted(children, key=lambda row: str(row.get("run_id") or ""))
+
     def claim_run_for_spawn(self, run_id: str) -> bool:
         run = validate_run_id(run_id, required=True)
         with self._lock:
@@ -367,7 +515,10 @@ class RunRegistry:
                 if latest is None:
                     return False
                 status = latest.get("status")
-                if status == "launching" and _process_alive(
+                if _process_alive(latest.get("pid")):
+                    self._runs[run] = latest
+                    return False
+                if latest.get("spawn_claim_id") and _process_alive(
                     latest.get("spawn_claim_pid")
                 ):
                     self._runs[run] = latest
@@ -378,12 +529,214 @@ class RunRegistry:
                 claimed = {
                     **latest,
                     "status": "launching",
+                    "pid": None,
+                    "spawn_claim_id": uuid.uuid4().hex,
                     "spawn_claim_pid": os.getpid(),
                     "spawn_claimed_at": _utc_now(),
                 }
                 self._runs[run] = claimed
                 self._append(claimed)
                 return True
+
+    def pause_prepared_run(
+        self,
+        run_id: str,
+        pause_path: Path,
+    ) -> dict[str, Any] | None:
+        """Serialize a user pause against the final prepared-run launch."""
+
+        run = validate_run_id(run_id, required=True)
+        with self._lock:
+            with _registry_file_guard(self._registry_path):
+                latest = _latest_registry_entry(self._registry_path, run)
+                if (
+                    latest is None
+                    or not latest.get("pre_spawn_freeze_run_id")
+                    or latest.get("status")
+                    not in {"pending", "launching", "paused"}
+                    or _process_alive(latest.get("pid"))
+                ):
+                    if latest is not None:
+                        self._runs[run] = latest
+                    return None
+                registered = _resolve_pre_spawn_pause_path(
+                    latest.get("pre_spawn_pause_path"),
+                    runs_root=self._runs_root,
+                )
+                if registered != pause_path.resolve():
+                    raise RunControlError(
+                        "resume_pause_path_invalid",
+                        "Pause target differs from the registered Resume marker.",
+                        409,
+                    )
+                _write_pause_marker(registered)
+                paused = {
+                    **latest,
+                    "status": "paused",
+                    "pre_spawn_control": "pause",
+                    "pre_spawn_control_at": _utc_now(),
+                    "pre_spawn_pause_binding": pre_spawn_pause_binding(
+                        registered,
+                        runs_root=self._runs_root,
+                    ),
+                }
+                self._runs[run] = paused
+                self._append(paused)
+                return dict(paused)
+
+    def unpause_prepared_run(
+        self,
+        run_id: str,
+        pause_path: Path,
+    ) -> dict[str, Any] | None:
+        """Clear a serialized pre-spawn pause without creating another child."""
+
+        run = validate_run_id(run_id, required=True)
+        with self._lock:
+            with _registry_file_guard(self._registry_path):
+                latest = _latest_registry_entry(self._registry_path, run)
+                if (
+                    latest is None
+                    or latest.get("pre_spawn_control") != "pause"
+                    or latest.get("status") != "paused"
+                ):
+                    if latest is not None:
+                        self._runs[run] = latest
+                    return None
+                registered = _resolve_pre_spawn_pause_path(
+                    latest.get("pre_spawn_pause_path"),
+                    runs_root=self._runs_root,
+                )
+                if registered != pause_path.resolve():
+                    raise RunControlError(
+                        "resume_pause_path_invalid",
+                        "Unpause target differs from the registered Resume marker.",
+                        409,
+                    )
+                registered.unlink(missing_ok=True)
+                active_claim = bool(latest.get("spawn_claim_id")) and _process_alive(
+                    latest.get("spawn_claim_pid")
+                )
+                unpaused = {
+                    **latest,
+                    "status": "launching" if active_claim else "pending",
+                    "pre_spawn_control": None,
+                    "pre_spawn_control_at": None,
+                    "pre_spawn_pause_binding": None,
+                }
+                self._runs[run] = unpaused
+                self._append(unpaused)
+                return dict(unpaused)
+
+    def start_claimed_prepared_process(
+        self,
+        run_id: str,
+        claim_id: str,
+        *,
+        log_fh,
+    ) -> "_PreparedRunProcess | None":
+        """Atomically bind a guarded PID and open its start barrier."""
+
+        run = validate_run_id(run_id, required=True)
+        with self._lock:
+            with _registry_file_guard(self._registry_path):
+                latest = _latest_registry_entry(self._registry_path, run)
+                if latest is None:
+                    return None
+                if (
+                    latest.get("spawn_claim_id") != claim_id
+                    or latest.get("status") != "launching"
+                    or latest.get("pre_spawn_control") is not None
+                ):
+                    if latest.get("spawn_claim_id") == claim_id:
+                        latest = {
+                            **latest,
+                            "spawn_claim_id": None,
+                            "spawn_claim_pid": None,
+                            "spawn_claimed_at": None,
+                        }
+                        self._append(latest)
+                    self._runs[run] = latest
+                    return None
+                if latest.get("script") in {
+                    D2L_PROJECT_CAMPAIGN_SCRIPT,
+                    WORKFLOW_ORCHESTRATOR_SCRIPT,
+                } and latest.get("component_id") in {None, D2L_COMPONENT_ID}:
+                    from pipeline.prepass.d2l_component_writer_lease_v1 import (
+                        component_writer_is_active,
+                        stage_writer_is_active,
+                    )
+
+                    manifest_path = Path(
+                        str(latest.get("manifest_path") or "")
+                    ).resolve()
+                    if component_writer_is_active(
+                        manifest_path.parent
+                    ) or stage_writer_is_active(manifest_path.parent):
+                        blocked = {
+                            **latest,
+                            "status": "paused",
+                            "pre_spawn_control": "writer_active",
+                            "pre_spawn_control_at": _utc_now(),
+                            "spawn_claim_id": None,
+                            "spawn_claim_pid": None,
+                            "spawn_claimed_at": None,
+                        }
+                        self._runs[run] = blocked
+                        self._append(blocked)
+                        return None
+                _consume_pre_spawn_pause(
+                    latest.get("pre_spawn_pause_path"),
+                    expected_binding=latest.get("pre_spawn_pause_binding"),
+                    runs_root=self._runs_root,
+                )
+                process = _PreparedRunProcess(
+                    runs_root=self._runs_root,
+                    run_id=run,
+                    claim_id=claim_id,
+                    argv=[str(item) for item in latest["argv"]],
+                    cwd=latest.get("cwd") or None,
+                    stdout=log_fh,
+                    stderr=subprocess.STDOUT,
+                )
+                try:
+                    launching = {
+                        **latest,
+                        "pid": process.pid,
+                        "prepared_guard_pid": process.pid,
+                        "prepared_start_authorized": False,
+                    }
+                    self._runs[run] = launching
+                    self._append(launching)
+                    authorized = {
+                        **launching,
+                        "prepared_start_authorized": True,
+                        "prepared_start_authorized_at": _utc_now(),
+                    }
+                    self._runs[run] = authorized
+                    self._append(authorized)
+                    process.release()
+                    running = {
+                        **authorized,
+                        "status": "running",
+                        "prepared_start_released": True,
+                        "prepared_start_released_at": _utc_now(),
+                        "spawn_claim_id": None,
+                        "spawn_claim_pid": None,
+                        "spawn_claimed_at": None,
+                    }
+                    self._runs[run] = running
+                    self._append(running)
+                    return process
+                except Exception:
+                    process.terminate()
+                    try:
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        process.wait(timeout=5)
+                    process.close()
+                    raise
 
     def update_run(self, run_id: str, **updates: Any) -> dict[str, Any] | None:
         with self._lock:
@@ -435,6 +788,8 @@ class RunRegistry:
                     "evaluation_settings_template_sha256": r.get(
                         "evaluation_settings_template_sha256"
                     ),
+                    "resume_operation_sha256": r.get("resume_operation_sha256"),
+                    "resume_repair_reason": r.get("resume_repair_reason"),
                 }
                 for r in self._runs.values()
             ]
@@ -1330,6 +1685,172 @@ def _issue_preview_token(
     return token
 
 
+class _PreparedRunProcess:
+    """Hold a wrapper behind a barrier until its PID is durable."""
+
+    def __init__(
+        self,
+        *,
+        runs_root: Path,
+        run_id: str,
+        claim_id: str,
+        argv: list[str],
+        cwd: str | None,
+        stdout,
+        stderr,
+    ) -> None:
+        import hashlib
+
+        if not re.fullmatch(r"[0-9a-f]{32}", claim_id):
+            raise RunControlError(
+                "spawn_claim_invalid",
+                "Prepared run spawn claim is invalid.",
+                409,
+            )
+        guard_dir = (
+            runs_root.resolve()
+            / "_run_start_guards"
+            / validate_run_id(run_id, required=True)
+            / claim_id
+        )
+        guard_dir.mkdir(parents=True, exist_ok=False)
+        self.guard_dir = guard_dir
+        self.ready_path = guard_dir / "ready"
+        self.barrier_path = guard_dir / "start"
+        self.command_path = guard_dir / "command.json"
+        self._token = uuid.uuid4().hex
+        command_bytes = json.dumps(
+            {"argv": argv, "cwd": cwd},
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        self.command_path.write_bytes(command_bytes)
+        command_sha256 = hashlib.sha256(command_bytes).hexdigest().upper()
+        guard_argv = [
+            sys.executable,
+            "-S",
+            "-c",
+            _PREPARED_RUN_GUARD_CODE,
+            str(os.getpid()),
+            str(self.ready_path),
+            str(self.barrier_path),
+            self._token,
+            str(self.command_path),
+            command_sha256,
+        ]
+        self.process = subprocess.Popen(
+            guard_argv,
+            cwd=runs_root.resolve(),
+            stdout=stdout,
+            stderr=stderr,
+            text=True,
+            encoding="utf-8",
+            creationflags=getattr(
+                subprocess,
+                "CREATE_NEW_PROCESS_GROUP",
+                0,
+            ),
+            start_new_session=os.name != "nt",
+        )
+        try:
+            self._await_ready()
+        except Exception:
+            self.terminate()
+            try:
+                self.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self.kill()
+                self.wait(timeout=5)
+            self.close()
+            raise
+
+    @property
+    def pid(self) -> int:
+        return int(self.process.pid)
+
+    @property
+    def returncode(self) -> int | None:
+        return self.process.returncode
+
+    def _await_ready(self) -> None:
+        deadline = time.monotonic() + _PREPARED_GUARD_READY_TIMEOUT_SECONDS
+        while time.monotonic() < deadline:
+            if self.ready_path.is_file():
+                try:
+                    observed = self.ready_path.read_text(encoding="ascii")
+                except PermissionError:
+                    time.sleep(0.02)
+                    continue
+                if observed != self._token:
+                    raise RunControlError(
+                        "prepared_guard_token_drift",
+                        "Prepared run guard ready token drifted.",
+                        409,
+                    )
+                return
+            returncode = self.process.poll()
+            if returncode is not None:
+                raise RunControlError(
+                    "prepared_guard_start_failed",
+                    f"Prepared run guard exited before ready: {returncode}.",
+                    409,
+                )
+            time.sleep(0.02)
+        raise RunControlError(
+            "prepared_guard_start_timeout",
+            "Prepared run guard did not become ready.",
+            409,
+        )
+
+    def release(self) -> None:
+        temporary = self.barrier_path.with_name(".start.tmp")
+        temporary.write_text(self._token, encoding="ascii")
+        deadline = time.monotonic() + 2.0
+        while True:
+            try:
+                os.replace(temporary, self.barrier_path)
+                return
+            except PermissionError:
+                if time.monotonic() >= deadline:
+                    temporary.unlink(missing_ok=True)
+                    raise
+                time.sleep(0.02)
+
+    def poll(self) -> int | None:
+        return self.process.poll()
+
+    def wait(self, timeout: float | None = None) -> int:
+        return self.process.wait(timeout=timeout)
+
+    def terminate(self) -> None:
+        if self.process.poll() is None:
+            _terminate_process_tree(self.process.pid, force=False)
+
+    def kill(self) -> None:
+        if self.process.poll() is None:
+            _terminate_process_tree(self.process.pid, force=True)
+
+    def close(self) -> None:
+        if self.process.poll() is None:
+            return
+        for path in (
+            self.ready_path,
+            self.barrier_path,
+            self.command_path,
+            self.ready_path.with_name(".ready.tmp"),
+            self.barrier_path.with_name(".start.tmp"),
+        ):
+            try:
+                path.unlink(missing_ok=True)
+            except PermissionError:
+                pass
+        try:
+            self.guard_dir.rmdir()
+        except OSError:
+            pass
+
+
 def spawn_run(registry: RunRegistry, run_id: str) -> None:
     if not registry.claim_run_for_spawn(run_id):
         return
@@ -1342,24 +1863,72 @@ def spawn_run(registry: RunRegistry, run_id: str) -> None:
     log_path = entry["log_path"]
 
     def _worker() -> None:
+        proc = None
         try:
             with open(log_path, "w", encoding="utf-8") as log_fh:
                 log_fh.write(f"[RunControl] cwd={cwd or os.getcwd()}\n")
                 log_fh.write(f"[RunControl] argv={json.dumps(_redact_argv(argv), ensure_ascii=False)}\n")
                 log_fh.flush()
-                proc = subprocess.Popen(
-                    argv,
-                    cwd=cwd,
-                    stdout=log_fh,
-                    stderr=subprocess.STDOUT,
-                    text=True,
-                    encoding="utf-8",
-                    creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
-                )
-                registry.update_run(run_id, status="running", pid=proc.pid)
+                freeze_run_id = entry.get("pre_spawn_freeze_run_id")
+                if freeze_run_id:
+                    from services.project_runtime import freeze_managed_runtime_for_run
+
+                    log_fh.write(
+                        "[RunControl] validating and freezing managed runtime before Resume\n"
+                    )
+                    log_fh.flush()
+                    freeze_managed_runtime_for_run(
+                        validate_job_id(entry.get("job_id"), required=True),
+                        validate_run_id(freeze_run_id, required=True),
+                        jobs_root=registry.runs_root,
+                    )
+                    log_fh.write("[RunControl] managed runtime freeze complete\n")
+                    log_fh.flush()
+                if freeze_run_id:
+                    claim_id = str(entry.get("spawn_claim_id") or "")
+                    proc = registry.start_claimed_prepared_process(
+                        run_id,
+                        claim_id,
+                        log_fh=log_fh,
+                    )
+                    if proc is None:
+                        return
+                else:
+                    proc = subprocess.Popen(
+                        argv,
+                        cwd=cwd,
+                        stdout=log_fh,
+                        stderr=subprocess.STDOUT,
+                        text=True,
+                        encoding="utf-8",
+                        creationflags=getattr(
+                            subprocess,
+                            "CREATE_NEW_PROCESS_GROUP",
+                            0,
+                        ),
+                    )
+                    registry.update_run(
+                        run_id,
+                        status="running",
+                        pid=proc.pid,
+                        spawn_claim_id=None,
+                        spawn_claim_pid=None,
+                        spawn_claimed_at=None,
+                    )
                 proc.wait()
                 current = registry.get_run(run_id) or {}
                 if current.get("status") == "cancelled":
+                    return
+                if current.get("status") == "cancelling":
+                    registry.update_run(
+                        run_id,
+                        status="cancelled",
+                        exit_code=-15,
+                        ended_at=_utc_now(),
+                        spawn_claim_id=None,
+                        spawn_claim_pid=None,
+                        spawn_claimed_at=None,
+                    )
                     return
                 if (
                     current.get("script") == WORKFLOW_ORCHESTRATOR_SCRIPT
@@ -1400,21 +1969,180 @@ def spawn_run(registry: RunRegistry, run_id: str) -> None:
                     status=status,
                     exit_code=proc.returncode,
                     ended_at=_utc_now(),
+                    spawn_claim_id=None,
+                    spawn_claim_pid=None,
+                    spawn_claimed_at=None,
                 )
         except Exception as exc:
-            registry.update_run(
-                run_id,
-                status="error",
-                exit_code=-1,
-                ended_at=_utc_now(),
-            )
+            current = registry.get_run(run_id) or {}
+            if current.get("status") not in {
+                "paused",
+                "cancelling",
+                "cancelled",
+            }:
+                registry.update_run(
+                    run_id,
+                    status="error",
+                    exit_code=-1,
+                    ended_at=_utc_now(),
+                    spawn_claim_id=None,
+                    spawn_claim_pid=None,
+                    spawn_claimed_at=None,
+                )
             try:
                 with open(log_path, "a", encoding="utf-8") as log_fh:
                     log_fh.write(f"\n[RunControl ERROR] {exc}\n")
             except OSError:
                 pass
+        finally:
+            if isinstance(proc, _PreparedRunProcess):
+                proc.close()
 
     threading.Thread(target=_worker, daemon=True, name=f"run-{run_id}").start()
+
+
+def _resolve_pre_spawn_pause_path(value: Any, *, runs_root: Path) -> Path:
+    if value is None:
+        raise RunControlError(
+            "resume_pause_path_invalid",
+            "Resume pause marker path is missing.",
+            409,
+        )
+    root = runs_root.resolve()
+    raw_path = Path(str(value))
+    if raw_path.is_symlink():
+        raise RunControlError(
+            "resume_pause_path_invalid",
+            "Resume pause marker must not be a symlink.",
+            409,
+        )
+    path = raw_path.resolve()
+    try:
+        path.relative_to(root)
+    except ValueError as exc:
+        raise RunControlError(
+            "resume_pause_path_invalid",
+            "Resume pause marker escapes the server jobs root.",
+            409,
+        ) from exc
+    return path
+
+
+def pre_spawn_pause_binding(
+    value: Any,
+    *,
+    runs_root: Path,
+) -> dict[str, Any] | None:
+    """Bind the exact server pause marker that one Resume may consume."""
+
+    if value is None:
+        return None
+    path = _resolve_pre_spawn_pause_path(value, runs_root=runs_root)
+    if not path.exists():
+        return None
+    if path.exists() and not path.is_file():
+        raise RunControlError(
+            "resume_pause_path_invalid",
+            "Resume pause marker must be a regular server-owned file.",
+            409,
+        )
+    before = path.stat()
+    payload = path.read_bytes()
+    after = path.stat()
+    identity_before = (
+        before.st_dev,
+        before.st_ino,
+        before.st_size,
+        before.st_mtime_ns,
+        before.st_ctime_ns,
+    )
+    identity_after = (
+        after.st_dev,
+        after.st_ino,
+        after.st_size,
+        after.st_mtime_ns,
+        after.st_ctime_ns,
+    )
+    if identity_before != identity_after:
+        raise RunControlError(
+            "resume_pause_marker_changed",
+            "Resume pause marker changed while it was being sealed.",
+            409,
+        )
+    import hashlib
+
+    return {
+        "sha256": hashlib.sha256(payload).hexdigest().upper(),
+        "size": len(payload),
+        "st_dev": int(after.st_dev),
+        "st_ino": int(after.st_ino),
+        "mtime_ns": int(after.st_mtime_ns),
+        "ctime_ns": int(after.st_ctime_ns),
+    }
+
+
+def _consume_pre_spawn_pause(
+    value: Any,
+    *,
+    expected_binding: Any,
+    runs_root: Path,
+) -> None:
+    if value is None:
+        if expected_binding is not None:
+            raise RunControlError(
+                "resume_pause_marker_changed",
+                "Resume pause marker binding exists without a path.",
+                409,
+            )
+        return
+    path = _resolve_pre_spawn_pause_path(value, runs_root=runs_root)
+    observed = pre_spawn_pause_binding(path, runs_root=runs_root)
+    if observed != expected_binding:
+        raise RunControlError(
+            "resume_pause_marker_changed",
+            "Resume pause marker differs from its sealed pre-spawn binding.",
+            409,
+        )
+    if observed is not None:
+        path.unlink()
+
+
+def _write_pause_marker(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+    temporary.write_text("paused_by_user\n", encoding="utf-8", newline="\n")
+    deadline = time.monotonic() + 2.0
+    while True:
+        try:
+            os.replace(temporary, path)
+            return
+        except PermissionError:
+            if time.monotonic() >= deadline:
+                temporary.unlink(missing_ok=True)
+                raise
+            time.sleep(0.02)
+
+
+def _terminate_process_tree(pid: int, *, force: bool) -> None:
+    if pid <= 0:
+        return
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/T", "/F", "/PID", str(pid)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        return
+    import signal
+
+    try:
+        os.killpg(pid, signal.SIGKILL if force else signal.SIGTERM)
+    except OSError:
+        try:
+            os.kill(pid, signal.SIGKILL if force else signal.SIGTERM)
+        except OSError:
+            pass
 
 
 def _process_alive(pid: Any) -> bool:
@@ -1508,37 +2236,102 @@ def _read_parent_component_status(
 
 
 def cancel_run(registry: RunRegistry, run_id: str) -> dict[str, Any]:
-    registry.refresh()
-    entry = registry.get_run(run_id)
-    if entry is None:
-        raise RunControlError("run_not_found", f"Run {run_id} not found.", 404)
-    pid = int(entry.get("pid") or 0)
-    if entry.get("status") not in {"pending", "running"}:
-        raise RunControlError(
-            "run_not_cancellable",
-            f"Run {run_id} is not running or pending.",
-            409,
-        )
+    run = validate_run_id(run_id, required=True)
+    with registry._lock:
+        with _registry_file_guard(registry._registry_path):
+            entry = _latest_registry_entry(registry._registry_path, run)
+            if entry is None:
+                raise RunControlError(
+                    "run_not_found",
+                    f"Run {run_id} not found.",
+                    404,
+                )
+            if entry.get("status") == "cancelled":
+                registry._runs[run] = entry
+                return dict(entry)
+            if entry.get("status") not in {
+                "pending",
+                "launching",
+                "paused",
+                "running",
+                "cancelling",
+            }:
+                registry._runs[run] = entry
+                raise RunControlError(
+                    "run_not_cancellable",
+                    f"Run {run_id} is not active or pending.",
+                    409,
+                )
+            pid = int(entry.get("pid") or 0)
+            cancelling = {
+                **entry,
+                "status": "cancelling",
+                "pre_spawn_control": "cancel",
+                "pre_spawn_control_at": _utc_now(),
+            }
+            registry._runs[run] = cancelling
+            registry._append(cancelling)
     if pid > 0:
-        if os.name == "nt":
-            subprocess.run(
-                ["taskkill", "/T", "/F", "/PID", str(pid)],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=False,
-            )
-        else:
+        try:
+            _terminate_process_tree(pid, force=False)
+        except OSError as exc:
+            raise RunControlError(
+                "run_cancel_incomplete",
+                f"Run {run_id} is still cancelling; retry Cancel.",
+                409,
+            ) from exc
+        deadline = time.monotonic() + 5.0
+        while _process_alive(pid) and time.monotonic() < deadline:
+            time.sleep(0.05)
+        if _process_alive(pid):
             try:
-                os.kill(pid, 15)
-            except OSError:
-                pass
-    updated = registry.update_run(
-        run_id,
-        status="cancelled",
-        exit_code=-15,
-        ended_at=_utc_now(),
-    )
-    return updated or entry
+                _terminate_process_tree(pid, force=True)
+            except OSError as exc:
+                raise RunControlError(
+                    "run_cancel_incomplete",
+                    f"Run {run_id} is still cancelling; retry Cancel.",
+                    409,
+                ) from exc
+            deadline = time.monotonic() + 5.0
+            while _process_alive(pid) and time.monotonic() < deadline:
+                time.sleep(0.05)
+        if _process_alive(pid):
+            raise RunControlError(
+                "run_cancel_incomplete",
+                f"Run {run_id} is still cancelling; retry Cancel.",
+                409,
+            )
+    with registry._lock:
+        with _registry_file_guard(registry._registry_path):
+            latest = _latest_registry_entry(registry._registry_path, run)
+            if latest is None:
+                raise RunControlError(
+                    "run_not_found",
+                    f"Run {run_id} not found.",
+                    404,
+                )
+            if latest.get("status") == "cancelled":
+                registry._runs[run] = latest
+                return dict(latest)
+            if latest.get("status") != "cancelling":
+                registry._runs[run] = latest
+                raise RunControlError(
+                    "run_cancel_state_drift",
+                    f"Run {run_id} changed state while cancellation completed.",
+                    409,
+                )
+            cancelled = {
+                **latest,
+                "status": "cancelled",
+                "exit_code": -15,
+                "ended_at": _utc_now(),
+                "spawn_claim_id": None,
+                "spawn_claim_pid": None,
+                "spawn_claimed_at": None,
+            }
+            registry._runs[run] = cancelled
+            registry._append(cancelled)
+            return dict(cancelled)
 
 
 def read_log(registry: RunRegistry, run_id: str, *, offset: int = 0) -> dict[str, Any]:
@@ -2160,6 +2953,54 @@ def _argv_digest(argv: list[str]) -> str:
 
     payload = json.dumps(argv[1:], ensure_ascii=False, sort_keys=False, separators=(",", ":"))
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def resume_operation_sha256(
+    *,
+    source_run_id: str,
+    job_id: str,
+    script: str,
+    argv: list[str],
+    attempt_index: int,
+    workflow_run_id: str | None,
+    component_id: str | None,
+    component_run_id: str | None,
+    prestate: dict[str, Any],
+) -> str:
+    """Bind one Resume source run to one immutable pre-spawn operation."""
+
+    import hashlib
+
+    payload = {
+        "schema": "thesis_resume_operation_v1",
+        "source_run_id": validate_run_id(source_run_id, required=True),
+        "job_id": validate_job_id(job_id, required=True),
+        "script": validate_script(script),
+        "argv_digest": _argv_digest(argv),
+        "attempt_index": int(attempt_index),
+        "workflow_run_id": workflow_run_id,
+        "component_id": component_id,
+        "component_run_id": component_run_id,
+        "prestate": prestate,
+    }
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest().upper()
+
+
+def resume_run_id(operation_sha256: str) -> str:
+    digest = str(operation_sha256 or "").strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", digest):
+        raise RunControlError(
+            "resume_operation_invalid",
+            "Resume operation identity must be one SHA-256 digest.",
+            409,
+        )
+    return f"run_{digest[:12]}"
 
 
 def _redact_argv(argv: list[str]) -> list[str]:

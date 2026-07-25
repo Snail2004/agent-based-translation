@@ -143,6 +143,68 @@ def _create_resumable_one_button_run(
     return entry, run_dir
 
 
+def _create_resumable_d2l_run(
+    tmp_path: Path,
+    registry,
+    *,
+    run_id: str,
+    job_id: str = "jobA",
+):
+    from pipeline.prepass.d2l_console_replay_contract_v1 import canonical_sha256
+    from pipeline.prepass.d2l_translation_component_runner_v1 import (
+        ComponentPlan,
+        D2LTranslationComponentRunner,
+    )
+    from pipeline.tests.test_d2l_translation_component_runner_v1 import (
+        _plan,
+        _write_payloads,
+    )
+
+    campaign_root = tmp_path / "_work" / "d2l_campaign" / job_id / run_id
+    component_root = campaign_root / "component"
+    _write_payloads(component_root, attempt_id=2)
+    D2LTranslationComponentRunner(
+        ComponentPlan.from_mapping(_plan(attempt_id=2)),
+        component_root,
+        stop_after_stage="candidate_index",
+    ).run()
+    manifest_path = component_root / "component_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    pause_path = campaign_root / "PAUSE"
+    pause_path.write_text("paused_by_user\n", encoding="utf-8")
+    entry = registry.create_run(
+        script="run_d2l_project_campaign",
+        argv=[
+            sys.executable,
+            "-m",
+            "pipeline.scripts.run_d2l_project_campaign",
+            "app-run",
+            "--workflow-run-id",
+            manifest["workflow_run_id"],
+            "--component-run-id",
+            manifest["component_run_id"],
+            "--chapter-id",
+            manifest["selected_chapter_ids"][0],
+            "--dry-run",
+        ],
+        run_id=run_id,
+        job_id=job_id,
+        allow_api=False,
+        event_log_path=str(component_root / "events.jsonl"),
+        run_dir=str(campaign_root),
+        manifest_path=str(manifest_path),
+        workflow_run_id=manifest["workflow_run_id"],
+        component_id="translation",
+        component_run_id=manifest["component_run_id"],
+        component_attempt_id=manifest["component_attempt_id"],
+        selected_chapter_ids=manifest["selected_chapter_ids"],
+        profile_id="technical_d2l_v1",
+        source_binding_sha256=canonical_sha256(manifest["source_binding"]),
+    )
+    registry.update_run(run_id, status="paused", exit_code=0)
+    return entry, campaign_root
+
+
 def _full_run_report(
     *,
     fixture_name: str = "full_run_one_arm.json",
@@ -1100,6 +1162,7 @@ def test_route_cancel_run_taskkills_registered_process(tmp_path, monkeypatch):
         "run",
         lambda argv, **_kwargs: calls.append([str(item) for item in argv]),
     )
+    monkeypatch.setattr(services, "_process_alive", lambda _pid: False)
     client = app_module.create_app().test_client()
 
     resp = client.post("/api/thesis/runs/run_cancel/cancel")
@@ -1508,6 +1571,646 @@ def test_route_repeated_resume_validates_original_frozen_run(tmp_path, monkeypat
     assert frozen_run_ids == ["run_resume_root"]
     assert spawned == [data["run_id"]]
     assert not (run_dir / "PAUSE").exists()
+
+
+def test_route_d2l_resume_exact_retry_reuses_one_registered_child(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    source, campaign_root = _create_resumable_d2l_run(
+        tmp_path,
+        registry,
+        run_id="run_d2l_resume_once",
+    )
+    routes.set_registry(registry)
+    spawned: list[str] = []
+
+    def claim_spawn(run_registry, child_run_id):
+        if run_registry.claim_run_for_spawn(child_run_id):
+            spawned.append(child_run_id)
+
+    monkeypatch.setattr(
+        routes,
+        "freeze_managed_runtime_for_run",
+        lambda *_args, **_kwargs: pytest.fail(
+            "D2L Resume freeze must run inside the registered worker"
+        ),
+    )
+    monkeypatch.setattr(
+        routes,
+        "spawn_run",
+        claim_spawn,
+    )
+    client = app_module.create_app().test_client()
+
+    first = client.post(f"/api/thesis/runs/{source['run_id']}/resume", json={})
+    second = client.post(f"/api/thesis/runs/{source['run_id']}/resume", json={})
+
+    assert first.status_code == 201
+    assert second.status_code == 200
+    first_data = first.get_json()["data"]
+    second_data = second.get_json()["data"]
+    assert second_data["reused"] is True
+    assert first_data["run_id"] == second_data["run_id"]
+    assert spawned == [first_data["run_id"]]
+    children = registry.find_resume_children(source["run_id"])
+    assert [row["run_id"] for row in children] == [first_data["run_id"]]
+    assert children[0]["resume_operation_sha256"]
+    assert children[0]["pre_spawn_freeze_run_id"] == source["run_id"]
+    assert (campaign_root / "PAUSE").is_file()
+
+
+def test_route_d2l_resume_retry_reclaims_registered_pending_child(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    source, _campaign_root = _create_resumable_d2l_run(
+        tmp_path,
+        registry,
+        run_id="run_d2l_pending_child",
+    )
+    routes.set_registry(registry)
+    monkeypatch.setattr(routes, "spawn_run", lambda *_args: None)
+    client = app_module.create_app().test_client()
+    first = client.post(f"/api/thesis/runs/{source['run_id']}/resume", json={})
+    child_run_id = first.get_json()["data"]["run_id"]
+    assert registry.get_run(child_run_id)["status"] == "pending"
+
+    reclaimed: list[str] = []
+
+    def claim_spawn(run_registry, run_id):
+        if run_registry.claim_run_for_spawn(run_id):
+            reclaimed.append(run_id)
+
+    monkeypatch.setattr(routes, "spawn_run", claim_spawn)
+    second = client.post(f"/api/thesis/runs/{source['run_id']}/resume", json={})
+
+    assert second.status_code == 200
+    assert second.get_json()["data"]["run_id"] == child_run_id
+    assert reclaimed == [child_run_id]
+    assert registry.get_run(child_run_id)["status"] == "launching"
+
+
+def test_route_concurrent_d2l_resume_registers_and_spawns_once(
+    tmp_path,
+    monkeypatch,
+):
+    from concurrent.futures import ThreadPoolExecutor
+
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    source, _campaign_root = _create_resumable_d2l_run(
+        tmp_path,
+        registry,
+        run_id="run_d2l_resume_race",
+    )
+    routes.set_registry(registry)
+    spawned: list[str] = []
+
+    def claim_spawn(run_registry, child_run_id):
+        if run_registry.claim_run_for_spawn(child_run_id):
+            spawned.append(child_run_id)
+
+    monkeypatch.setattr(
+        routes,
+        "spawn_run",
+        claim_spawn,
+    )
+    app = app_module.create_app()
+
+    def submit_resume():
+        with app.test_client() as client:
+            response = client.post(
+                f"/api/thesis/runs/{source['run_id']}/resume",
+                json={},
+            )
+            return response.status_code, response.get_json()
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        results = list(executor.map(lambda _index: submit_resume(), range(2)))
+
+    assert sorted(status for status, _payload in results) == [200, 201], results
+    run_ids = {payload["data"]["run_id"] for _status, payload in results}
+    assert len(run_ids) == 1
+    assert spawned == [next(iter(run_ids))]
+    assert len(registry.find_resume_children(source["run_id"])) == 1
+
+
+def test_route_resume_rejects_multiple_existing_children(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    source, _campaign_root = _create_resumable_d2l_run(
+        tmp_path,
+        registry,
+        run_id="run_d2l_ambiguous_source",
+    )
+    for suffix in ("a", "b"):
+        registry.create_run(
+            script=source["script"],
+            argv=source["argv"],
+            run_id=f"run_d2l_child_{suffix}",
+            job_id=source["job_id"],
+            event_log_path=source["event_log_path"],
+            run_dir=source["run_dir"],
+            manifest_path=source["manifest_path"],
+            resumed_from=source["run_id"],
+            workflow_run_id=source["workflow_run_id"],
+            component_id=source["component_id"],
+            component_run_id=source["component_run_id"],
+            selected_chapter_ids=source["selected_chapter_ids"],
+            source_binding_sha256=source["source_binding_sha256"],
+        )
+    routes.set_registry(registry)
+    spawned: list[str] = []
+    monkeypatch.setattr(
+        routes,
+        "spawn_run",
+        lambda _registry, child_run_id: spawned.append(child_run_id),
+    )
+    client = app_module.create_app().test_client()
+
+    response = client.post(
+        f"/api/thesis/runs/{source['run_id']}/resume",
+        json={},
+    )
+
+    assert response.status_code == 409
+    assert (
+        response.get_json()["errors"][0]["code"]
+        == "resume_lineage_ambiguous"
+    )
+    assert spawned == []
+
+
+def test_spawn_run_freezes_then_clears_pause_before_process(
+    tmp_path,
+    monkeypatch,
+):
+    from services import project_runtime
+    from services.thesis_runs import (
+        RunRegistry,
+        pre_spawn_pause_binding,
+        spawn_run,
+    )
+
+    registry = RunRegistry(runs_root=tmp_path)
+    run_dir = tmp_path / "jobA" / "campaign"
+    run_dir.mkdir(parents=True)
+    pause_path = run_dir / "PAUSE"
+    pause_path.write_text("paused_by_user\n", encoding="utf-8")
+    freeze_marker = tmp_path / "freeze.complete"
+    process_marker = tmp_path / "process.started"
+    script = (
+        "from pathlib import Path; "
+        f"assert Path({str(freeze_marker)!r}).is_file(); "
+        f"assert not Path({str(pause_path)!r}).exists(); "
+        f"Path({str(process_marker)!r}).write_text('started', encoding='utf-8')"
+    )
+    entry = registry.create_run(
+        script="run_one_button",
+        argv=[sys.executable, "-c", script],
+        run_id="run_async_prepare",
+        job_id="jobA",
+        pre_spawn_freeze_run_id="run_source",
+        pre_spawn_pause_path=str(pause_path),
+        pre_spawn_pause_binding=pre_spawn_pause_binding(
+            pause_path,
+            runs_root=tmp_path,
+        ),
+    )
+    monkeypatch.setattr(
+        project_runtime,
+        "freeze_managed_runtime_for_run",
+        lambda *_args, **_kwargs: freeze_marker.write_text(
+            "frozen",
+            encoding="utf-8",
+        ),
+    )
+
+    spawn_run(registry, entry["run_id"])
+    result = _wait_for_status(registry, entry["run_id"])
+
+    assert result["status"] == "done"
+    assert process_marker.read_text(encoding="utf-8") == "started"
+    assert not pause_path.exists()
+
+
+def test_spawn_run_freeze_failure_keeps_pause_and_never_starts_process(
+    tmp_path,
+    monkeypatch,
+):
+    from services import project_runtime
+    from services.thesis_runs import (
+        RunRegistry,
+        pre_spawn_pause_binding,
+        spawn_run,
+    )
+
+    registry = RunRegistry(runs_root=tmp_path)
+    run_dir = tmp_path / "jobA" / "campaign"
+    run_dir.mkdir(parents=True)
+    pause_path = run_dir / "PAUSE"
+    pause_path.write_text("paused_by_user\n", encoding="utf-8")
+    process_marker = tmp_path / "process.started"
+    entry = registry.create_run(
+        script="run_one_button",
+        argv=[
+            sys.executable,
+            "-c",
+            (
+                "from pathlib import Path; "
+                f"Path({str(process_marker)!r}).write_text('started', encoding='utf-8')"
+            ),
+        ],
+        run_id="run_async_prepare_failure",
+        job_id="jobA",
+        pre_spawn_freeze_run_id="run_source",
+        pre_spawn_pause_path=str(pause_path),
+        pre_spawn_pause_binding=pre_spawn_pause_binding(
+            pause_path,
+            runs_root=tmp_path,
+        ),
+    )
+    monkeypatch.setattr(
+        project_runtime,
+        "freeze_managed_runtime_for_run",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            RuntimeError("freeze failed")
+        ),
+    )
+
+    spawn_run(registry, entry["run_id"])
+    result = _wait_for_status(registry, entry["run_id"])
+
+    assert result["status"] == "error"
+    assert pause_path.is_file()
+    assert not process_marker.exists()
+
+
+@pytest.mark.parametrize(
+    ("control_route", "expected_status"),
+    [
+        ("pause", "paused"),
+        ("cancel", "cancelled"),
+    ],
+)
+def test_prepared_spawn_control_during_freeze_never_starts_process(
+    tmp_path,
+    monkeypatch,
+    control_route,
+    expected_status,
+):
+    import threading
+
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services import project_runtime
+    from services.thesis_runs import (
+        RunRegistry,
+        pre_spawn_pause_binding,
+        spawn_run,
+    )
+
+    registry = RunRegistry(runs_root=tmp_path)
+    run_dir = tmp_path / "jobA" / "campaign"
+    run_dir.mkdir(parents=True)
+    pause_path = run_dir / "PAUSE"
+    pause_path.write_text("paused_by_user\n", encoding="utf-8")
+    component_root = run_dir / "component"
+    component_root.mkdir()
+    manifest_path = component_root / "component_manifest.json"
+    manifest_path.write_text("{}\n", encoding="utf-8")
+    process_marker = tmp_path / "process.started"
+    entry = registry.create_run(
+        script="run_d2l_project_campaign",
+        argv=[
+            sys.executable,
+            "-c",
+            (
+                "from pathlib import Path; "
+                f"Path({str(process_marker)!r}).write_text('started')"
+            ),
+        ],
+        run_id=f"run_{control_route}_during_freeze",
+        job_id="jobA",
+        run_dir=str(run_dir),
+        manifest_path=str(manifest_path),
+        pre_spawn_freeze_run_id="run_source",
+        pre_spawn_pause_path=str(pause_path),
+        pre_spawn_pause_binding=pre_spawn_pause_binding(
+            pause_path,
+            runs_root=tmp_path,
+        ),
+    )
+    routes.set_registry(registry)
+    freeze_entered = threading.Event()
+    release_freeze = threading.Event()
+
+    def blocking_freeze(*_args, **_kwargs):
+        freeze_entered.set()
+        assert release_freeze.wait(timeout=10)
+
+    monkeypatch.setattr(
+        project_runtime,
+        "freeze_managed_runtime_for_run",
+        blocking_freeze,
+    )
+    spawn_run(registry, entry["run_id"])
+    assert freeze_entered.wait(timeout=10)
+
+    client = app_module.create_app().test_client()
+    response = client.post(
+        f"/api/thesis/runs/{entry['run_id']}/{control_route}",
+        json={},
+    )
+    release_freeze.set()
+
+    assert response.status_code == 200
+    result = _wait_for_status(
+        registry,
+        entry["run_id"],
+        done_statuses=(expected_status,),
+    )
+    assert result["status"] == expected_status
+    assert not process_marker.exists()
+    if control_route == "pause":
+        assert pause_path.is_file()
+
+
+def test_prepared_spawn_registry_failure_before_pid_release_starts_nothing(
+    tmp_path,
+    monkeypatch,
+):
+    from services import project_runtime
+    from services.thesis_runs import (
+        RunRegistry,
+        pre_spawn_pause_binding,
+        spawn_run,
+    )
+
+    registry = RunRegistry(runs_root=tmp_path)
+    run_dir = tmp_path / "jobA" / "campaign"
+    run_dir.mkdir(parents=True)
+    pause_path = run_dir / "PAUSE"
+    pause_path.write_text("paused_by_user\n", encoding="utf-8")
+    component_root = run_dir / "component"
+    component_root.mkdir()
+    manifest_path = component_root / "component_manifest.json"
+    manifest_path.write_text("{}\n", encoding="utf-8")
+    process_marker = tmp_path / "process.started"
+    entry = registry.create_run(
+        script="run_d2l_project_campaign",
+        argv=[
+            sys.executable,
+            "-c",
+            (
+                "from pathlib import Path; "
+                f"Path({str(process_marker)!r}).write_text('started')"
+            ),
+        ],
+        run_id="run_crash_before_pid_persist",
+        job_id="jobA",
+        run_dir=str(run_dir),
+        manifest_path=str(manifest_path),
+        pre_spawn_freeze_run_id="run_source",
+        pre_spawn_pause_path=str(pause_path),
+        pre_spawn_pause_binding=pre_spawn_pause_binding(
+            pause_path,
+            runs_root=tmp_path,
+        ),
+    )
+    monkeypatch.setattr(
+        project_runtime,
+        "freeze_managed_runtime_for_run",
+        lambda *_args, **_kwargs: None,
+    )
+    original_append = registry._append
+    failed_once = False
+
+    def fail_before_pid_persist(row):
+        nonlocal failed_once
+        if row.get("prepared_guard_pid") and not failed_once:
+            failed_once = True
+            raise OSError("injected registry failure before PID persistence")
+        original_append(row)
+
+    monkeypatch.setattr(registry, "_append", fail_before_pid_persist)
+    spawn_run(registry, entry["run_id"])
+    result = _wait_for_status(registry, entry["run_id"])
+
+    assert failed_once is True
+    assert result["status"] == "error"
+    assert not process_marker.exists()
+
+
+def test_prepared_spawn_running_write_failure_kills_real_child_tree(
+    tmp_path,
+    monkeypatch,
+):
+    from services import project_runtime
+    from services.thesis_runs import (
+        RunRegistry,
+        _process_alive,
+        pre_spawn_pause_binding,
+        spawn_run,
+    )
+
+    registry = RunRegistry(runs_root=tmp_path)
+    run_dir = tmp_path / "jobA" / "campaign"
+    component_root = run_dir / "component"
+    component_root.mkdir(parents=True)
+    manifest_path = component_root / "component_manifest.json"
+    manifest_path.write_text("{}\n", encoding="utf-8")
+    pause_path = run_dir / "PAUSE"
+    pause_path.write_text("paused_by_user\n", encoding="utf-8")
+    child_pid_path = tmp_path / "real-child.pid"
+    entry = registry.create_run(
+        script="run_d2l_project_campaign",
+        argv=[
+            sys.executable,
+            "-c",
+            (
+                "import os,time; from pathlib import Path; "
+                f"Path({str(child_pid_path)!r}).write_text(str(os.getpid())); "
+                "time.sleep(60)"
+            ),
+        ],
+        run_id="run_failure_after_barrier",
+        job_id="jobA",
+        run_dir=str(run_dir),
+        manifest_path=str(manifest_path),
+        pre_spawn_freeze_run_id="run_source",
+        pre_spawn_pause_path=str(pause_path),
+        pre_spawn_pause_binding=pre_spawn_pause_binding(
+            pause_path,
+            runs_root=tmp_path,
+        ),
+    )
+    monkeypatch.setattr(
+        project_runtime,
+        "freeze_managed_runtime_for_run",
+        lambda *_args, **_kwargs: None,
+    )
+    original_append = registry._append
+    failed_once = False
+
+    def fail_running_write(row):
+        nonlocal failed_once
+        if (
+            row.get("status") == "running"
+            and row.get("prepared_start_released") is True
+            and not failed_once
+        ):
+            failed_once = True
+            time.sleep(0.1)
+            raise OSError("injected running registry write failure")
+        original_append(row)
+
+    monkeypatch.setattr(registry, "_append", fail_running_write)
+    spawn_run(registry, entry["run_id"])
+    result = _wait_for_status(registry, entry["run_id"])
+
+    assert failed_once is True
+    assert result["status"] == "error"
+    if child_pid_path.is_file():
+        child_pid = int(child_pid_path.read_text(encoding="utf-8"))
+        assert not _process_alive(child_pid)
+
+
+def test_cancel_retry_finishes_durable_cancelling_state(
+    tmp_path,
+    monkeypatch,
+):
+    from services import thesis_runs
+    from services.thesis_runs import RunControlError, RunRegistry, cancel_run
+
+    registry = RunRegistry(runs_root=tmp_path)
+    entry = registry.create_run(
+        script="run_one_button",
+        argv=[sys.executable, "-c", "raise SystemExit(0)"],
+        run_id="run_cancel_retry",
+        job_id="jobA",
+    )
+    registry.update_run(entry["run_id"], status="running", pid=424242)
+    monkeypatch.setattr(
+        thesis_runs,
+        "_terminate_process_tree",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            OSError("injected taskkill failure")
+        ),
+    )
+
+    with pytest.raises(RunControlError) as exc_info:
+        cancel_run(registry, entry["run_id"])
+
+    assert exc_info.value.code == "run_cancel_incomplete"
+    assert registry.get_run(entry["run_id"])["status"] == "cancelling"
+    monkeypatch.setattr(
+        thesis_runs,
+        "_terminate_process_tree",
+        lambda *_args, **_kwargs: None,
+    )
+    monkeypatch.setattr(thesis_runs, "_process_alive", lambda _pid: False)
+
+    cancelled = cancel_run(registry, entry["run_id"])
+    repeated = cancel_run(registry, entry["run_id"])
+
+    assert cancelled["status"] == "cancelled"
+    assert repeated["status"] == "cancelled"
+
+
+def test_route_resume_existing_child_checks_writer_lease_before_reclaim(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from pipeline.prepass.d2l_component_writer_lease_v1 import (
+        D2LComponentWriterLease,
+    )
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    source, _campaign_root = _create_resumable_d2l_run(
+        tmp_path,
+        registry,
+        run_id="run_d2l_reclaim_lease",
+    )
+    routes.set_registry(registry)
+    monkeypatch.setattr(routes, "spawn_run", lambda *_args: None)
+    client = app_module.create_app().test_client()
+    first = client.post(f"/api/thesis/runs/{source['run_id']}/resume", json={})
+    child_run_id = first.get_json()["data"]["run_id"]
+    child = registry.get_run(child_run_id)
+    component_root = Path(child["manifest_path"]).parent
+    spawned: list[str] = []
+    monkeypatch.setattr(
+        routes,
+        "spawn_run",
+        lambda _registry, run_id: spawned.append(run_id),
+    )
+
+    with D2LComponentWriterLease(component_root):
+        response = client.post(
+            f"/api/thesis/runs/{source['run_id']}/resume",
+            json={},
+        )
+
+    assert response.status_code == 409
+    assert (
+        response.get_json()["errors"][0]["code"]
+        == "component_writer_still_active"
+    )
+    assert spawned == []
 
 
 def test_route_resume_rejects_invalid_ancestry_without_mutation(tmp_path, monkeypatch):
