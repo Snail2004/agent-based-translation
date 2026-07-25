@@ -44,6 +44,69 @@
   ]);
   const OPTIONAL_DETAIL_COMPONENTS = new Set(["translation", "evaluation", "publication"]);
   const ACTIVE_REGISTRY_RUN_STATUSES = new Set(["pending", "running"]);
+  const TERM_LIFECYCLE_SCHEMA = "d2l_term_lifecycle_batch_v1";
+  const TERM_LIFECYCLE_STATES = Object.freeze([
+    "proposed",
+    "aggregated",
+    "admitted",
+    "rejected",
+    "review_held",
+    "morphology_resolved",
+    "morphology_pending",
+    "collision_resolved",
+    "collision_pending",
+    "multi_target_resolved",
+    "multi_target_pending",
+    "committed",
+  ]);
+  const TERM_LIFECYCLE_STATE_SET = new Set(TERM_LIFECYCLE_STATES);
+  const TERM_STAGE_STATES = Object.freeze({
+    b1_candidate_discovery: new Set(["proposed"]),
+    candidate_index: new Set(["aggregated"]),
+    b2_admission_translation: new Set(["admitted", "rejected", "review_held"]),
+    auditor_morphology: new Set(["morphology_resolved", "morphology_pending"]),
+    auditor_target_collision: new Set(["collision_resolved", "collision_pending"]),
+    auditor_multi_target: new Set(["multi_target_resolved", "multi_target_pending"]),
+    glossary_seal: new Set(["committed"]),
+  });
+  const TERM_ALLOWED_TRANSITIONS = Object.freeze({
+    proposed: new Set(["aggregated", "admitted", "rejected", "review_held"]),
+    aggregated: new Set(["admitted", "rejected", "review_held"]),
+    admitted: new Set([
+      "morphology_resolved", "morphology_pending",
+      "collision_resolved", "collision_pending",
+      "multi_target_resolved", "multi_target_pending", "committed",
+    ]),
+    morphology_resolved: new Set([
+      "collision_resolved", "collision_pending",
+      "multi_target_resolved", "multi_target_pending", "committed",
+    ]),
+    collision_resolved: new Set([
+      "multi_target_resolved", "multi_target_pending", "committed",
+    ]),
+    multi_target_resolved: new Set(["committed"]),
+    committed: new Set(["committed"]),
+  });
+  const TERM_PROJECTION_MODES = new Set(["live", "resume_backfill", "stage_artifact_projection"]);
+  const TERM_TIMING_AUTHORITIES = new Set(["recorded", "logical_order_only"]);
+  const TERM_SHA256_KINDS = new Set(["physical", "canonical:d2l_canonical_json_v1"]);
+  const TERM_BATCH_KEYS = Object.freeze([
+    "schema_version", "batch_id", "batch_sha256", "projection_mode",
+    "timing_authority", "origin_component_attempt_id", "origin_component_seq",
+    "evidence", "rows", "summary",
+  ]);
+  const TERM_ROW_KEYS = Object.freeze([
+    "row_id", "row_sha256", "logical_term_id", "state", "lifecycle", "authority",
+    "origin_component_attempt_id", "origin_component_seq", "candidate_ids",
+    "member_ids", "surfaces", "source_block_ids", "targets", "reason_codes",
+    "rationale", "supersedes_row_ids", "evidence_ref", "evidence_sha256",
+  ]);
+  const TERM_SUMMARY_KEYS = Object.freeze([
+    "observations", "unique_surfaces", "logical_terms", "state_counts",
+    "completed", "total", "unit", "through_work_id",
+  ]);
+  const TERM_MAX_PAYLOAD_BYTES = 60000;
+  const TERM_MAX_ROWS_PER_BATCH = 128;
 
   function isObject(value) {
     return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -275,6 +338,635 @@
 
   function validId(value) {
     return typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,191}$/.test(value);
+  }
+
+  function validTermId(value) {
+    return typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,190}$/.test(value);
+  }
+
+  function validTermSha(value) {
+    return typeof value === "string" && /^[0-9a-f]{64}$/i.test(value);
+  }
+
+  function termRequireId(value, path, errors) {
+    if (!validTermId(value)) addError(errors, "term_id", path, "invalid D2L term lifecycle identifier");
+    return validTermId(value);
+  }
+
+  function termRequireSha(value, path, errors) {
+    if (!validTermSha(value)) addError(errors, "term_sha256", path, "expected SHA-256");
+    return validTermSha(value);
+  }
+
+  function termRequireInt(value, path, errors, minimum = 0) {
+    const valid = Number.isInteger(value) && value >= minimum;
+    if (!valid) addError(errors, "term_integer", path, `expected an integer >= ${minimum}`);
+    return valid;
+  }
+
+  function termRequireString(value, path, errors, maximum, allowNull = false) {
+    if (value === null && allowNull) return true;
+    const valid = typeof value === "string"
+      && value.length > 0
+      && value.length <= maximum
+      && !/[\x00-\x1f\x7f]/.test(value);
+    if (!valid) addError(errors, "term_string", path, `expected a non-empty string of at most ${maximum} characters without controls`);
+    return valid;
+  }
+
+  function termStringCompare(left, right) {
+    const leftFolded = left.toLocaleLowerCase();
+    const rightFolded = right.toLocaleLowerCase();
+    if (leftFolded < rightFolded) return -1;
+    if (leftFolded > rightFolded) return 1;
+    if (left < right) return -1;
+    if (left > right) return 1;
+    return 0;
+  }
+
+  function termValidateStringList(value, path, errors, maximumItems, maximumLength) {
+    if (!Array.isArray(value)) {
+      addError(errors, "term_array", path, "expected an array");
+      return false;
+    }
+    if (value.length > maximumItems) {
+      addError(errors, "term_array_cap", path, `expected at most ${maximumItems} items`);
+    }
+    let valid = value.length <= maximumItems;
+    value.forEach((item, index) => {
+      valid = termRequireString(item, `${path}[${index}]`, errors, maximumLength) && valid;
+    });
+    if (value.every(item => typeof item === "string")) {
+      const expected = [...new Set(value)].sort(termStringCompare);
+      if (!canonicalEqual(value, expected)) {
+        addError(errors, "term_array_order", path, "values must be sorted and unique");
+        valid = false;
+      }
+    }
+    return valid;
+  }
+
+  function termValidateRelativeRef(value, path, errors) {
+    const valid = typeof value === "string"
+      && value.length > 0
+      && !value.includes("\\")
+      && !value.startsWith("/")
+      && !/^[A-Za-z]:/.test(value)
+      && !value.split("/").includes("..");
+    if (!valid) addError(errors, "term_evidence_ref", path, "expected a package-relative POSIX reference");
+    return valid;
+  }
+
+  function termNormalizeTarget(value, path, errors) {
+    exactKeys(value, ["target_vi", "applicability", "disposition"], path, errors);
+    if (!isObject(value)) return null;
+    termRequireString(value.target_vi, `${path}.target_vi`, errors, 256);
+    let applicability = value.applicability;
+    if (isObject(applicability)) {
+      try {
+        applicability = canonicalJSONString(applicability);
+      } catch (_error) {
+        addError(errors, "term_target", `${path}.applicability`, "applicability cannot be canonicalized");
+        applicability = null;
+      }
+    }
+    termRequireString(applicability, `${path}.applicability`, errors, 384, true);
+    termRequireString(value.disposition, `${path}.disposition`, errors, 64);
+    return {
+      target_vi: value.target_vi,
+      applicability,
+      disposition: value.disposition,
+    };
+  }
+
+  function termTargetCompare(left, right) {
+    const leftIdentity = [
+      String(left.target_vi || "").toLocaleLowerCase(),
+      String(left.target_vi || ""),
+      left.applicability === null ? "" : String(left.applicability || ""),
+      String(left.disposition || ""),
+    ];
+    const rightIdentity = [
+      String(right.target_vi || "").toLocaleLowerCase(),
+      String(right.target_vi || ""),
+      right.applicability === null ? "" : String(right.applicability || ""),
+      String(right.disposition || ""),
+    ];
+    for (let index = 0; index < leftIdentity.length; index += 1) {
+      if (leftIdentity[index] < rightIdentity[index]) return -1;
+      if (leftIdentity[index] > rightIdentity[index]) return 1;
+    }
+    return 0;
+  }
+
+  function termValidateEvidence(value, path, errors) {
+    if (!isObject(value)) {
+      addError(errors, "term_evidence", path, "expected an evidence object");
+      return null;
+    }
+    const kind = value.evidence_kind;
+    if (kind === "work_journal") {
+      exactKeys(value, [
+        "evidence_kind", "journal_ref", "journal_seq", "entry_sha256",
+        "producer_component_attempt_id", "validation_event_id",
+        "validation_component_attempt_id", "validation_component_seq",
+      ], path, errors);
+      termValidateRelativeRef(value.journal_ref, `${path}.journal_ref`, errors);
+      termRequireInt(value.journal_seq, `${path}.journal_seq`, errors, 1);
+      termRequireSha(value.entry_sha256, `${path}.entry_sha256`, errors);
+      termRequireInt(value.producer_component_attempt_id, `${path}.producer_component_attempt_id`, errors, 1);
+      termRequireId(value.validation_event_id, `${path}.validation_event_id`, errors);
+      termRequireInt(value.validation_component_attempt_id, `${path}.validation_component_attempt_id`, errors, 1);
+      termRequireInt(value.validation_component_seq, `${path}.validation_component_seq`, errors, 1);
+      return {
+        ...deepClone(value),
+        entry_sha256: validTermSha(value.entry_sha256) ? value.entry_sha256.toUpperCase() : value.entry_sha256,
+      };
+    }
+    if (kind === "artifact") {
+      exactKeys(value, [
+        "evidence_kind", "artifact_ref", "artifact_kind", "schema_version",
+        "sha256", "sha256_kind", "created_event_id",
+        "producer_component_attempt_id", "created_component_seq",
+      ], path, errors);
+      termRequireId(value.artifact_ref, `${path}.artifact_ref`, errors);
+      termRequireString(value.artifact_kind, `${path}.artifact_kind`, errors, 128);
+      termRequireString(value.schema_version, `${path}.schema_version`, errors, 128);
+      termRequireSha(value.sha256, `${path}.sha256`, errors);
+      if (!TERM_SHA256_KINDS.has(value.sha256_kind)) {
+        addError(errors, "term_evidence", `${path}.sha256_kind`, "unsupported evidence SHA-256 kind");
+      }
+      termRequireId(value.created_event_id, `${path}.created_event_id`, errors);
+      termRequireInt(value.producer_component_attempt_id, `${path}.producer_component_attempt_id`, errors, 1);
+      termRequireInt(value.created_component_seq, `${path}.created_component_seq`, errors, 1);
+      return {
+        ...deepClone(value),
+        sha256: validTermSha(value.sha256) ? value.sha256.toUpperCase() : value.sha256,
+      };
+    }
+    addError(errors, "term_evidence", `${path}.evidence_kind`, "unsupported evidence kind");
+    return null;
+  }
+
+  function termEvidenceBinding(evidence) {
+    if (evidence?.evidence_kind === "work_journal") {
+      return {
+        ref: evidence.journal_ref,
+        sha256: evidence.entry_sha256,
+        attempt: evidence.validation_component_attempt_id,
+        seq: evidence.validation_component_seq,
+      };
+    }
+    if (evidence?.evidence_kind === "artifact") {
+      return {
+        ref: evidence.artifact_ref,
+        sha256: evidence.sha256,
+        attempt: evidence.producer_component_attempt_id,
+        seq: evidence.created_component_seq,
+      };
+    }
+    return { ref: null, sha256: null, attempt: null, seq: null };
+  }
+
+  function termValidateSummary(value, path, errors) {
+    exactKeys(value, TERM_SUMMARY_KEYS, path, errors);
+    if (!isObject(value)) return false;
+    let valid = true;
+    ["observations", "unique_surfaces", "logical_terms", "completed"].forEach(key => {
+      valid = termRequireInt(value[key], `${path}.${key}`, errors) && valid;
+    });
+    if (value.total !== null) valid = termRequireInt(value.total, `${path}.total`, errors) && valid;
+    if (
+      Number.isInteger(value.observations)
+      && (
+        (Number.isInteger(value.unique_surfaces) && value.unique_surfaces > value.observations)
+        || (Number.isInteger(value.logical_terms) && value.logical_terms > value.observations)
+      )
+    ) {
+      addError(errors, "term_summary", path, "unique counts exceed observations");
+      valid = false;
+    }
+    if (Number.isInteger(value.completed) && Number.isInteger(value.total) && value.completed > value.total) {
+      addError(errors, "term_summary", path, "completed exceeds total");
+      valid = false;
+    }
+    termRequireString(value.unit, `${path}.unit`, errors, 64);
+    if (value.through_work_id !== null) termRequireId(value.through_work_id, `${path}.through_work_id`, errors);
+    if (!isObject(value.state_counts)) {
+      addError(errors, "term_summary", `${path}.state_counts`, "expected an object");
+      return false;
+    }
+    let counted = 0;
+    Object.entries(value.state_counts).forEach(([state, count]) => {
+      if (!TERM_LIFECYCLE_STATE_SET.has(state)) {
+        addError(errors, "term_state", `${path}.state_counts.${state}`, "unknown lifecycle state");
+        valid = false;
+      }
+      if (termRequireInt(count, `${path}.state_counts.${state}`, errors)) counted += count;
+      else valid = false;
+    });
+    if (Number.isInteger(value.observations) && counted !== value.observations) {
+      addError(errors, "term_summary", `${path}.state_counts`, "state counts do not cover observations");
+      valid = false;
+    }
+    return valid;
+  }
+
+  async function termValidateRow(value, stage, evidence, path, errors) {
+    exactKeys(value, TERM_ROW_KEYS, path, errors);
+    if (!isObject(value)) return null;
+    termRequireId(value.row_id, `${path}.row_id`, errors);
+    termRequireSha(value.row_sha256, `${path}.row_sha256`, errors);
+    termRequireId(value.logical_term_id, `${path}.logical_term_id`, errors);
+    const allowedStates = TERM_STAGE_STATES[stage?.local_stage_id];
+    if (!allowedStates?.has(value.state)) {
+      addError(errors, "term_state", `${path}.state`, `state is not allowed for ${stage?.local_stage_id || "unknown stage"}`);
+    }
+    const committed = value.state === "committed";
+    if (value.lifecycle !== (committed ? "committed" : "provisional")) {
+      addError(errors, "term_lifecycle", `${path}.lifecycle`, "lifecycle and state disagree");
+    }
+    if (value.authority !== (committed ? "glossary_commit" : "none")) {
+      addError(errors, "term_authority", `${path}.authority`, "authority and lifecycle disagree");
+    }
+    const binding = termEvidenceBinding(evidence);
+    termRequireInt(value.origin_component_attempt_id, `${path}.origin_component_attempt_id`, errors, 1);
+    termRequireInt(value.origin_component_seq, `${path}.origin_component_seq`, errors, 1);
+    if (
+      value.origin_component_attempt_id !== binding.attempt
+      || value.origin_component_seq !== binding.seq
+    ) {
+      addError(errors, "term_origin", path, "row origin differs from evidence");
+    }
+    [
+      ["candidate_ids", 256, 191],
+      ["member_ids", 256, 191],
+      ["surfaces", 32, 256],
+      ["source_block_ids", 512, 191],
+      ["reason_codes", 32, 96],
+      ["supersedes_row_ids", 512, 191],
+    ].forEach(([key, maximumItems, maximumLength]) => {
+      termValidateStringList(value[key], `${path}.${key}`, errors, maximumItems, maximumLength);
+    });
+    if (Array.isArray(value.supersedes_row_ids) && value.supersedes_row_ids.includes(value.row_id)) {
+      addError(errors, "term_transition", `${path}.supersedes_row_ids`, "row cannot supersede itself");
+    }
+    if (!Array.isArray(value.targets)) {
+      addError(errors, "term_array", `${path}.targets`, "expected an array");
+    }
+    const normalizedTargets = (Array.isArray(value.targets) ? value.targets : [])
+      .map((target, index) => termNormalizeTarget(target, `${path}.targets[${index}]`, errors))
+      .filter(Boolean);
+    if (normalizedTargets.length > 16) {
+      addError(errors, "term_target_cap", `${path}.targets`, "expected at most 16 targets");
+    }
+    const targetIdentities = normalizedTargets.map(target => canonicalJSONString(target));
+    const sortedTargets = [...normalizedTargets].sort(termTargetCompare);
+    if (
+      targetIdentities.length !== new Set(targetIdentities).size
+      || !canonicalEqual(normalizedTargets, sortedTargets)
+    ) {
+      addError(errors, "term_target_order", `${path}.targets`, "targets must be sorted and unique");
+    }
+    termRequireString(value.rationale, `${path}.rationale`, errors, 512, true);
+    if (
+      value.evidence_ref !== binding.ref
+      || !validTermSha(value.evidence_sha256)
+      || String(value.evidence_sha256 || "").toUpperCase() !== String(binding.sha256 || "").toUpperCase()
+    ) {
+      addError(errors, "term_evidence_binding", path, "row evidence binding differs from batch evidence");
+    }
+    if (["proposed", "aggregated", "rejected", "review_held"].includes(value.state) && normalizedTargets.length) {
+      addError(errors, "term_target_state", `${path}.targets`, `targets are forbidden for ${value.state}`);
+    }
+    if (value.state === "admitted" && !normalizedTargets.length) {
+      addError(errors, "term_target_state", `${path}.targets`, "admitted requires at least one target");
+    }
+    if (
+      value.state === "committed"
+      && (
+        !Array.isArray(value.surfaces) || !value.surfaces.length
+        || !normalizedTargets.length
+        || !Array.isArray(value.candidate_ids) || !value.candidate_ids.length
+      )
+    ) {
+      addError(errors, "term_commit_identity", path, "committed row lacks glossary identity or target");
+    }
+    const identity = {
+      schema_version: "d2l_term_lifecycle_row_identity_v1",
+      stage_id: stage?.local_stage_id,
+      state: value.state,
+      logical_term_id: value.logical_term_id,
+      candidate_ids: value.candidate_ids,
+      member_ids: value.member_ids,
+      surfaces: value.surfaces,
+      source_block_ids: value.source_block_ids,
+      targets: value.targets,
+      evidence_ref: value.evidence_ref,
+      evidence_sha256: value.evidence_sha256,
+    };
+    const expectedRowId = `tlr_${(await canonicalSha256(identity)).slice(0, 32)}`;
+    if (value.row_id !== expectedRowId) {
+      addError(errors, "term_row_id", `${path}.row_id`, "row ID is not deterministic");
+    }
+    const expectedRowSha = await canonicalSha256(withoutNested(value, ["row_sha256"]));
+    if (String(value.row_sha256 || "").toLowerCase() !== expectedRowSha) {
+      addError(errors, "term_row_hash", `${path}.row_sha256`, "row SHA-256 drift");
+    }
+    return deepClone(value);
+  }
+
+  async function termValidateBatch(value, stage, path, errors) {
+    exactKeys(value, TERM_BATCH_KEYS, path, errors);
+    if (!isObject(value)) return null;
+    if (value.schema_version !== TERM_LIFECYCLE_SCHEMA) {
+      addError(errors, "term_schema", `${path}.schema_version`, `expected ${TERM_LIFECYCLE_SCHEMA}`);
+    }
+    termRequireId(value.batch_id, `${path}.batch_id`, errors);
+    termRequireSha(value.batch_sha256, `${path}.batch_sha256`, errors);
+    if (!TERM_PROJECTION_MODES.has(value.projection_mode)) {
+      addError(errors, "term_projection_mode", `${path}.projection_mode`, "unsupported projection mode");
+    }
+    if (!TERM_TIMING_AUTHORITIES.has(value.timing_authority)) {
+      addError(errors, "term_timing", `${path}.timing_authority`, "unsupported timing authority");
+    }
+    const evidence = termValidateEvidence(value.evidence, `${path}.evidence`, errors);
+    if (value.projection_mode === "stage_artifact_projection") {
+      if (evidence?.evidence_kind !== "artifact" || value.timing_authority !== "recorded") {
+        addError(errors, "term_projection_binding", path, "artifact projection requires recorded artifact evidence");
+      }
+    } else if (evidence?.evidence_kind !== "work_journal") {
+      addError(errors, "term_projection_binding", path, "live/backfill projection requires work-journal evidence");
+    } else if (value.projection_mode === "resume_backfill") {
+      if (value.timing_authority !== "logical_order_only") {
+        addError(errors, "term_projection_binding", path, "Resume backfill timing must be logical_order_only");
+      }
+    } else if (value.timing_authority !== "recorded") {
+      addError(errors, "term_projection_binding", path, "live projection timing must be recorded");
+    }
+    const binding = termEvidenceBinding(evidence);
+    termRequireInt(value.origin_component_attempt_id, `${path}.origin_component_attempt_id`, errors, 1);
+    termRequireInt(value.origin_component_seq, `${path}.origin_component_seq`, errors, 1);
+    if (
+      value.origin_component_attempt_id !== binding.attempt
+      || value.origin_component_seq !== binding.seq
+    ) {
+      addError(errors, "term_origin", path, "batch origin differs from evidence");
+    }
+    if (!Array.isArray(value.rows) || !value.rows.length || value.rows.length > TERM_MAX_ROWS_PER_BATCH) {
+      addError(errors, "term_row_count", `${path}.rows`, `expected 1..${TERM_MAX_ROWS_PER_BATCH} rows`);
+    }
+    const rows = [];
+    for (let index = 0; index < (Array.isArray(value.rows) ? value.rows.length : 0); index += 1) {
+      const row = await termValidateRow(value.rows[index], stage, evidence, `${path}.rows[${index}]`, errors);
+      if (row) rows.push(row);
+    }
+    const rowIds = rows.map(row => row.row_id);
+    const sortedRowIds = [...new Set(rowIds)].sort();
+    if (!canonicalEqual(rowIds, sortedRowIds)) {
+      addError(errors, "term_row_order", `${path}.rows`, "rows must be row_id-sorted and unique");
+    }
+    termValidateSummary(value.summary, `${path}.summary`, errors);
+    const expectedBatchId = `tlb_${(await canonicalSha256({
+      schema_version: "d2l_term_lifecycle_batch_identity_v1",
+      stage_id: stage?.local_stage_id,
+      evidence,
+      row_ids: rowIds,
+    })).slice(0, 32)}`;
+    if (value.batch_id !== expectedBatchId) {
+      addError(errors, "term_batch_id", `${path}.batch_id`, "batch ID is not deterministic");
+    }
+    const expectedBatchSha = await canonicalSha256(withoutNested(value, ["batch_sha256"]));
+    if (String(value.batch_sha256 || "").toLowerCase() !== expectedBatchSha) {
+      addError(errors, "term_batch_hash", `${path}.batch_sha256`, "batch SHA-256 drift");
+    }
+    try {
+      const byteLength = new TextEncoder().encode(canonicalJSONString(value)).byteLength;
+      if (byteLength > TERM_MAX_PAYLOAD_BYTES) {
+        addError(errors, "term_payload_cap", path, `payload exceeds ${TERM_MAX_PAYLOAD_BYTES} bytes`);
+      }
+    } catch (_error) {
+      addError(errors, "term_payload", path, "payload cannot be canonicalized");
+    }
+    return {
+      payload: deepClone(value),
+      rows,
+    };
+  }
+
+  function termExpectedSummary(rowsById, currentSummary) {
+    const rows = [...rowsById.values()];
+    const stateCounts = {};
+    rows.forEach(row => {
+      stateCounts[row.state] = (stateCounts[row.state] || 0) + 1;
+    });
+    const sortedStateCounts = {};
+    Object.keys(stateCounts).sort().forEach(state => {
+      sortedStateCounts[state] = stateCounts[state];
+    });
+    return {
+      observations: rows.length,
+      unique_surfaces: new Set(rows.flatMap(row => row.surfaces || [])).size,
+      logical_terms: new Set(rows.map(row => row.logical_term_id)).size,
+      state_counts: sortedStateCounts,
+      completed: currentSummary?.completed,
+      total: currentSummary?.total,
+      unit: currentSummary?.unit,
+      through_work_id: currentSummary?.through_work_id,
+    };
+  }
+
+  async function validateTermLifecycleEvents(events, manifest) {
+    const errors = [];
+    const termEvents = (Array.isArray(events) ? events : [])
+      .map((event, eventIndex) => ({ event, eventIndex }))
+      .filter(({ event }) => event?.event === "term_lifecycle");
+    if (!termEvents.length) {
+      return Object.freeze({
+        present: false,
+        valid: true,
+        errors: [],
+        batches: [],
+      });
+    }
+    const stages = new Map((Array.isArray(manifest?.stages) ? manifest.stages : []).map(stage => [stage.stage_id, stage]));
+    const rowsById = new Map();
+    const batchesById = new Map();
+    const batches = [];
+    for (const { event, eventIndex } of termEvents) {
+      const path = `$events[${eventIndex}].payload`;
+      const stage = stages.get(event.stage_id);
+      if (
+        !stage
+        || stage.component_id !== "translation"
+        || !Object.prototype.hasOwnProperty.call(TERM_STAGE_STATES, stage.local_stage_id)
+      ) {
+        addError(errors, "term_stage", `$events[${eventIndex}].stage_id`, "term lifecycle event requires a declared D2L translation stage");
+      }
+      if (event?.component?.component_id !== "translation") {
+        addError(errors, "term_component", `$events[${eventIndex}].component.component_id`, "term lifecycle authority must be Translation");
+      }
+      const validated = await termValidateBatch(event.payload, stage, path, errors);
+      if (!validated) continue;
+      const payload = validated.payload;
+      const eventAttempt = event?.component?.component_attempt_id;
+      const eventComponentSeq = event?.component?.component_seq;
+      const validEventAttempt = termRequireInt(
+        eventAttempt,
+        `$events[${eventIndex}].component.component_attempt_id`,
+        errors,
+        1,
+      );
+      const validEventComponentSeq = termRequireInt(
+        eventComponentSeq,
+        `$events[${eventIndex}].component.component_seq`,
+        errors,
+        1,
+      );
+      if (validEventAttempt && validEventComponentSeq) {
+        if (payload.origin_component_attempt_id > eventAttempt) {
+          addError(
+            errors,
+            "term_future_origin",
+            `${path}.origin_component_attempt_id`,
+            "term lifecycle evidence comes from a future attempt",
+          );
+        } else if (
+          payload.origin_component_attempt_id === eventAttempt
+          && payload.origin_component_seq >= eventComponentSeq
+        ) {
+          addError(
+            errors,
+            "term_future_origin",
+            `${path}.origin_component_seq`,
+            "same-attempt evidence must precede the term lifecycle event",
+          );
+        }
+        if (
+          payload.projection_mode === "resume_backfill"
+          && payload.origin_component_attempt_id >= eventAttempt
+        ) {
+          addError(
+            errors,
+            "term_projection_attempt",
+            `${path}.origin_component_attempt_id`,
+            "Resume backfill must originate in an older component attempt",
+          );
+        } else if (
+          (payload.projection_mode === "live" || payload.projection_mode === "stage_artifact_projection")
+          && payload.origin_component_attempt_id !== eventAttempt
+        ) {
+          addError(
+            errors,
+            "term_projection_attempt",
+            `${path}.origin_component_attempt_id`,
+            `${payload.projection_mode} must originate in the projected component attempt`,
+          );
+        }
+      }
+      const existingBatchHash = batchesById.get(payload.batch_id);
+      if (existingBatchHash !== undefined) {
+        if (String(existingBatchHash).toLowerCase() !== String(payload.batch_sha256).toLowerCase()) {
+          addError(errors, "term_batch_conflict", `${path}.batch_id`, "batch ID was reused with unequal hash");
+        }
+        continue;
+      }
+      for (const row of validated.rows) {
+        const existing = rowsById.get(row.row_id);
+        if (existing) {
+          if (String(existing.row_sha256).toLowerCase() !== String(row.row_sha256).toLowerCase()) {
+            addError(errors, "term_row_conflict", `${path}.rows`, "row ID was reused with unequal hash");
+          }
+          continue;
+        }
+        (Array.isArray(row.supersedes_row_ids) ? row.supersedes_row_ids : []).forEach(supersededId => {
+          const superseded = rowsById.get(supersededId);
+          if (!superseded) {
+            addError(errors, "term_transition", `${path}.rows.${row.row_id}`, `unknown superseded row ${supersededId}`);
+            return;
+          }
+          if (!TERM_ALLOWED_TRANSITIONS[superseded.state]?.has(row.state)) {
+            addError(errors, "term_transition", `${path}.rows.${row.row_id}`, `${superseded.state} cannot transition to ${row.state}`);
+          }
+        });
+        rowsById.set(row.row_id, {
+          ...deepClone(row),
+          parentSeq: event.seq,
+          parentEventId: event.event_id,
+          stageId: event.stage_id,
+          stageLabel: stage?.label || event.stage_id,
+          localStageId: stage?.local_stage_id || null,
+          projectionMode: payload.projection_mode,
+          timingAuthority: payload.timing_authority,
+        });
+      }
+      batchesById.set(payload.batch_id, payload.batch_sha256);
+      const expectedSummary = termExpectedSummary(rowsById, payload.summary);
+      if (!canonicalEqual(payload.summary, expectedSummary)) {
+        addError(errors, "term_summary_drift", `${path}.summary`, "producer cumulative summary drift");
+      }
+      batches.push({
+        parentSeq: event.seq,
+        parentEventId: event.event_id,
+        componentAttemptId: event?.component?.component_attempt_id ?? null,
+        componentAttemptIndex: event?.component?.component_attempt_index ?? null,
+        componentSeq: event?.component?.component_seq ?? null,
+        stageId: event.stage_id,
+        localStageId: stage?.local_stage_id || null,
+        stageLabel: stage?.label || event.stage_id,
+        payload,
+        rows: validated.rows.map(deepClone),
+      });
+    }
+    return Object.freeze({
+      present: true,
+      valid: errors.length === 0,
+      errors,
+      batches: errors.length ? [] : batches,
+    });
+  }
+
+  function foldTermLifecycleCursor(termLifecycle, throughSeq = Number.MAX_SAFE_INTEGER) {
+    if (!termLifecycle?.present || termLifecycle.valid !== true) return null;
+    const cursor = Number.isInteger(throughSeq) && throughSeq >= 0
+      ? throughSeq
+      : Number.MAX_SAFE_INTEGER;
+    const batches = termLifecycle.batches.filter(batch => batch.parentSeq <= cursor);
+    if (!batches.length) return null;
+    const rowsById = new Map();
+    batches.forEach(batch => {
+      batch.rows.forEach(row => {
+        if (!rowsById.has(row.row_id)) {
+          rowsById.set(row.row_id, {
+            ...deepClone(row),
+            parentSeq: batch.parentSeq,
+            parentEventId: batch.parentEventId,
+            stageId: batch.stageId,
+            stageLabel: batch.stageLabel,
+            localStageId: batch.localStageId,
+            projectionMode: batch.payload.projection_mode,
+            timingAuthority: batch.payload.timing_authority,
+          });
+        }
+      });
+    });
+    const latestBatch = batches[batches.length - 1];
+    return Object.freeze({
+      present: true,
+      valid: true,
+      throughSeq: cursor,
+      batches: deepClone(batches),
+      rows: [...rowsById.values()].map(deepClone),
+      summary: deepClone(latestBatch.payload.summary),
+      stageId: latestBatch.stageId,
+      stageLabel: latestBatch.stageLabel,
+      localStageId: latestBatch.localStageId,
+      projectionMode: latestBatch.payload.projection_mode,
+      timingAuthority: latestBatch.payload.timing_authority,
+      originComponentAttemptId: latestBatch.payload.origin_component_attempt_id,
+      originComponentSeq: latestBatch.payload.origin_component_seq,
+      evidence: deepClone(latestBatch.payload.evidence),
+    });
   }
 
   function validateBinding(binding, path, errors) {
@@ -1432,6 +2124,7 @@
       await verifyNestedHash(manifest, ["integrity", "manifest_sha256"], manifest?.integrity?.manifest_sha256, "manifest_hash", "$manifest.integrity.manifest_sha256", errors);
     }
     await validateEvents(parentEvents, manifest, errors);
+    const termLifecycle = await validateTermLifecycleEvents(parentEvents, manifest);
     validateOptionalDetails(parentEvents, errors);
     const artifactRows = validateArtifactIndexShape(artifactIndex, manifest, parentEvents, errors);
     if (isObject(artifactIndex)) {
@@ -1489,6 +2182,7 @@
       evaluationScope: valid ? evaluationScope : null,
       scoreReadiness,
       usage: valid ? usage : { present: usage.present, calls: [], stageTotals: [], componentTotals: [], workflowTotal: null },
+      termLifecycle,
       operationalFacts: valid ? operationalFacts : [],
       latestCheckpoint: valid && checkpoints.length ? checkpoints[checkpoints.length - 1] : null,
       cursor: valid ? cursor : null,
@@ -1580,6 +2274,8 @@
     buildWorkflowPreflightRequest,
     normalizeWorkflowPreflight,
     validatePackage,
+    validateTermLifecycleEvents,
+    foldTermLifecycleCursor,
     mergeReplayEnvelope,
     isActiveRegistryRun,
     newestActiveRegistryRun,
