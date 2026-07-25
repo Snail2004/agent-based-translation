@@ -29,6 +29,10 @@ _MECHANICAL_RUNTIME_PATHS = frozenset(
         ),
         (
             "THESIS_RUNTIME_TOOL/pipeline/prepass/"
+            "d2l_component_journal_recovery_v1.py"
+        ),
+        (
+            "THESIS_RUNTIME_TOOL/pipeline/prepass/"
             "d2l_console_replay_contract_v1.py"
         ),
         (
@@ -55,6 +59,10 @@ _MECHANICAL_RUNTIME_PATHS = frozenset(
         (
             "THESIS_RUNTIME_TOOL/pipeline/prepass/"
             "d2l_translation_component_runner_v1.py"
+        ),
+        (
+            "THESIS_RUNTIME_TOOL/pipeline/scripts/"
+            "recover_d2l_component_journal_recovery_v1.py"
         ),
         "THESIS_RUNTIME_TOOL/pipeline/scripts/run_d2l_project_campaign.py",
         "THESIS_RUNTIME_TOOL/pipeline/scripts/run_workflow_orchestrator_v1.py",
