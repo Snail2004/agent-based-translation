@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Story Bible · 0-API UI fixture</title>
+<link rel="icon" href="data:," />
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="console.css" />
+<link rel="stylesheet" href="graph.css" />
+<link rel="stylesheet" href="i18n.css" />
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="i18n.js"></script>
+<script type="text/babel" src="parts_graph.jsx"></script>
+<script type="text/babel">
+function StoryBibleDevApp() {
+  const [locale, setLocale] = useThesisLocale();
+  const [theme, setTheme] = React.useState(() => (
+    localStorage.getItem("ailab.console_theme") === "dark" ? "dark" : "paper"
+  ));
+  const [state, setState] = React.useState({ loading: true, data: null, error: null });
+
+  React.useEffect(() => {
+    let cancelled = false;
+    fetch("fixtures/story_bible_graph_v1/full_ch6.json", { cache: "no-store" })
+      .then(response => {
+        if (!response.ok) throw new Error("fixture_http_" + response.status);
+        return response.json();
+      })
+      .then(data => {
+        if (!cancelled) setState({ loading: false, data, error: null });
+      })
+      .catch(error => {
+        if (!cancelled) setState({ loading: false, data: null, error });
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  function toggleTheme() {
+    setTheme(previous => {
+      const next = previous === "paper" ? "dark" : "paper";
+      localStorage.setItem("ailab.console_theme", next);
+      return next;
+    });
+  }
+
+  return (
+    <StoryBiblePage
+      data={state.data}
+      loading={state.loading}
+      error={state.error}
+      initialChapter={6}
+      projectId="wuthering_heights"
+      runLabel="literary_fixture_ch1_06"
+      statusLabel="0-API"
+      sourceLabel="Wuthering Heights · ch1–6"
+      authorityLabel="FIXTURE · NOT PRODUCTION"
+      authorityTone="fixture"
+      theme={theme}
+      lang={locale}
+      onLocaleChange={setLocale}
+      onToggleTheme={toggleTheme}
+      onBack={() => {}}
+      onOpenConsole={() => {}}
+      onOpenReport={() => {}}
+    />
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<StoryBibleDevApp />);
+</script>
+</body>
+</html>

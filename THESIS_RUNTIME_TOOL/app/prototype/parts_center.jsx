@@ -39,7 +39,7 @@ function EditorToolbar({
   const [detailsOpen, setDetailsOpen] = React.useState(false);
   const [legendOpen, setLegendOpen] = React.useState(false);
   const readOnlyPreview = mode === "preview" || readOnly;
-  const consoleLike = mode === "console" || mode === "report";
+  const consoleLike = mode === "console" || mode === "report" || mode === "story-bible";
   if (consoleLike) return null;
   const qualityFlags = block.quality_flags || [];
   const flags = qualityFlags.filter(f => f !== "ok");
@@ -579,12 +579,10 @@ function RuntimeEmptyState({ runControl, view }) {
   );
 }
 
-function AgentConsole({ runControl, onBack, onOpenReport }) {
+function AgentConsole({ runControl, onBack, onOpenReport, onOpenStoryBible }) {
   // Thin adapter: maps runControl -> AgentConsoleView (console.jsx, skin ported from Claude Design).
-  const [consoleTheme, setConsoleTheme] = React.useState(() => (localStorage.getItem("ailab.console_theme") === "dark" ? "dark" : "paper"));
-  function toggleConsoleTheme() {
-    setConsoleTheme(prev => { const next = prev === "paper" ? "dark" : "paper"; localStorage.setItem("ailab.console_theme", next); return next; });
-  }
+  const consoleTheme = runControl?.theme === "dark" ? "dark" : "paper";
+  const toggleConsoleTheme = runControl?.onToggleTheme;
   if (!runControl) return null;
   if (!runControl.runtimeAvailable) {
     return (
@@ -595,6 +593,7 @@ function AgentConsole({ runControl, onBack, onOpenReport }) {
           <nav className="run-surface-tabs" aria-label={uiText("Các chế độ lần chạy", "Run views")}>
             <span className="run-surface-tab active" aria-current="page">Console</span>
             {onOpenReport && <button className="run-surface-tab" type="button" onClick={onOpenReport}>{uiText("Báo cáo", "Report")}</button>}
+            {runControl.storyBibleAvailable && onOpenStoryBible && <button className="run-surface-tab" type="button" onClick={onOpenStoryBible}>{uiText("Bộ hồ sơ", "Story Bible")}</button>}
           </nav>
           <span className="mono">{runControl.sourceProjectId || "no project"}</span>
         </div>
@@ -633,6 +632,7 @@ function AgentConsole({ runControl, onBack, onOpenReport }) {
         projectId={runControl.sourceProjectId || ""}
         onBack={onBack}
         onOpenReport={onOpenReport}
+        onOpenStoryBible={runControl.storyBibleAvailable ? onOpenStoryBible : null}
         theme={consoleTheme}
         onToggleTheme={toggleConsoleTheme}
         onRefresh={runControl.onRefreshRuns}
@@ -654,17 +654,8 @@ function AgentConsole({ runControl, onBack, onOpenReport }) {
   );
 }
 
-function AgentReport({ runControl, onBack, onOpenConsole }) {
-  const [reportTheme, setReportTheme] = React.useState(() => (
-    localStorage.getItem("ailab.console_theme") === "dark" ? "dark" : "light"
-  ));
-  function toggleReportTheme() {
-    setReportTheme(previous => {
-      const next = previous === "dark" ? "light" : "dark";
-      localStorage.setItem("ailab.console_theme", next === "dark" ? "dark" : "paper");
-      return next;
-    });
-  }
+function AgentReport({ runControl, onBack, onOpenConsole, onOpenStoryBible }) {
+  const reportTheme = runControl?.theme === "dark" ? "dark" : "light";
   if (!runControl) return null;
   const selectedRun = (runControl.runs || []).find(run => run.run_id === runControl.selectedRunId) || null;
   const ReportView = typeof window !== "undefined" ? window.AgentReportView : null;
@@ -688,9 +679,45 @@ function AgentReport({ runControl, onBack, onOpenConsole }) {
       projectTitle={runControl.sourceTitle || ""}
       onBack={onBack}
       onOpenConsole={onOpenConsole}
+      onOpenStoryBible={runControl.storyBibleAvailable ? onOpenStoryBible : null}
       onRefresh={runControl.onRefreshRuns}
       theme={reportTheme}
-      onToggleTheme={toggleReportTheme}
+      onToggleTheme={runControl.onToggleTheme}
+    />
+  );
+}
+
+function AgentStoryBible({ runControl, onBack, onOpenConsole, onOpenReport }) {
+  const StoryBibleView = typeof window !== "undefined" ? window.StoryBiblePage : null;
+  if (!StoryBibleView) {
+    return (
+      <div className={"agentconsole console-theme-" + (runControl?.theme === "dark" ? "dark" : "paper")}>
+        <div className="console-shell">
+          <div className="artifact-path">{uiText("Đang tải Bộ hồ sơ...", "Loading Story Bible...")}</div>
+        </div>
+      </div>
+    );
+  }
+  const selectedRun = (runControl?.runs || []).find(run => run.run_id === runControl.selectedRunId) || null;
+  return (
+    <StoryBibleView
+      data={runControl?.storyBible || null}
+      loading={!!runControl?.storyBibleLoading}
+      error={runControl?.storyBibleError || null}
+      projectId={runControl?.sourceProjectId || ""}
+      runId={runControl?.selectedRunId || ""}
+      runLabel={runControl?.selectedRunId || runControl?.sourceProjectId || ""}
+      statusLabel={selectedRun?.status || ""}
+      sourceLabel={runControl?.sourceTitle || runControl?.sourceProjectId || ""}
+      authorityLabel={runControl?.storyBibleAuthority?.label || ""}
+      theme={runControl?.theme === "dark" ? "dark" : "paper"}
+      lang={runControl?.locale === "en" ? "en" : "vi"}
+      onLocaleChange={runControl?.onLocaleChange}
+      onToggleTheme={runControl?.onToggleTheme}
+      onBack={onBack}
+      onOpenConsole={onOpenConsole}
+      onOpenReport={onOpenReport}
+      onExport={runControl?.onExportStoryBible || null}
     />
   );
 }
@@ -2243,7 +2270,7 @@ function CenterEditor({
   onChangeType, onToggleOpening, onToggleFlag, onMarkReviewed,
   onAddGlossary, onAddEntity, onPreviewRunChange, readOnly,
   observability, runControl, selectedCallId, selectedCallDetail, callDetailLoading, onSelectCall,
-  onConsoleBack, onOpenConsole, onOpenReport,
+  onConsoleBack, onOpenConsole, onOpenReport, onOpenStoryBible,
   focusTerm, focusedTermId, focusedTermIndex, onFocusSpan, onClearFocus, onFocusJump,
 }) {
   const [hoverInfo, setHoverInfo] = React.useState(null);
@@ -2263,12 +2290,14 @@ function CenterEditor({
         streamLabel={streamLabel} streamCount={streamCount} onNextUnreviewed={onNextUnreviewed}
         onChangeType={onChangeType} onToggleOpening={onToggleOpening}
         onToggleFlag={onToggleFlag} onMarkReviewed={() => onMarkReviewed(block.block_id)} readOnly={readOnly} />
-      {!["console", "report"].includes(mode) && <FocusTermChip term={focusTerm} index={focusedTermIndex} onJump={onFocusJump} onClear={onClearFocus} />}
+      {!["console", "report", "story-bible"].includes(mode) && <FocusTermChip term={focusTerm} index={focusedTermIndex} onJump={onFocusJump} onClear={onClearFocus} />}
 
       {mode === "console" ? (
-        <AgentConsole runControl={runControl} onBack={onConsoleBack} onOpenReport={onOpenReport} />
+        <AgentConsole runControl={runControl} onBack={onConsoleBack} onOpenReport={onOpenReport} onOpenStoryBible={onOpenStoryBible} />
       ) : mode === "report" ? (
-        <AgentReport runControl={runControl} onBack={onConsoleBack} onOpenConsole={onOpenConsole} />
+        <AgentReport runControl={runControl} onBack={onConsoleBack} onOpenConsole={onOpenConsole} onOpenStoryBible={onOpenStoryBible} />
+      ) : mode === "story-bible" ? (
+        <AgentStoryBible runControl={runControl} onBack={onConsoleBack} onOpenConsole={onOpenConsole} onOpenReport={onOpenReport} />
       ) : mode === "preview" ? (
         <TranslationResultsView
           docInfo={docInfo}

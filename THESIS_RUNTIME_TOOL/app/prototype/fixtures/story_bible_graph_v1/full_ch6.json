@@ -1,0 +1,2009 @@
+{
+ "nodes": [
+  {
+   "id": "b0ent_061a0ca4a8",
+   "name": "Th’ Helmet o’ Salvation",
+   "kind": "named_text",
+   "rc": "named_entity_candidate",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "Th’ Helmet o’ Salvation"
+   ],
+   "cl": {
+    "document_type": [
+     "book"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_092fdc38c1",
+   "name": "Shielders",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    6
+   ],
+   "first": 6,
+   "surf": [
+    "Shielders"
+   ],
+   "cl": {
+    "gender": [
+     "masculine"
+    ],
+    "role_or_occupation": [
+     "curate"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_0c13c3def2",
+   "name": "the Chapel of Gimmerden Sough",
+   "kind": "place",
+   "rc": "named_entity_candidate",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "the Chapel of Gimmerden Sough"
+   ],
+   "cl": {
+    "place_type": [
+     "chapel"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_0d53c7c1d8",
+   "name": "Maister Hindley",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    3,
+    4,
+    5,
+    6
+   ],
+   "first": 3,
+   "surf": [
+    "Maister Hindley",
+    "Hindley",
+    "Mr. Hindley Earnshaw",
+    "Mr. Hindley"
+   ],
+   "cl": {
+    "gender": [
+     "masculine"
+    ],
+    "life_stage": [
+     "adult",
+     "child"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_0e06619347",
+   "name": "Cathy",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    4
+   ],
+   "first": 4,
+   "surf": [
+    "Cathy"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "life_stage": [
+     "child"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_0ff143230d",
+   "name": "Mr. Linton",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    4,
+    6
+   ],
+   "first": 4,
+   "surf": [
+    "Mr. Linton",
+    "Edgar Linton",
+    "Edgar",
+    "Linton"
+   ],
+   "cl": {
+    "gender": [
+     "masculine"
+    ],
+    "life_stage": [
+     "adult",
+     "child"
+    ],
+    "role_or_occupation": [
+     "magistrate"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_10328f2514",
+   "name": "Thrushcross Park",
+   "kind": "place",
+   "rc": "named_entity_candidate",
+   "ch": [
+    3,
+    6
+   ],
+   "first": 3,
+   "surf": [
+    "Thrushcross Park"
+   ],
+   "cl": {}
+  },
+  {
+   "id": "b0ent_11e983e831",
+   "name": "Mrs. Dean",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    4
+   ],
+   "first": 4,
+   "surf": [
+    "Mrs. Dean"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "life_stage": [
+     "adult"
+    ],
+    "role_or_occupation": [
+     "housekeeper"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_161f862b46",
+   "name": "Catherine Linton",
+   "kind": "unknown",
+   "rc": "unresolved_named_reference",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "Catherine Linton"
+   ],
+   "cl": {}
+  },
+  {
+   "id": "b0ent_2531004d27",
+   "name": "Cathy",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "Cathy"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_2657b31705",
+   "name": "the Lord",
+   "kind": "unknown",
+   "rc": "unresolved_named_reference",
+   "ch": [
+    2
+   ],
+   "first": 2,
+   "surf": [
+    "the Lord"
+   ],
+   "cl": {}
+  },
+  {
+   "id": "b0ent_27ee83823f",
+   "name": "H",
+   "kind": "unknown",
+   "rc": "unresolved_named_reference",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "H"
+   ],
+   "cl": {}
+  },
+  {
+   "id": "b0ent_2854dab35e",
+   "name": "owd Nick",
+   "kind": "unknown",
+   "rc": "unresolved_named_reference",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "owd Nick"
+   ],
+   "cl": {}
+  },
+  {
+   "id": "b0ent_2a4087d7b3",
+   "name": "Frances",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "Frances"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_2b63ecd358",
+   "name": "Mr. Earnshaw",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    4,
+    5,
+    6
+   ],
+   "first": 4,
+   "surf": [
+    "Mr. Earnshaw",
+    "Earnshaw"
+   ],
+   "cl": {
+    "gender": [
+     "masculine"
+    ],
+    "life_stage": [
+     "adult"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_3047b3ab9b",
+   "name": "Grimalkin",
+   "kind": "animal",
+   "rc": "named_entity_candidate",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "Grimalkin"
+   ],
+   "cl": {
+    "species": [
+     "cat"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_3796764b1d",
+   "name": "T’ Brooad Way to Destruction",
+   "kind": "named_text",
+   "rc": "named_entity_candidate",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "T’ Brooad Way to Destruction"
+   ],
+   "cl": {
+    "document_type": [
+     "book"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_3da9eaff90",
+   "name": "a most fascinating creature",
+   "kind": "person",
+   "rc": "important_unnamed_referent",
+   "ch": [
+    1
+   ],
+   "first": 1,
+   "surf": [
+    "a most fascinating creature"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "life_stage": [
+     "adult"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_3e2dfc6744",
+   "name": "the doctor",
+   "kind": "person",
+   "rc": "important_unnamed_referent",
+   "ch": [
+    5
+   ],
+   "first": 5,
+   "surf": [
+    "the doctor"
+   ],
+   "cl": {}
+  },
+  {
+   "id": "b0ent_41c488ad03",
+   "name": "the Heights",
+   "kind": "place",
+   "rc": "named_entity_candidate",
+   "ch": [
+    6
+   ],
+   "first": 6,
+   "surf": [
+    "the Heights"
+   ],
+   "cl": {
+    "place_type": [
+     "house"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_426d731c18",
+   "name": "Catherine Heathcliff",
+   "kind": "unknown",
+   "rc": "unresolved_named_reference",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "Catherine Heathcliff"
+   ],
+   "cl": {}
+  },
+  {
+   "id": "b0ent_43f944f31c",
+   "name": "Mrs. Heathcliff",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    2,
+    3,
+    4
+   ],
+   "first": 2,
+   "surf": [
+    "Mrs. Heathcliff"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "life_stage": [
+     "youth"
+    ],
+    "role_or_occupation": [
+     "widow"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_48842023db",
+   "name": "the unknown Catherine",
+   "kind": "person",
+   "rc": "important_unnamed_referent",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "the unknown Catherine"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_49e6b6691d",
+   "name": "Mary",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    6
+   ],
+   "first": 6,
+   "surf": [
+    "Mary"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "life_stage": [
+     "adult"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_4cbd734a5c",
+   "name": "Hareton Earnshaw",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    2,
+    3,
+    4
+   ],
+   "first": 2,
+   "surf": [
+    "Hareton Earnshaw",
+    "Hareton",
+    "Earnshaw"
+   ],
+   "cl": {
+    "gender": [
+     "masculine"
+    ],
+    "life_stage": [
+     "youth"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_4d2def174b",
+   "name": "Mr. Lockwood",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    1,
+    3,
+    6
+   ],
+   "first": 1,
+   "surf": [
+    "Mr. Lockwood"
+   ],
+   "cl": {
+    "gender": [
+     "masculine"
+    ],
+    "life_stage": [
+     "adult"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_52b2698218",
+   "name": "Thrushcross Grange",
+   "kind": "place",
+   "rc": "named_entity_candidate",
+   "ch": [
+    1,
+    2,
+    3,
+    4,
+    6
+   ],
+   "first": 1,
+   "surf": [
+    "Thrushcross Grange",
+    "the Grange"
+   ],
+   "cl": {
+    "place_type": [
+     "country house",
+     "estate",
+     "house"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_52eaf3b785",
+   "name": "Catherine Linton",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    4
+   ],
+   "first": 4,
+   "surf": [
+    "Catherine Linton"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_53c7a42220",
+   "name": "the brother",
+   "kind": "person",
+   "rc": "important_unnamed_referent",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "the brother"
+   ],
+   "cl": {
+    "gender": [
+     "masculine"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_55ac220612",
+   "name": "Old Mr. and Mrs. Linton",
+   "kind": "group_reference",
+   "rc": "named_entity_candidate",
+   "ch": [
+    6
+   ],
+   "first": 6,
+   "surf": [
+    "Old Mr. and Mrs. Linton"
+   ],
+   "cl": {
+    "group_type": [
+     "married couple"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_55e0e481ca",
+   "name": "Miss Cathy",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    4,
+    5,
+    6
+   ],
+   "first": 4,
+   "surf": [
+    "Miss Cathy"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "life_stage": [
+     "child"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_5762eed9cc",
+   "name": "Gnasher",
+   "kind": "animal",
+   "rc": "named_entity_candidate",
+   "ch": [
+    2
+   ],
+   "first": 2,
+   "surf": [
+    "Gnasher"
+   ],
+   "cl": {
+    "species": [
+     "dog"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_597fd6ec4f",
+   "name": "the Black Art",
+   "kind": "unknown",
+   "rc": "unresolved_named_reference",
+   "ch": [
+    2
+   ],
+   "first": 2,
+   "surf": [
+    "the Black Art"
+   ],
+   "cl": {}
+  },
+  {
+   "id": "b0ent_5c1b078766",
+   "name": "the chapel",
+   "kind": "place",
+   "rc": "important_unnamed_referent",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "the chapel"
+   ],
+   "cl": {
+    "place_type": [
+     "chapel"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_5f85880755",
+   "name": "Mr. Heathcliff",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ],
+   "first": 1,
+   "surf": [
+    "Mr. Heathcliff",
+    "Heathcliff"
+   ],
+   "cl": {
+    "gender": [
+     "masculine"
+    ],
+    "life_stage": [
+     "adult",
+     "child"
+    ],
+    "role_or_occupation": [
+     "landlord"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_64e3a4c9e8",
+   "name": "the dame",
+   "kind": "person",
+   "rc": "important_unnamed_referent",
+   "ch": [
+    6
+   ],
+   "first": 6,
+   "surf": [
+    "the dame"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "life_stage": [
+     "adult"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_65d7ffed60",
+   "name": "Wuthering",
+   "kind": "unknown",
+   "rc": "unresolved_named_reference",
+   "ch": [
+    1
+   ],
+   "first": 1,
+   "surf": [
+    "Wuthering"
+   ],
+   "cl": {
+    "referent_kind": [
+     "unknown"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_66bf777af7",
+   "name": "King Lear",
+   "kind": "named_text",
+   "rc": "named_entity_candidate",
+   "ch": [
+    2
+   ],
+   "first": 2,
+   "surf": [
+    "King Lear"
+   ],
+   "cl": {
+    "document_type": [
+     "play"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_6a8ccdde94",
+   "name": "my dear mother",
+   "kind": "person",
+   "rc": "important_unnamed_referent",
+   "ch": [
+    1
+   ],
+   "first": 1,
+   "surf": [
+    "my dear mother"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "life_stage": [
+     "adult"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_72d27bfe95",
+   "name": "Juno",
+   "kind": "animal",
+   "rc": "named_entity_candidate",
+   "ch": [
+    2,
+    3
+   ],
+   "first": 2,
+   "surf": [
+    "Juno"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "species": [
+     "dog"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_7b594caa1e",
+   "name": "Cathy",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    5,
+    6
+   ],
+   "first": 5,
+   "surf": [
+    "Cathy"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "life_stage": [
+     "child"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_7c910dc0c4",
+   "name": "Mr. Earnshaw",
+   "kind": "person",
+   "rc": "important_unnamed_referent",
+   "ch": [
+    6
+   ],
+   "first": 6,
+   "surf": [
+    "Mr. Earnshaw"
+   ],
+   "cl": {
+    "gender": [
+     "masculine"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_8043e8fffc",
+   "name": "Catherine Earnshaw",
+   "kind": "unknown",
+   "rc": "unresolved_named_reference",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "Catherine Earnshaw"
+   ],
+   "cl": {}
+  },
+  {
+   "id": "b0ent_849afff087",
+   "name": "the Lintons",
+   "kind": "group_reference",
+   "rc": "named_entity_candidate",
+   "ch": [
+    6
+   ],
+   "first": 6,
+   "surf": [
+    "the Lintons"
+   ],
+   "cl": {
+    "group_type": [
+     "family"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_8a37555bb3",
+   "name": "London",
+   "kind": "place",
+   "rc": "named_entity_candidate",
+   "ch": [
+    2
+   ],
+   "first": 2,
+   "surf": [
+    "London"
+   ],
+   "cl": {
+    "place_type": [
+     "city"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_8c469dc1bc",
+   "name": "Miss Earnshaw",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    6
+   ],
+   "first": 6,
+   "surf": [
+    "Miss Earnshaw"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "life_stage": [
+     "child"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_8cc0f487dd",
+   "name": "Seventy Times Seven, and the First of the Seventy-First",
+   "kind": "named_text",
+   "rc": "named_entity_candidate",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "Seventy Times Seven, and the First of the Seventy-First"
+   ],
+   "cl": {
+    "document_type": [
+     "discourse"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_8d305b79d2",
+   "name": "Mrs. Earnshaw",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    4,
+    6
+   ],
+   "first": 4,
+   "surf": [
+    "Mrs. Earnshaw"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "life_stage": [
+     "adult"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_91c8142b16",
+   "name": "the Reverend Jabez Branderham",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "the Reverend Jabez Branderham",
+    "Jabez Branderham"
+   ],
+   "cl": {
+    "gender": [
+     "masculine"
+    ],
+    "role_or_occupation": [
+     "preacher",
+     "reverend"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_9c124a3c22",
+   "name": "Gimmerton",
+   "kind": "place",
+   "rc": "named_entity_candidate",
+   "ch": [
+    5
+   ],
+   "first": 5,
+   "surf": [
+    "Gimmerton"
+   ],
+   "cl": {}
+  },
+  {
+   "id": "b0ent_a1471757da",
+   "name": "Joseph",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ],
+   "first": 1,
+   "surf": [
+    "Joseph"
+   ],
+   "cl": {
+    "gender": [
+     "masculine"
+    ],
+    "life_stage": [
+     "elder"
+    ],
+    "role_or_occupation": [
+     "chaplain",
+     "servant"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_a1e5faa7b9",
+   "name": "Wuthering Heights",
+   "kind": "place",
+   "rc": "named_entity_candidate",
+   "ch": [
+    1,
+    2,
+    3,
+    4,
+    6
+   ],
+   "first": 1,
+   "surf": [
+    "Wuthering Heights"
+   ],
+   "cl": {
+    "place_type": [
+     "dwelling",
+     "house"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_a2f7669520",
+   "name": "Catherine’s library",
+   "kind": "object",
+   "rc": "important_unnamed_referent",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "Catherine’s library"
+   ],
+   "cl": {
+    "object_type": [
+     "library"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_aa559db2ef",
+   "name": "Miss Cathy",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "Miss Cathy"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_aaa76fbf22",
+   "name": "The Lord",
+   "kind": "unknown",
+   "rc": "unresolved_named_reference",
+   "ch": [
+    1
+   ],
+   "first": 1,
+   "surf": [
+    "The Lord"
+   ],
+   "cl": {}
+  },
+  {
+   "id": "b0ent_afcc65a982",
+   "name": "Zillah",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    2,
+    3
+   ],
+   "first": 2,
+   "surf": [
+    "Zillah"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "life_stage": [
+     "adult"
+    ],
+    "role_or_occupation": [
+     "housewife",
+     "servant"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_b087bc6c86",
+   "name": "Jenny",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    6
+   ],
+   "first": 6,
+   "surf": [
+    "Jenny"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "role_or_occupation": [
+     "servant"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_bc31c1ef9c",
+   "name": "Wolf",
+   "kind": "animal",
+   "rc": "named_entity_candidate",
+   "ch": [
+    2
+   ],
+   "first": 2,
+   "surf": [
+    "Wolf"
+   ],
+   "cl": {
+    "species": [
+     "dog"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_c0b7f8d148",
+   "name": "the canine mother",
+   "kind": "animal",
+   "rc": "important_unnamed_referent",
+   "ch": [
+    1
+   ],
+   "first": 1,
+   "surf": [
+    "the canine mother"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "species": [
+     "dog"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_c5e45646f5",
+   "name": "Robert",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    6
+   ],
+   "first": 6,
+   "surf": [
+    "Robert"
+   ],
+   "cl": {
+    "gender": [
+     "masculine"
+    ],
+    "role_or_occupation": [
+     "servant"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_c8f380ed63",
+   "name": "Catherine",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    5,
+    6
+   ],
+   "first": 5,
+   "surf": [
+    "Catherine",
+    "Miss Catherine"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "life_stage": [
+     "child"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_ca7481d7ce",
+   "name": "Mrs. Linton",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    6
+   ],
+   "first": 6,
+   "surf": [
+    "Mrs. Linton"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "life_stage": [
+     "adult"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_cb51bbcaf0",
+   "name": "Hareton Earnshaw",
+   "kind": "unknown",
+   "rc": "unresolved_named_reference",
+   "ch": [
+    1
+   ],
+   "first": 1,
+   "surf": [
+    "Hareton Earnshaw"
+   ],
+   "cl": {}
+  },
+  {
+   "id": "b0ent_d010889b2d",
+   "name": "Nelly",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    6
+   ],
+   "first": 6,
+   "surf": [
+    "Nelly"
+   ],
+   "cl": {}
+  },
+  {
+   "id": "b0ent_dc5a13c3bd",
+   "name": "Isabella",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    6
+   ],
+   "first": 6,
+   "surf": [
+    "Isabella"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "life_stage": [
+     "child"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_df57141a04",
+   "name": "Catherine Linton",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "Catherine Linton"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "life_stage": [
+     "child"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_e38cf7e277",
+   "name": "Catherine",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "Catherine"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_e587131158",
+   "name": "England",
+   "kind": "place",
+   "rc": "named_entity_candidate",
+   "ch": [
+    1
+   ],
+   "first": 1,
+   "surf": [
+    "England"
+   ],
+   "cl": {
+    "place_type": [
+     "country"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_ea302e049c",
+   "name": "the little fiend",
+   "kind": "nonhuman_character",
+   "rc": "important_unnamed_referent",
+   "ch": [
+    3
+   ],
+   "first": 3,
+   "surf": [
+    "the little fiend"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_ea69511dbc",
+   "name": "John",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    6
+   ],
+   "first": 6,
+   "surf": [
+    "John"
+   ],
+   "cl": {
+    "gender": [
+     "masculine"
+    ],
+    "role_or_occupation": [
+     "servant"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_eae9c98c38",
+   "name": "Skulker",
+   "kind": "animal",
+   "rc": "named_entity_candidate",
+   "ch": [
+    6
+   ],
+   "first": 6,
+   "surf": [
+    "Skulker"
+   ],
+   "cl": {
+    "species": [
+     "dog"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_eee6b57109",
+   "name": "mamma",
+   "kind": "person",
+   "rc": "important_unnamed_referent",
+   "ch": [
+    1
+   ],
+   "first": 1,
+   "surf": [
+    "mamma"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "life_stage": [
+     "adult"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_ef0d692cb4",
+   "name": "the little dog",
+   "kind": "animal",
+   "rc": "important_unnamed_referent",
+   "ch": [
+    6
+   ],
+   "first": 6,
+   "surf": [
+    "the little dog"
+   ],
+   "cl": {
+    "species": [
+     "dog"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_f00bc3cd70",
+   "name": "the parson",
+   "kind": "person",
+   "rc": "important_unnamed_referent",
+   "ch": [
+    5
+   ],
+   "first": 5,
+   "surf": [
+    "the parson"
+   ],
+   "cl": {}
+  },
+  {
+   "id": "b0ent_f20cbf5152",
+   "name": "Catherine",
+   "kind": "person",
+   "rc": "named_entity_candidate",
+   "ch": [
+    4
+   ],
+   "first": 4,
+   "surf": [
+    "Catherine"
+   ],
+   "cl": {
+    "gender": [
+     "feminine"
+    ],
+    "life_stage": [
+     "child"
+    ]
+   }
+  },
+  {
+   "id": "b0ent_f523267cb5",
+   "name": "Liverpool",
+   "kind": "place",
+   "rc": "named_entity_candidate",
+   "ch": [
+    4,
+    6
+   ],
+   "first": 4,
+   "surf": [
+    "Liverpool"
+   ],
+   "cl": {
+    "place_type": [
+     "city"
+    ]
+   }
+  }
+ ],
+ "edges": [
+  {
+   "s": "b0ent_5f85880755",
+   "t": "b0ent_a1e5faa7b9",
+   "r": "owned_by",
+   "ch": 1,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch01_b011"
+   ]
+  },
+  {
+   "s": "b0ent_5f85880755",
+   "t": "b0ent_52b2698218",
+   "r": "owned_by",
+   "ch": 1,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch01_b006"
+   ]
+  },
+  {
+   "s": "b0ent_4d2def174b",
+   "t": "b0ent_52b2698218",
+   "r": "other_link",
+   "ch": 1,
+   "c": 0,
+   "note": "new tenant",
+   "a": [
+    "wh_ch01_b005",
+    "wh_ch01_b028"
+   ]
+  },
+  {
+   "s": "b0ent_a1471757da",
+   "t": "b0ent_a1e5faa7b9",
+   "r": "serves_in",
+   "ch": 1,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch01_b008",
+    "wh_ch01_b019"
+   ]
+  },
+  {
+   "s": "b0ent_72d27bfe95",
+   "t": "b0ent_a1e5faa7b9",
+   "r": "resides_at",
+   "ch": 2,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch02_b014"
+   ]
+  },
+  {
+   "s": "b0ent_43f944f31c",
+   "t": "b0ent_5f85880755",
+   "r": "widow_of",
+   "ch": 2,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch02_b049"
+   ]
+  },
+  {
+   "s": "b0ent_bc31c1ef9c",
+   "t": "b0ent_a1e5faa7b9",
+   "r": "resides_at",
+   "ch": 2,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch02_b087"
+   ]
+  },
+  {
+   "s": "b0ent_43f944f31c",
+   "t": "b0ent_a1e5faa7b9",
+   "r": "resides_at",
+   "ch": 2,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch02_b011",
+    "wh_ch02_b071"
+   ]
+  },
+  {
+   "s": "b0ent_5762eed9cc",
+   "t": "b0ent_a1e5faa7b9",
+   "r": "resides_at",
+   "ch": 2,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch02_b087"
+   ]
+  },
+  {
+   "s": "b0ent_afcc65a982",
+   "t": "b0ent_a1e5faa7b9",
+   "r": "serves_in",
+   "ch": 2,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch02_b089",
+    "wh_ch02_b092"
+   ]
+  },
+  {
+   "s": "b0ent_a1471757da",
+   "t": "b0ent_a1e5faa7b9",
+   "r": "serves_in",
+   "ch": 2,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch02_b004",
+    "wh_ch02_b060"
+   ]
+  },
+  {
+   "s": "b0ent_5f85880755",
+   "t": "b0ent_a1e5faa7b9",
+   "r": "resides_at",
+   "ch": 2,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch02_b040",
+    "wh_ch02_b091"
+   ]
+  },
+  {
+   "s": "b0ent_4cbd734a5c",
+   "t": "b0ent_a1e5faa7b9",
+   "r": "resides_at",
+   "ch": 2,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch02_b053",
+    "wh_ch02_b058"
+   ]
+  },
+  {
+   "s": "b0ent_8cc0f487dd",
+   "t": "b0ent_0c13c3def2",
+   "r": "part_of",
+   "ch": 3,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch03_b020"
+   ]
+  },
+  {
+   "s": "b0ent_43f944f31c",
+   "t": "b0ent_5f85880755",
+   "r": "other_kin",
+   "ch": 3,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch03_b062"
+   ]
+  },
+  {
+   "s": "b0ent_0d53c7c1d8",
+   "t": "b0ent_5f85880755",
+   "r": "other_link",
+   "ch": 3,
+   "c": 0,
+   "note": "conduct to Heathcliff is atrocious",
+   "a": [
+    "wh_ch03_b009",
+    "wh_ch03_b018"
+   ]
+  },
+  {
+   "s": "b0ent_91c8142b16",
+   "t": "b0ent_5c1b078766",
+   "r": "serves_in",
+   "ch": 3,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch03_b022",
+    "wh_ch03_b026"
+   ]
+  },
+  {
+   "s": "b0ent_8cc0f487dd",
+   "t": "b0ent_91c8142b16",
+   "r": "other_link",
+   "ch": 3,
+   "c": 0,
+   "note": "delivered by",
+   "a": [
+    "wh_ch03_b020"
+   ]
+  },
+  {
+   "s": "b0ent_0d53c7c1d8",
+   "t": "b0ent_2a4087d7b3",
+   "r": "spouse_of",
+   "ch": 3,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch03_b010",
+    "wh_ch03_b011"
+   ]
+  },
+  {
+   "s": "b0ent_0ff143230d",
+   "t": "b0ent_52eaf3b785",
+   "r": "parent_of",
+   "ch": 4,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch04_b016",
+    "wh_ch04_b018"
+   ]
+  },
+  {
+   "s": "b0ent_8d305b79d2",
+   "t": "b0ent_0e06619347",
+   "r": "parent_of",
+   "ch": 4,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch04_b036",
+    "wh_ch04_b042"
+   ]
+  },
+  {
+   "s": "b0ent_2b63ecd358",
+   "t": "b0ent_0d53c7c1d8",
+   "r": "parent_of",
+   "ch": 4,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch04_b035",
+    "wh_ch04_b041"
+   ]
+  },
+  {
+   "s": "b0ent_4cbd734a5c",
+   "t": "b0ent_a1e5faa7b9",
+   "r": "resides_at",
+   "ch": 4,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch04_b019",
+    "wh_ch04_b024"
+   ]
+  },
+  {
+   "s": "b0ent_0d53c7c1d8",
+   "t": "b0ent_4cbd734a5c",
+   "r": "parent_of",
+   "ch": 4,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch04_b035"
+   ]
+  },
+  {
+   "s": "b0ent_0d53c7c1d8",
+   "t": "b0ent_0e06619347",
+   "r": "sibling_of",
+   "ch": 4,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch04_b035",
+    "wh_ch04_b042"
+   ]
+  },
+  {
+   "s": "b0ent_2b63ecd358",
+   "t": "b0ent_0e06619347",
+   "r": "parent_of",
+   "ch": 4,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch04_b035"
+   ]
+  },
+  {
+   "s": "b0ent_0ff143230d",
+   "t": "b0ent_5f85880755",
+   "r": "other_kin",
+   "ch": 4,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch04_b022"
+   ]
+  },
+  {
+   "s": "b0ent_2b63ecd358",
+   "t": "b0ent_8d305b79d2",
+   "r": "spouse_of",
+   "ch": 4,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch04_b037"
+   ]
+  },
+  {
+   "s": "b0ent_8d305b79d2",
+   "t": "b0ent_0d53c7c1d8",
+   "r": "parent_of",
+   "ch": 4,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch04_b036",
+    "wh_ch04_b042"
+   ]
+  },
+  {
+   "s": "b0ent_43f944f31c",
+   "t": "b0ent_5f85880755",
+   "r": "widow_of",
+   "ch": 4,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch04_b013",
+    "wh_ch04_b014"
+   ]
+  },
+  {
+   "s": "b0ent_0d53c7c1d8",
+   "t": "b0ent_c8f380ed63",
+   "r": "sibling_of",
+   "ch": 5,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch05_b006"
+   ]
+  },
+  {
+   "s": "b0ent_2b63ecd358",
+   "t": "b0ent_c8f380ed63",
+   "r": "parent_of",
+   "ch": 5,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch05_b006",
+    "wh_ch05_b008"
+   ]
+  },
+  {
+   "s": "b0ent_0d53c7c1d8",
+   "t": "b0ent_7b594caa1e",
+   "r": "sibling_of",
+   "ch": 5,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch05_b006"
+   ]
+  },
+  {
+   "s": "b0ent_2b63ecd358",
+   "t": "b0ent_0d53c7c1d8",
+   "r": "parent_of",
+   "ch": 5,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch05_b002",
+    "wh_ch05_b003"
+   ]
+  },
+  {
+   "s": "b0ent_2b63ecd358",
+   "t": "b0ent_7b594caa1e",
+   "r": "parent_of",
+   "ch": 5,
+   "c": 0,
+   "note": null,
+   "a": [
+    "wh_ch05_b006",
+    "wh_ch05_b007"
+   ]
+  },
+  {
+   "s": "b0ent_ca7481d7ce",
+   "t": "b0ent_0ff143230d",
+   "r": "parent_of",
+   "ch": 6,
+   "c": 1,
+   "note": null,
+   "a": [
+    "wh_ch06_b009"
+   ]
+  },
+  {
+   "s": "b0ent_0ff143230d",
+   "t": "b0ent_dc5a13c3bd",
+   "r": "parent_of",
+   "ch": 6,
+   "c": 1,
+   "note": null,
+   "a": [
+    "wh_ch06_b009"
+   ]
+  },
+  {
+   "s": "b0ent_ca7481d7ce",
+   "t": "b0ent_dc5a13c3bd",
+   "r": "parent_of",
+   "ch": 6,
+   "c": 1,
+   "note": null,
+   "a": [
+    "wh_ch06_b009"
+   ]
+  },
+  {
+   "s": "b0ent_0d53c7c1d8",
+   "t": "b0ent_8d305b79d2",
+   "r": "other_kin",
+   "ch": 6,
+   "c": 0,
+   "note": "described as keeping her sister-in-law in due restraint",
+   "a": [
+    "wh_ch06_b015"
+   ]
+  }
+ ],
+ "pending": [
+  {
+   "ch": 2,
+   "q": "identity_linkage",
+   "cond": "A later source block that makes “the Lord” a concrete participant or explicitly links these invocations to one established referent would settle whether the chapter-2 reference should merge with the p"
+  },
+  {
+   "ch": 2,
+   "q": "identity_linkage",
+   "cond": "A source block explicitly linking the door inscription to the living young man—such as narration or dialogue stating that the carved “Hareton Earnshaw” is his name, or that the house/inscription was n"
+  },
+  {
+   "ch": 3,
+   "q": "roster_recognition",
+   "cond": "A source block explicitly connecting Mrs. Heathcliff to the name Cathy or Catherine, or otherwise showing that Heathcliff’s lattice addressee is his daughter-in-law rather than another Catherine."
+  },
+  {
+   "ch": 4,
+   "q": "identity_linkage",
+   "cond": "A source block that directly links the chapter 4 child Cathy to Heathcliff at a later time under the same name, or otherwise states that the Cathy Heathcliff calls to at the lattice is or is not Mr. E"
+  },
+  {
+   "ch": 4,
+   "q": "identity_linkage",
+   "cond": "A future source block that directly links the chapter 3 diary-scene Miss Cathy to the retrospective child at Wuthering Heights by the same narrated occasion or relation—for example, naming Miss Cathy "
+  },
+  {
+   "ch": 5,
+   "q": "identity_linkage",
+   "cond": "A source block that explicitly links Mr. Earnshaw’s daughter Catherine across chapters to either the child compared with Heathcliff in chapter 4 or the Catherine whom Heathcliff addresses at the latti"
+  },
+  {
+   "ch": 5,
+   "q": "identity_linkage",
+   "cond": "A source block that explicitly links Mr. Earnshaw’s daughter Catherine across chapters to either the child compared with Heathcliff in chapter 4 or the Catherine whom Heathcliff addresses at the latti"
+  },
+  {
+   "ch": 5,
+   "q": "identity_linkage",
+   "cond": "A future source block that directly connects Heathcliff’s addressed Cathy in the lattice scene to the Earnshaw child—such as narration or dialogue identifying that addressee as Mr. Earnshaw’s daughter"
+  },
+  {
+   "ch": 5,
+   "q": "identity_linkage",
+   "cond": "A future source block that directly connects Heathcliff’s addressed Cathy in the lattice scene to the Earnshaw child—such as narration or dialogue identifying that addressee as Mr. Earnshaw’s daughter"
+  },
+  {
+   "ch": 6,
+   "q": "identity_linkage",
+   "cond": "A source block that explicitly links this chapter's Miss Catherine/Cathy to one prior candidate by continuous family placement, later naming, or direct retrospective identification, or that otherwise "
+  },
+  {
+   "ch": 6,
+   "q": "identity_linkage",
+   "cond": "A source block that explicitly links this chapter's Miss Catherine/Cathy to one prior candidate by continuous family placement, later naming, or direct retrospective identification, or that otherwise "
+  },
+  {
+   "ch": 6,
+   "q": "identity_linkage",
+   "cond": "A future source block that directly links the chapter 3 called-for Catherine to the Earnshaw child from chapter 4 or directly distinguishes them by role, time, kinship, or scene continuity would settl"
+  },
+  {
+   "ch": 6,
+   "q": "identity_linkage",
+   "cond": "A future source block that directly links the chapter 3 called-for Catherine to the Earnshaw child from chapter 4 or directly distinguishes them by role, time, kinship, or scene continuity would settl"
+  }
+ ]
+}

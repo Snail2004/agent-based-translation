@@ -655,6 +655,7 @@ function AgentReportView(props) {
     projectTitle = "",
     onBack,
     onOpenConsole,
+    onOpenStoryBible,
     onRefresh,
     theme = "light",
     onToggleTheme,
@@ -720,6 +721,7 @@ function AgentReportView(props) {
         <nav className="run-surface-tabs" aria-label={uiText("Các chế độ lần chạy", "Run views")}>
           {onOpenConsole && <button className="run-surface-tab" type="button" onClick={onOpenConsole}>Console</button>}
           <span className="run-surface-tab active" aria-current="page">{uiText("Báo cáo", "Report")}</span>
+          {onOpenStoryBible && <button className="run-surface-tab" type="button" onClick={onOpenStoryBible}>{uiText("Bộ hồ sơ", "Story Bible")}</button>}
         </nav>
         {projectId && <span className="report-project" title={projectId}>{projectId}</span>}
         <select className="report-run-picker" aria-label={uiText("Chọn lần chạy", "Run picker")} value={runId || ""} onChange={event => onSelectRun?.(event.target.value)}>

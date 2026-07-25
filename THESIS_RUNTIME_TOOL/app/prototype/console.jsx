@@ -3751,7 +3751,7 @@ function AgentConsoleView(props) {
     blockPreview = [], watchlist = [],
     reportSummary = null,
     workflowReplay = null,
-    projectId = "", onBack, onOpenReport,
+    projectId = "", onBack, onOpenReport, onOpenStoryBible,
     theme = "paper", onToggleTheme,
     onRefresh, onPause, onCancel, onResume, onDich, onScore, busy = false,
     onReplayStateChange,
@@ -4246,6 +4246,9 @@ function AgentConsoleView(props) {
           <span className="run-surface-tab active" aria-current="page">Console</span>
           {onOpenReport && (
             <button className="run-surface-tab" type="button" onClick={onOpenReport}>{uiText("Báo cáo", "Report")}</button>
+          )}
+          {onOpenStoryBible && (
+            <button className="run-surface-tab" type="button" onClick={onOpenStoryBible}>{uiText("Bộ hồ sơ", "Story Bible")}</button>
           )}
         </nav>
         {projectId && <span className="console-project" title={projectId}>{projectId}</span>}

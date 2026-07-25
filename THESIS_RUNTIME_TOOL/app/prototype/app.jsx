@@ -9,10 +9,12 @@ const STORAGE_CENTER_MODE = "ailab.center_mode";
 const STORAGE_LEFT_PANEL = "thesis.left_panel_open";
 const STORAGE_RIGHT_PANEL = "thesis.right_panel_open";
 const STORAGE_RIGHT_PANEL_EXPANDED = "thesis.right_panel_expanded";
+const STORAGE_RUN_SURFACE_THEME = "ailab.console_theme";
 const THESIS_PREFIX = "thesis:";
 const PROJECT_ROUTE_HASH = "#project";
 const CONSOLE_ROUTE_HASH = "#console";
 const REPORT_ROUTE_HASH = "#report";
+const STORY_BIBLE_ROUTE_HASH = "#story-bible";
 const DEFAULT_USER = "U2 · Mai";
 const EDITABLE_META = new Set(["title", "author", "domain", "genre", "source_format", "license", "source_url", "contamination_risk"]);
 const RUN_TERMINAL_STATUSES = new Set(["done", "failed", "cancelled", "canceled", "error"]);
@@ -120,6 +122,7 @@ function viewFromLocation() {
   if (window.location.hash === PROJECT_ROUTE_HASH) return "project";
   if (window.location.hash === CONSOLE_ROUTE_HASH) return "console";
   if (window.location.hash === REPORT_ROUTE_HASH) return "report";
+  if (window.location.hash === STORY_BIBLE_ROUTE_HASH) return "story-bible";
   return "workspace";
 }
 
@@ -1582,6 +1585,9 @@ function StartupState({ title, message, action, onAction, secondary, secondaryAc
 
 function App() {
   const [uiLocale, setUiLocale] = useThesisLocale();
+  const [runSurfaceTheme, setRunSurfaceTheme] = useState(() => (
+    localStorage.getItem(STORAGE_RUN_SURFACE_THEME) === "dark" ? "dark" : "paper"
+  ));
   const [view, setView] = useState(viewFromLocation);
   const [projects, setProjects] = useState([]);
   const [docInfo, setDocInfo] = useState(null);
@@ -1681,6 +1687,14 @@ function App() {
   });
   const fullRegistryOverlayCacheRef = useRef(new Map());
 
+  const toggleRunSurfaceTheme = useCallback(() => {
+    setRunSurfaceTheme(previous => {
+      const next = previous === "paper" ? "dark" : "paper";
+      localStorage.setItem(STORAGE_RUN_SURFACE_THEME, next);
+      return next;
+    });
+  }, []);
+
   const navigateView = useCallback((nextView, { replace = false } = {}) => {
     const targetView = nextView === "project"
       ? "project"
@@ -1688,14 +1702,18 @@ function App() {
         ? "console"
         : nextView === "report"
           ? "report"
+          : nextView === "story-bible"
+            ? "story-bible"
           : "workspace";
     const baseUrl = `${window.location.pathname}${window.location.search}`;
     const targetUrl = targetView === "project"
       ? `${baseUrl}${PROJECT_ROUTE_HASH}`
       : targetView === "console"
         ? `${baseUrl}${CONSOLE_ROUTE_HASH}`
-        : targetView === "report"
+      : targetView === "report"
           ? `${baseUrl}${REPORT_ROUTE_HASH}`
+        : targetView === "story-bible"
+          ? `${baseUrl}${STORY_BIBLE_ROUTE_HASH}`
         : baseUrl;
     const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     if (currentUrl !== targetUrl) {
@@ -2064,7 +2082,7 @@ function App() {
 
   useEffect(() => {
     const adapter = window.WorkflowReplayAdapter;
-    const onRunSurface = ["console", "report"].includes(view);
+    const onRunSurface = ["console", "report", "story-bible"].includes(view);
     runRegistryPollerRef.current?.stop?.();
     runRegistryPollerRef.current = null;
     if (!runtimeJobId || !onRunSurface || !adapter?.createRunRegistryPoller) return undefined;
@@ -2572,13 +2590,13 @@ function App() {
   // Entering a run surface with nothing selected: auto-pick the newest run so
   // Console and Report share the same current run (registry list is newest-first).
   useEffect(() => {
-    if (!["console", "report"].includes(view) || selectedRunId || !thesisRuns.length) return;
+    if (!["console", "report", "story-bible"].includes(view) || selectedRunId || !thesisRuns.length) return;
     const run = window.WorkflowReplayAdapter?.newestActiveRegistryRun?.(thesisRuns) || thesisRuns[0];
     selectRun(run.run_id, { origin: "surface-entry", run });
   }, [view, selectedRunId, thesisRuns]);
 
   function setCenterMode(mode) {
-    if (["console", "report"].includes(mode)) {
+    if (["console", "report", "story-bible"].includes(mode)) {
       navigateView(mode);
       return;
     }
@@ -3972,7 +3990,7 @@ function App() {
     );
   }
 
-  const runSurfaceView = view === "console" || view === "report";
+  const runSurfaceView = ["console", "report", "story-bible"].includes(view);
   const activeCenterMode = runSurfaceView ? view : centerMode;
   const sourcePackageOverlay = window.__SOURCE_PACKAGE_UI_DEV__ === true
     ? window.SOURCE_PACKAGE_UI_FIXTURE?.overlay || null
@@ -4063,7 +4081,7 @@ function App() {
   }
 
   return (
-    <div className={"app" + (runSurfaceView ? " app--console" : "") + (view === "report" ? " app--report" : "") + (activeCenterMode === "structure" ? " app--structure" : "")}>
+    <div className={"app" + (runSurfaceView ? " app--console" : "") + (view === "report" ? " app--report" : "") + (view === "story-bible" ? " app--story-bible" : "") + (activeCenterMode === "structure" ? " app--structure" : "")}>
       {!runSurfaceView && <TopBar docId={docInfo?.doc_id || activeDocId} dirty={dirty} lastSaved={lastSaved}
         projects={projects} mode={centerMode} onModeChange={setCenterMode}
         onSelectProject={selectProject} onOpenProjectSource={openProjectSource} onQuickImport={() => setModal({ kind: "quick-import" })}
@@ -4074,7 +4092,7 @@ function App() {
         freezeReady={freezeReady} freezeReasons={freezeReasons} previewReadOnly={["preview", "structure"].includes(centerMode) || readOnly} canExportPreview={!!currentPreviewRun?.run}
         appVersion={appVersion} locale={uiLocale} onLocaleChange={setUiLocale}
         showContentViews={contentViewsReady} showRunViews={contentViewsReady} />}
-      <div className={["workspace", runSurfaceView ? "workspace--console" : "", view === "report" ? "workspace--report" : "", activeCenterMode === "memory" ? "workspace--memory" : "", activeCenterMode === "structure" ? "workspace--structure" : "", (!leftPanelOpen || activeCenterMode === "structure") ? "workspace--no-left" : "", (!rightPanelOpen || ["memory", "structure"].includes(activeCenterMode)) ? "workspace--no-right" : "", rightPanelOpen && rightPanelExpanded && !["memory", "structure"].includes(activeCenterMode) ? "workspace--right-expanded" : ""].filter(Boolean).join(" ")}>
+      <div className={["workspace", runSurfaceView ? "workspace--console" : "", view === "report" ? "workspace--report" : "", view === "story-bible" ? "workspace--story-bible" : "", activeCenterMode === "memory" ? "workspace--memory" : "", activeCenterMode === "structure" ? "workspace--structure" : "", (!leftPanelOpen || activeCenterMode === "structure") ? "workspace--no-left" : "", (!rightPanelOpen || ["memory", "structure"].includes(activeCenterMode)) ? "workspace--no-right" : "", rightPanelOpen && rightPanelExpanded && !["memory", "structure"].includes(activeCenterMode) ? "workspace--right-expanded" : ""].filter(Boolean).join(" ")}>
         {!runSurfaceView && activeCenterMode !== "structure" && leftPanelOpen && <LeftSidebar docInfo={docInfo} blocks={visibleBlocks} chapters={chapters} review={review}
           annoSet={annoSet} selectedId={selectedId} onSelect={selectBlock}
           filters={filters} onToggleFilter={toggleFilter} counts={filterCounts} total={blocks.length}
@@ -4115,6 +4133,7 @@ function App() {
           onConsoleBack={() => navigateView("workspace")}
           onOpenConsole={() => navigateView("console")}
           onOpenReport={() => navigateView("report")}
+          onOpenStoryBible={() => navigateView("story-bible")}
           runControl={{
             runtimeAvailable: !!runtimeJobId,
             sourceProjectId: activeDocId,
@@ -4129,6 +4148,11 @@ function App() {
             watchlist: runWatchlist,
             reportSummary: runReportSummary,
             workflowReplay,
+            storyBibleAvailable: false,
+            storyBible: null,
+            storyBibleLoading: false,
+            storyBibleError: null,
+            storyBibleAuthority: null,
             runForm,
             promptPreview: runPromptPreview,
             busy: runBusy,
@@ -4148,6 +4172,8 @@ function App() {
             onScore: scoreRun,
             locale: uiLocale,
             onLocaleChange: setUiLocale,
+            theme: runSurfaceTheme,
+            onToggleTheme: toggleRunSurfaceTheme,
           }}
           selectedCallId={selectedCallId}
           selectedCallDetail={selectedCallDetail}
