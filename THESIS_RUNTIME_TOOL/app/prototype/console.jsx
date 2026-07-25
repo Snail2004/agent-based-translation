@@ -723,6 +723,12 @@ function consoleIsTerminalStatus(status) {
   return CONSOLE_TERMINAL_STATUSES.has(String(status || "").toLowerCase());
 }
 
+function consoleWorkflowActionAllowed(actions, actionId) {
+  const nested = actions?.[actionId];
+  if (nested && typeof nested === "object") return nested.allowed === true;
+  return actions?.[`${actionId}_allowed`] === true;
+}
+
 function consoleEventSeverity(row) {
   const sev = String(row.severity || "").toLowerCase();
   if (sev === "error" || sev === "warning") return sev;
@@ -4041,14 +4047,14 @@ function AgentConsoleView(props) {
   const workflowPaused = Boolean(workflowReplay && sourceRunStatus === "paused");
   const canResumeRun = !replayActive && !!onResume && (
     workflowReplay
-      ? workflowReplay.sourceMode === "live" && workflowActions.resume_allowed === true
+      ? workflowReplay.sourceMode === "live" && consoleWorkflowActionAllowed(workflowActions, "resume")
       : runStatus === "failed" || st.paused || stalled
   );
   const canPauseRun = workflowReplay
-    ? workflowReplay.sourceMode === "live" && workflowActions.pause_allowed === true
+    ? workflowReplay.sourceMode === "live" && consoleWorkflowActionAllowed(workflowActions, "pause")
     : isOpenRun;
   const canCancelRun = workflowReplay
-    ? workflowReplay.sourceMode === "live" && workflowActions.cancel_allowed === true
+    ? workflowReplay.sourceMode === "live" && consoleWorkflowActionAllowed(workflowActions, "cancel")
     : isOpenRun;
   const replayClock = consoleReplayClock(events, replayPosition);
   const systemChecks = st.systemChecks || [];

@@ -35,8 +35,10 @@ function extractFunction(name) {
 
 const context = {};
 vm.runInNewContext(
-  `${extractFunction("consoleUsageSummaryTotal")}
+  `${extractFunction("consoleWorkflowActionAllowed")}
+   ${extractFunction("consoleUsageSummaryTotal")}
    ${extractFunction("consoleLatestWorkProgressRows")}
+   this.consoleWorkflowActionAllowed = consoleWorkflowActionAllowed;
    this.consoleUsageSummaryTotal = consoleUsageSummaryTotal;
    this.consoleLatestWorkProgressRows = consoleLatestWorkProgressRows;`,
   context,
@@ -138,8 +140,27 @@ function progressPresentationGates() {
   );
 }
 
+function workflowActionGates() {
+  assert.equal(
+    context.consoleWorkflowActionAllowed({ resume: { allowed: true } }, "resume"),
+    true,
+  );
+  assert.equal(
+    context.consoleWorkflowActionAllowed({ resume: { allowed: false }, resume_allowed: true }, "resume"),
+    false,
+    "the backend nested action is authoritative when present",
+  );
+  assert.equal(
+    context.consoleWorkflowActionAllowed({ resume_allowed: true }, "resume"),
+    true,
+    "legacy flat actions remain compatible",
+  );
+  assert.equal(context.consoleWorkflowActionAllowed({}, "resume"), false);
+}
+
 usageAuthorityGates();
 progressPresentationGates();
+workflowActionGates();
 assert.match(source, /"work_started", "work_progress", "work_completed"/);
 assert.match(source, /consoleLatestWorkProgressRows\(retryPresentationRows, eventPreset\)/);
 console.log("workflow live progress + usage: 2/2 passed");
