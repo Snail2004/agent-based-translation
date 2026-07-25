@@ -133,7 +133,15 @@ def _broken_fixture(tmp_path: Path) -> dict[str, object]:
 
     authoritative_bytes = (root / "artifact_index.json").read_bytes()
     authoritative_sha = sha256(authoritative_bytes).hexdigest().upper()
-    snapshot_dir = tmp_path / "parent" / "snapshots" / SNAPSHOT_SHA
+    snapshot_dir = (
+        tmp_path
+        / "parent"
+        / "components"
+        / "translation"
+        / "tr_recovery_test_v1"
+        / "snapshots"
+        / SNAPSHOT_SHA
+    )
     snapshot_dir.mkdir(parents=True)
     authoritative_path = snapshot_dir / "artifact_index.json"
     authoritative_path.write_bytes(authoritative_bytes)
@@ -236,6 +244,41 @@ def test_recovery_is_idempotent_after_commit(tmp_path: Path) -> None:
     first = recover_d2l_component_package_v1(request)
     second = recover_d2l_component_package_v1(request)
     assert second == first
+
+
+def test_recovery_rejects_validly_resealed_forged_receipt(
+    tmp_path: Path,
+) -> None:
+    fixture = _broken_fixture(tmp_path)
+    request = fixture["request"]
+    root = fixture["root"]
+    assert isinstance(request, D2LComponentPackageRecoveryRequestV1)
+    assert isinstance(root, Path)
+    receipt = recover_d2l_component_package_v1(request)
+    package_before = {
+        path.name: path.read_bytes()
+        for path in root.iterdir()
+        if path.is_file()
+    }
+    transaction_dir = request.transaction_root / receipt["transaction_id"]
+    forged = dict(receipt)
+    forged.pop("receipt_sha256")
+    forged["provider_call_count"] = 7
+    forged["receipt_sha256"] = canonical_sha256(forged)
+    (transaction_dir / "receipt.json").write_bytes(
+        canonical_json_bytes(forged)
+    )
+
+    with pytest.raises(
+        D2LComponentPackageRecoveryError,
+        match="does not match the deterministic transaction",
+    ):
+        recover_d2l_component_package_v1(request)
+    assert {
+        path.name: path.read_bytes()
+        for path in root.iterdir()
+        if path.is_file()
+    } == package_before
 
 
 def test_recovery_rejects_quarantine_drift_on_idempotent_call(
@@ -381,7 +424,39 @@ def test_recovery_rejects_foreign_snapshot_path_before_mutation(
     )
     with pytest.raises(
         D2LComponentPackageRecoveryError,
-        match="outside the supplied snapshot",
+        match="does not bind the supplied snapshot SHA",
+    ):
+        recover_d2l_component_package_v1(foreign)
+    assert (root / "artifact_index.json").read_bytes() == before
+
+
+def test_recovery_rejects_same_hash_under_foreign_parent_path(
+    tmp_path: Path,
+) -> None:
+    fixture = _broken_fixture(tmp_path)
+    request = fixture["request"]
+    root = fixture["root"]
+    assert isinstance(request, D2LComponentPackageRecoveryRequestV1)
+    assert isinstance(root, Path)
+    before = (root / "artifact_index.json").read_bytes()
+    foreign_dir = (
+        tmp_path
+        / "foreign_not_parent_relay"
+        / request.parent_snapshot_sha256
+    )
+    foreign_dir.mkdir(parents=True)
+    foreign_index = foreign_dir / "artifact_index.json"
+    foreign_index.write_bytes(request.authoritative_index_file.read_bytes())
+    foreign = D2LComponentPackageRecoveryRequestV1(
+        **{
+            **request.__dict__,
+            "authoritative_index_file": foreign_index,
+        }
+    )
+
+    with pytest.raises(
+        D2LComponentPackageRecoveryError,
+        match="does not match parent_snapshot_ref",
     ):
         recover_d2l_component_package_v1(foreign)
     assert (root / "artifact_index.json").read_bytes() == before

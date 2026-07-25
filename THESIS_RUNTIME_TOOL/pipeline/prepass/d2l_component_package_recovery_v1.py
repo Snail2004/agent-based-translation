@@ -183,6 +183,10 @@ class D2LComponentPackageRecoveryRequestV1:
             self.parent_snapshot_sha256,
             "parent_snapshot_sha256",
         )
+        parent_snapshot_ref = _normalize_snapshot_ref(
+            self.parent_snapshot_ref,
+            snapshot_sha256=snapshot_sha,
+        )
         if authoritative.parent.name.upper() != snapshot_sha:
             raise D2LComponentPackageRecoveryError(
                 "authoritative index path is outside the supplied snapshot"
@@ -190,6 +194,14 @@ class D2LComponentPackageRecoveryRequestV1:
         if authoritative.name != "artifact_index.json":
             raise D2LComponentPackageRecoveryError(
                 "authoritative index filename must be artifact_index.json"
+            )
+        reference_parts = PurePosixPath(parent_snapshot_ref).parts
+        authoritative_tail = authoritative.parts[-len(reference_parts) :]
+        if tuple(os.path.normcase(part) for part in authoritative_tail) != tuple(
+            os.path.normcase(part) for part in reference_parts
+        ):
+            raise D2LComponentPackageRecoveryError(
+                "authoritative index path does not match parent_snapshot_ref"
             )
         ordinal = self.parent_import_ordinal
         if ordinal is not None and (
@@ -206,10 +218,7 @@ class D2LComponentPackageRecoveryRequestV1:
                 self.authoritative_index_sha256,
                 "authoritative_index_sha256",
             ),
-            parent_snapshot_ref=_normalize_snapshot_ref(
-                self.parent_snapshot_ref,
-                snapshot_sha256=snapshot_sha,
-            ),
+            parent_snapshot_ref=parent_snapshot_ref,
             parent_snapshot_sha256=snapshot_sha,
             parent_import_ordinal=ordinal,
             expected_manifest_sha256=_require_sha256(
@@ -254,6 +263,64 @@ def _receipt_with_hash(payload: Mapping[str, Any]) -> dict[str, Any]:
     result = dict(payload)
     result["receipt_sha256"] = canonical_sha256(result)
     return result
+
+
+def _expected_recovery_receipt(
+    *,
+    req: D2LComponentPackageRecoveryRequestV1,
+    transaction_id: str,
+    transaction_sha: str,
+    manifest: Mapping[str, Any],
+    resume: Mapping[str, Any],
+    broken_copy_ref: str,
+    temp_copy_ref: str | None,
+    authoritative_copy_ref: str,
+    manifest_path: Path,
+    events_path: Path,
+    index_path: Path,
+    manifest_temp_path: Path,
+    validation: Mapping[str, Any],
+) -> dict[str, Any]:
+    return _receipt_with_hash(
+        {
+            "schema": RECOVERY_RECEIPT_SCHEMA,
+            "transaction_id": transaction_id,
+            "transaction_sha256": transaction_sha,
+            "workflow_run_id": manifest["workflow_run_id"],
+            "component_run_id": manifest["component_run_id"],
+            "component_attempt_id": manifest["component_attempt_id"],
+            "checkpoint_ref": resume["checkpoint_ref"],
+            "checkpoint_sha256": resume["checkpoint_sha256"],
+            "parent_snapshot_ref": req.parent_snapshot_ref,
+            "parent_snapshot_sha256": req.parent_snapshot_sha256,
+            "parent_import_ordinal": req.parent_import_ordinal,
+            "prestate": {
+                "component_manifest_sha256": req.expected_manifest_sha256,
+                "events_sha256": req.expected_events_sha256,
+                "broken_artifact_index_sha256": (
+                    req.expected_broken_index_sha256
+                ),
+                "orphan_manifest_temp_sha256": (
+                    req.expected_manifest_temp_sha256
+                ),
+            },
+            "quarantine": {
+                "broken_artifact_index_ref": broken_copy_ref,
+                "orphan_manifest_temp_ref": temp_copy_ref,
+                "authoritative_artifact_index_ref": authoritative_copy_ref,
+            },
+            "poststate": {
+                "component_manifest_sha256": file_sha256(manifest_path),
+                "events_sha256": file_sha256(events_path),
+                "artifact_index_sha256": file_sha256(index_path),
+                "orphan_manifest_temp_present": manifest_temp_path.exists(),
+            },
+            "post_package_validation": validation,
+            "post_package_validation_sha256": canonical_sha256(validation),
+            "semantic_replay_count": 0,
+            "provider_call_count": 0,
+        }
+    )
 
 
 def validate_recovery_receipt_v1(value: Mapping[str, Any]) -> dict[str, Any]:
@@ -470,30 +537,38 @@ def recover_d2l_component_package_v1(
 
             receipt_path = transaction_dir / "receipt.json"
             if receipt_path.exists():
+                receipt_bytes = _require_regular_file(
+                    receipt_path,
+                    "recovery receipt",
+                ).read_bytes()
                 receipt = validate_recovery_receipt_v1(
-                    _load_mapping_bytes(
-                        _require_regular_file(
-                            receipt_path,
-                            "recovery receipt",
-                        ).read_bytes(),
-                        "recovery receipt",
-                    )
+                    _load_mapping_bytes(receipt_bytes, "recovery receipt")
                 )
                 validation = validate_translation_component_package(
                     root,
                     require_terminal=False,
                 )
-                if (
-                    file_sha256(index_path)
-                    != req.authoritative_index_sha256
-                    or manifest_temp_path.exists()
-                    or canonical_sha256(validation)
-                    != receipt["post_package_validation_sha256"]
-                ):
+                expected_receipt = _expected_recovery_receipt(
+                    req=req,
+                    transaction_id=transaction_id,
+                    transaction_sha=transaction_sha,
+                    manifest=manifest,
+                    resume=resume,
+                    broken_copy_ref=broken_copy_ref,
+                    temp_copy_ref=temp_copy_ref,
+                    authoritative_copy_ref=authoritative_copy_ref,
+                    manifest_path=manifest_path,
+                    events_path=events_path,
+                    index_path=index_path,
+                    manifest_temp_path=manifest_temp_path,
+                    validation=validation,
+                )
+                if receipt_bytes != canonical_json_bytes(expected_receipt):
                     raise D2LComponentPackageRecoveryError(
-                        "committed recovery receipt disagrees with package state"
+                        "committed recovery receipt does not match "
+                        "the deterministic transaction"
                     )
-                return receipt
+                return expected_receipt
 
             index_was_broken = (
                 current_index_sha == req.expected_broken_index_sha256
@@ -545,57 +620,20 @@ def recover_d2l_component_package_v1(
                     )
                 raise
 
-            receipt = _receipt_with_hash(
-                {
-                    "schema": RECOVERY_RECEIPT_SCHEMA,
-                    "transaction_id": transaction_id,
-                    "transaction_sha256": transaction_sha,
-                    "workflow_run_id": manifest["workflow_run_id"],
-                    "component_run_id": manifest["component_run_id"],
-                    "component_attempt_id": manifest[
-                        "component_attempt_id"
-                    ],
-                    "checkpoint_ref": resume["checkpoint_ref"],
-                    "checkpoint_sha256": resume["checkpoint_sha256"],
-                    "parent_snapshot_ref": req.parent_snapshot_ref,
-                    "parent_snapshot_sha256": req.parent_snapshot_sha256,
-                    "parent_import_ordinal": req.parent_import_ordinal,
-                    "prestate": {
-                        "component_manifest_sha256": (
-                            req.expected_manifest_sha256
-                        ),
-                        "events_sha256": req.expected_events_sha256,
-                        "broken_artifact_index_sha256": (
-                            req.expected_broken_index_sha256
-                        ),
-                        "orphan_manifest_temp_sha256": (
-                            req.expected_manifest_temp_sha256
-                        ),
-                    },
-                    "quarantine": {
-                        "broken_artifact_index_ref": broken_copy_ref,
-                        "orphan_manifest_temp_ref": temp_copy_ref,
-                        "authoritative_artifact_index_ref": (
-                            authoritative_copy_ref
-                        ),
-                    },
-                    "poststate": {
-                        "component_manifest_sha256": file_sha256(
-                            manifest_path
-                        ),
-                        "events_sha256": file_sha256(events_path),
-                        "artifact_index_sha256": file_sha256(index_path),
-                        "orphan_manifest_temp_present": (
-                            manifest_temp_path.exists()
-                        ),
-                    },
-                    "post_package_validation": validation,
-                    "post_package_validation_sha256": canonical_sha256(
-                        validation
-                    ),
-                    "semantic_replay_count": 0,
-                    "provider_call_count": 0,
-                }
+            receipt = _expected_recovery_receipt(
+                req=req,
+                transaction_id=transaction_id,
+                transaction_sha=transaction_sha,
+                manifest=manifest,
+                resume=resume,
+                broken_copy_ref=broken_copy_ref,
+                temp_copy_ref=temp_copy_ref,
+                authoritative_copy_ref=authoritative_copy_ref,
+                manifest_path=manifest_path,
+                events_path=events_path,
+                index_path=index_path,
+                manifest_temp_path=manifest_temp_path,
+                validation=validation,
             )
             _write_absent_or_equal(
                 receipt_path,
