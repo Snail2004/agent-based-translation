@@ -49,6 +49,12 @@ from pipeline.eval.workflow_component_v1 import (
     validate_scoring_receipt_v1,
     validate_typed_artifact_binding_v1,
 )
+from pipeline.eval.workflow_recovery_v1 import (
+    EvaluationWorkflowRecoveryStoreV1,
+    build_evaluation_recovery_assignment_v1,
+    build_evaluation_work_descriptor_v1,
+    validate_evaluation_recovery_package_v1,
+)
 from pipeline.llm_backend import (
     SharedLlmAttemptLedger,
     validate_llm_run_records,
@@ -72,6 +78,51 @@ _CHECKPOINT_POLICY = CanonicalPolicy(
     set_like_paths=frozenset(),
     semantic_sequence_paths=frozenset({("completed_stage_ids",)}),
 )
+
+
+def _stable_sha256(value: Any) -> str:
+    payload = json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _build_recovery_assignment_from_component_v1(
+    *,
+    workflow_run_id: str,
+    component_run_id: str,
+    input_set_sha256: str,
+    workflow_settings: Mapping[str, Any],
+    evaluation_profile: Mapping[str, Any],
+    stages: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    selection = require_mapping(
+        workflow_settings["shared_selection_ref"],
+        path="$.workflow_settings.shared_selection_ref",
+    )
+    semantic_material = {
+        "benchmark_preset_ref": workflow_settings["benchmark_preset_ref"],
+        "evaluation_config_ref": workflow_settings["evaluation_config_ref"],
+        "scorer_set_ref": workflow_settings["scorer_set_ref"],
+        "selected_chapter_ids": workflow_settings["selected_chapter_ids"],
+        "selected_arm_ids": workflow_settings["selected_arm_ids"],
+        "selected_scorer_ids": workflow_settings["selected_scorer_ids"],
+        "highlight_pair": workflow_settings["highlight_pair"],
+    }
+    return build_evaluation_recovery_assignment_v1(
+        workflow_run_id=workflow_run_id,
+        component_run_id=component_run_id,
+        input_set_sha256=input_set_sha256,
+        settings_sha256=workflow_settings["settings_sha256"],
+        evaluation_profile_sha256=evaluation_profile["sha256"],
+        stage_plan_sha256=_stable_sha256({"stages": list(stages)}),
+        sampling_sha256=selection["sha256"],
+        semantic_contract_sha256=_stable_sha256(semantic_material),
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -205,12 +256,15 @@ class EvaluationWorkflowComponentWriterV1:
             component_run_id=self.component_run_id,
             stage_ids=self.stage_ids,
         )
+        self.recovery: EvaluationWorkflowRecoveryStoreV1 | None = None
+        self._recovery_work_ids: dict[str, str] = {}
         self.created_new = False
         self.recovered_resume = False
 
         if self.manifest_path.exists():
             self.recovered_resume = self._recover_resume_intent()
             self._load_existing()
+            self._init_recovery_store()
             return
         component_paths = (
             self.events_path,
@@ -233,6 +287,7 @@ class EvaluationWorkflowComponentWriterV1:
                 "cannot retrofit replay records onto an already-started benchmark",
             )
         self.created_new = True
+        self._init_recovery_store()
         _write_immutable_json(self.workflow_settings_path, self.workflow_settings)
         self.manifest = self._build_manifest(
             attempt_index=1,
@@ -353,6 +408,12 @@ class EvaluationWorkflowComponentWriterV1:
         _write_json_atomic(self.resume_intent_path, intent)
         self.recovered_resume = self._recover_resume_intent()
         self._load_existing()
+        self._init_recovery_store()
+        if self.recovery is not None and self.recovery.latest_checkpoint is not None:
+            self.recovery.resume(
+                component_attempt_id=self.component_attempt_id,
+                component_attempt_index=self.component_attempt_index,
+            )
         return True
 
     def _recover_resume_intent(self) -> bool:
@@ -470,6 +531,7 @@ class EvaluationWorkflowComponentWriterV1:
             raise ContractValidationError(
                 "stage_state", "$.stage_id", f"stage {stage_id} is {state}"
             )
+        self._ensure_recovery_work(stage_id)
         self.append_event(
             "stage_start",
             stage_id=stage_id,
@@ -523,6 +585,16 @@ class EvaluationWorkflowComponentWriterV1:
         )
 
     def complete_stage(self, stage_id: str, *, outcome: str = "succeeded") -> None:
+        if outcome in {"succeeded", "skipped"} and self.recovery is not None:
+            work_id = self._recovery_stage_work_id(stage_id)
+            if work_id is not None:
+                artifact_binding = self._latest_stage_artifact_binding(stage_id)
+                self.recovery.accept_work(
+                    work_id=work_id,
+                    component_attempt_id=self.component_attempt_id,
+                    component_attempt_index=self.component_attempt_index,
+                    artifact_binding=artifact_binding,
+                )
         self.append_event(
             "stage_done",
             stage_id=stage_id,
@@ -530,6 +602,12 @@ class EvaluationWorkflowComponentWriterV1:
             severity="info" if outcome in {"succeeded", "skipped"} else "warning",
             payload={"outcome": outcome},
         )
+
+    def _latest_stage_artifact_binding(self, stage_id: str) -> dict[str, Any]:
+        for row in reversed(self._artifact_rows):
+            if row["stage_id"] == stage_id:
+                return copy.deepcopy(row["artifact"])
+        return copy.deepcopy(self.workflow_settings_binding)
 
     def persist_checkpoint(
         self,
@@ -586,15 +664,74 @@ class EvaluationWorkflowComponentWriterV1:
             created_by_event_id=event["event_id"],
             parent_artifact_refs=parents,
         )
+        if self.recovery is not None:
+            latest_usage_sha256 = None
+            for row in reversed(self._artifact_rows):
+                if row["artifact"]["artifact_kind"] == "evaluation_component_usage_snapshot_v1":
+                    latest_usage_sha256 = row["artifact"]["sha256"]
+                    break
+            self.recovery.write_checkpoint(
+                component_attempt_id=self.component_attempt_id,
+                component_attempt_index=self.component_attempt_index,
+                component_seq=event["component_seq"],
+                artifact_index_sha256=hashlib.sha256(
+                    self.artifact_index_path.read_bytes()
+                ).hexdigest(),
+                usage_snapshot_sha256=latest_usage_sha256,
+            )
         return binding
 
-    def halt(self, *, reason_code: str) -> None:
+    def halt(
+        self,
+        *,
+        reason_code: str,
+        reason_category: str | None = None,
+        incident_id: str | None = None,
+        checkpoint: Mapping[str, Any] | None = None,
+        current_stage_id: str | None = None,
+        current_work_id: str | None = None,
+    ) -> None:
+        payload: dict[str, Any] = {
+            "reason_code": require_string(reason_code, path="$.reason_code"),
+            "resume_available": True,
+        }
+        if reason_category is not None:
+            payload["reason_category"] = require_enum(
+                reason_category,
+                {"transport", "semantic", "operational", "user"},
+                path="$.reason_category",
+            )
+        if incident_id is not None:
+            payload["incident_id"] = require_string(
+                incident_id, path="$.incident_id"
+            )
+        if checkpoint is not None:
+            payload["checkpoint"] = validate_typed_artifact_binding_v1(
+                checkpoint, path="$.checkpoint"
+            )
+        if current_stage_id is not None:
+            payload["current_stage_id"] = require_string(
+                current_stage_id, path="$.current_stage_id"
+            )
+        if current_work_id is not None:
+            payload["current_work_id"] = require_string(
+                current_work_id, path="$.current_work_id"
+            )
+        if self.recovery is not None and reason_category is not None:
+            self.recovery.mark_halted(
+                work_id=self._recovery_stage_work_id(current_stage_id),
+                component_attempt_id=self.component_attempt_id,
+                component_attempt_index=self.component_attempt_index,
+                category=reason_category,
+                incident_id=incident_id,
+                reason_code=reason_code,
+            )
         self.append_event(
             "component_halted",
             stage_id="__component__",
             agent="runner",
             severity="warning",
-            payload={"reason_code": reason_code, "resume_available": True},
+            payload=payload,
         )
 
     def done(self) -> None:
@@ -607,14 +744,49 @@ class EvaluationWorkflowComponentWriterV1:
             payload={"outcome": "succeeded"},
         )
 
-    def failed(self, *, reason_code: str) -> None:
+    def failed(
+        self,
+        *,
+        reason_code: str,
+        reason_category: str | None = None,
+        incident_id: str | None = None,
+        checkpoint: Mapping[str, Any] | None = None,
+        current_stage_id: str | None = None,
+        current_work_id: str | None = None,
+    ) -> None:
         self._finalize_usage(stage_id=self._latest_non_pending_stage_id())
+        payload: dict[str, Any] = {
+            "outcome": "failed",
+            "reason_code": require_string(reason_code, path="$.reason_code"),
+        }
+        if reason_category is not None:
+            payload["reason_category"] = require_enum(
+                reason_category,
+                {"integrity", "operational", "user", "transport", "semantic"},
+                path="$.reason_category",
+            )
+        if incident_id is not None:
+            payload["incident_id"] = require_string(
+                incident_id, path="$.incident_id"
+            )
+        if checkpoint is not None:
+            payload["checkpoint"] = validate_typed_artifact_binding_v1(
+                checkpoint, path="$.checkpoint"
+            )
+        if current_stage_id is not None:
+            payload["current_stage_id"] = require_string(
+                current_stage_id, path="$.current_stage_id"
+            )
+        if current_work_id is not None:
+            payload["current_work_id"] = require_string(
+                current_work_id, path="$.current_work_id"
+            )
         self.append_event(
             "component_failed",
             stage_id="__component__",
             agent="runner",
             severity="error",
-            payload={"outcome": "failed", "reason_code": reason_code},
+            payload=payload,
         )
 
     def file_binding(
@@ -903,9 +1075,12 @@ class EvaluationWorkflowComponentWriterV1:
             self._persist_usage_snapshot(snapshot)
 
     def validate_package(self, *, require_terminal: bool = False) -> dict[str, Any]:
-        return validate_evaluation_workflow_component_package_v1(
+        package = validate_evaluation_workflow_component_package_v1(
             self.root, self.handoff, require_terminal=require_terminal
         )
+        if self.recovery is not None:
+            self.recovery.validate()
+        return package
 
     def _build_manifest(
         self,
@@ -929,6 +1104,95 @@ class EvaluationWorkflowComponentWriterV1:
             evaluation_profile=self.evaluation_profile,
             workflow_settings=self.workflow_settings_binding,
             stages=self.stages,
+        )
+
+    def _init_recovery_store(self) -> None:
+        assignment = _build_recovery_assignment_from_component_v1(
+            workflow_run_id=self.workflow_run_id,
+            component_run_id=self.component_run_id,
+            input_set_sha256=self.handoff["input_set_sha256"],
+            workflow_settings=self.workflow_settings,
+            evaluation_profile=self.evaluation_profile,
+            stages=self.stages,
+        )
+        self.recovery = EvaluationWorkflowRecoveryStoreV1(
+            self.root,
+            assignment=assignment,
+            generated_at=self.generated_at,
+            producer_code_commit=self.producer_code_commit,
+        )
+
+    def _ensure_recovery_work(self, stage_id: str) -> str | None:
+        if self.recovery is None:
+            return None
+        existing = self._recovery_work_ids.get(stage_id)
+        if existing is not None:
+            return existing
+        chapter_id = (
+            stage_id[len("chapter_") :]
+            if stage_id.startswith("chapter_")
+            else None
+        )
+        # The descriptor is a recovery identity, not a second scoring
+        # configuration. The sealed workflow settings hash is deliberately
+        # reused for prompt/schema/validator slots so operational recovery
+        # cannot silently cross a semantic experiment boundary.
+        descriptor = build_evaluation_work_descriptor_v1(
+            stage_id=stage_id,
+            chapter_id=chapter_id,
+            scorer_id=stage_id,
+            arm_ids=self.workflow_settings["selected_arm_ids"],
+            presentation_id=f"stage:{stage_id}",
+            orientation=None,
+            input_bindings=[
+                {
+                    "artifact_ref": self.handoff_binding["artifact_ref"],
+                    "sha256": self.handoff_binding["sha256"],
+                    "sha256_kind": self.handoff_binding["sha256_kind"],
+                }
+            ],
+            evaluation_profile_sha256=self.evaluation_profile["sha256"],
+            prompt_sha256=self.workflow_settings["settings_sha256"],
+            schema_sha256=self.workflow_settings["settings_sha256"],
+            validator_sha256=self.workflow_settings["settings_sha256"],
+            model_id="sealed-by-evaluation-profile",
+            provider_family="evaluation",
+            output_mode="sealed",
+            logical_request_id=f"evaluation.workflow.{stage_id}",
+        )
+        work_id = self.recovery.begin_work(
+            descriptor,
+            component_attempt_id=self.component_attempt_id,
+            component_attempt_index=self.component_attempt_index,
+        )
+        self._recovery_work_ids[stage_id] = work_id
+        return work_id
+
+    def _recovery_stage_work_id(self, stage_id: str | None) -> str | None:
+        if stage_id is None or stage_id == "__component__":
+            return None
+        return self._ensure_recovery_work(stage_id)
+
+    def record_internal_incident(
+        self,
+        error: BaseException,
+        *,
+        category: str,
+        reason_code: str,
+        stage_id: str | None,
+        work_id: str | None,
+    ) -> str | None:
+        if self.recovery is None:
+            return None
+        recovery_work_id = self._recovery_stage_work_id(stage_id)
+        return self.recovery.record_incident(
+            error=error,
+            category=category,
+            reason_code=reason_code,
+            component_attempt_id=self.component_attempt_id,
+            component_attempt_index=self.component_attempt_index,
+            stage_id=stage_id,
+            work_id=recovery_work_id,
         )
 
     def _persist_manifest_revision(self, manifest: Mapping[str, Any]) -> None:
@@ -1357,6 +1621,21 @@ def validate_evaluation_workflow_component_package_v1(
         raise ContractValidationError(
             "component_terminal", str(package_root), "component package is not terminal"
         )
+    recovery = None
+    recovery_root = package_root / "recovery"
+    if (recovery_root / "assignment.json").is_file():
+        expected_assignment = _build_recovery_assignment_from_component_v1(
+            workflow_run_id=manifest["workflow_run_id"],
+            component_run_id=manifest["component_run_id"],
+            input_set_sha256=accepted_handoff["input_set_sha256"],
+            workflow_settings=settings,
+            evaluation_profile=manifest["evaluation_profile"],
+            stages=manifest["stages"],
+        )
+        recovery = validate_evaluation_recovery_package_v1(
+            recovery_root,
+            assignment=expected_assignment,
+        )
     return {
         "manifest": manifest,
         "events": tuple(copy.deepcopy(normalized_events)),
@@ -1364,6 +1643,7 @@ def validate_evaluation_workflow_component_package_v1(
         "workflow_settings": settings,
         "usage_snapshots": tuple(copy.deepcopy(usage_snapshots)),
         "artifact_index": index,
+        "recovery": recovery,
     }
 
 

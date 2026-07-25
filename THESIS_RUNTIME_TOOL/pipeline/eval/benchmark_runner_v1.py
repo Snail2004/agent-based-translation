@@ -66,6 +66,7 @@ from pipeline.eval.workflow_component_writer_v1 import (
     EvaluationWorkflowRunContextV1,
     benchmark_workflow_stages_v1,
 )
+from pipeline.eval.workflow_recovery_v1 import classify_evaluation_failure_v1
 from pipeline.llm_backend import SharedLlmAttemptLedger
 from pipeline.llm_backend import canonical_sha256 as shared_canonical_sha256
 
@@ -722,22 +723,42 @@ def run_benchmark_end_to_end_v1(
             state.append_event("run_halted", reason_code=_exception_code(exc))
             if workflow is not None and workflow.terminal_event is None and not workflow.is_halted:
                 active_stage = workflow_active_stage
+                classification = classify_evaluation_failure_v1(exc)
+                reason_code = classification.reason_code
+                work_id = chapter_id or active_stage
+                incident_id = workflow.record_internal_incident(
+                    exc,
+                    category=classification.category,
+                    reason_code=reason_code,
+                    stage_id=active_stage,
+                    work_id=work_id,
+                )
+                checkpoint_binding = None
                 if active_stage is not None and workflow.stage_state(active_stage) == "running":
-                    reason_code = _exception_code(exc)
-                    workflow.validation_failed(
-                        active_stage,
-                        validator_id="evaluation_stage_execution_v1",
-                        reason_code=reason_code,
-                    )
-                    workflow.persist_checkpoint(
+                    checkpoint_binding = workflow.persist_checkpoint(
                         stage_id=active_stage,
-                        work_id=chapter_id or active_stage,
+                        work_id=work_id,
                         benchmark_status=state.status(),
                     )
-                    workflow.halt(reason_code=reason_code)
-                    workflow.validate_package()
+                if classification.category == "integrity":
+                    workflow.failed(
+                        reason_code=reason_code,
+                        reason_category="integrity",
+                        incident_id=incident_id,
+                        checkpoint=checkpoint_binding,
+                        current_stage_id=active_stage,
+                        current_work_id=work_id,
+                    )
                 else:
-                    workflow.failed(reason_code=_exception_code(exc))
+                    workflow.halt(
+                        reason_code=reason_code,
+                        reason_category=classification.category,
+                        incident_id=incident_id,
+                        checkpoint=checkpoint_binding,
+                        current_stage_id=active_stage,
+                        current_work_id=work_id,
+                    )
+                workflow.validate_package()
             raise
 
 

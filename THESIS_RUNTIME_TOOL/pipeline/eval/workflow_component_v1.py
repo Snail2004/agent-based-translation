@@ -1098,19 +1098,92 @@ def _validate_event_payload(event_type: str, value: Any, *, path: str) -> dict[s
         require_exact_keys(row, required={"outcome"}, path=path)
         return {"outcome": require_enum(row["outcome"], {"succeeded", "failed", "blocked", "skipped"}, path=f"{path}.outcome")}
     if event_type == "component_halted":
-        require_exact_keys(row, required={"reason_code", "resume_available"}, path=path)
+        require_exact_keys(
+            row,
+            required={"reason_code", "resume_available"},
+            optional={
+                "reason_category",
+                "incident_id",
+                "checkpoint",
+                "current_stage_id",
+                "current_work_id",
+            },
+            path=path,
+        )
         if row["resume_available"] is not True:
             raise ContractValidationError("resume_available", f"{path}.resume_available", "halt must explicitly allow resume")
-        return {"reason_code": require_string(row["reason_code"], path=f"{path}.reason_code"), "resume_available": True}
+        result = {
+            "reason_code": require_string(row["reason_code"], path=f"{path}.reason_code"),
+            "resume_available": True,
+        }
+        if "reason_category" in row:
+            result["reason_category"] = require_enum(
+                row["reason_category"],
+                {"transport", "semantic", "operational", "user"},
+                path=f"{path}.reason_category",
+            )
+        if "incident_id" in row:
+            result["incident_id"] = require_nullable_string(
+                row["incident_id"], path=f"{path}.incident_id"
+            )
+        if "checkpoint" in row:
+            result["checkpoint"] = (
+                None
+                if row["checkpoint"] is None
+                else validate_typed_artifact_binding_v1(
+                    row["checkpoint"], path=f"{path}.checkpoint"
+                )
+            )
+        for key in ("current_stage_id", "current_work_id"):
+            if key in row:
+                result[key] = require_nullable_string(
+                    row[key], path=f"{path}.{key}"
+                )
+        return result
     if event_type == "component_done":
         require_exact_keys(row, required={"outcome"}, path=path)
         return {"outcome": require_enum(row["outcome"], {"succeeded"}, path=f"{path}.outcome")}
     if event_type == "component_failed":
-        require_exact_keys(row, required={"outcome", "reason_code"}, path=path)
-        return {
+        require_exact_keys(
+            row,
+            required={"outcome", "reason_code"},
+            optional={
+                "reason_category",
+                "incident_id",
+                "checkpoint",
+                "current_stage_id",
+                "current_work_id",
+            },
+            path=path,
+        )
+        result = {
             "outcome": require_enum(row["outcome"], {"failed"}, path=f"{path}.outcome"),
             "reason_code": require_string(row["reason_code"], path=f"{path}.reason_code"),
         }
+        if "reason_category" in row:
+            result["reason_category"] = require_enum(
+                row["reason_category"],
+                {"integrity", "operational", "user", "transport", "semantic"},
+                path=f"{path}.reason_category",
+            )
+        if "incident_id" in row:
+            result["incident_id"] = require_nullable_string(
+                row["incident_id"], path=f"{path}.incident_id"
+            )
+        if "checkpoint" in row:
+            result["checkpoint"] = (
+                None
+                if row["checkpoint"] is None
+                else validate_typed_artifact_binding_v1(
+                    row["checkpoint"], path=f"{path}.checkpoint"
+                )
+            )
+        for key in ("current_stage_id", "current_work_id"):
+            if key in row:
+                result[key] = require_nullable_string(
+                    row[key], path=f"{path}.{key}"
+                )
+        return result
     raise ContractValidationError("event_type", path, "unsupported event payload")
 
 

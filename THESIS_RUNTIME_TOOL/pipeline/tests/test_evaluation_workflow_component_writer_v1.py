@@ -22,6 +22,9 @@ from pipeline.eval.workflow_component_writer_v1 import (
     benchmark_workflow_stages_v1,
     validate_evaluation_workflow_component_package_v1,
 )
+from pipeline.eval.workflow_recovery_v1 import (
+    build_evaluation_recovery_assignment_v1,
+)
 from pipeline.eval.execution_runner_v1 import execute_evaluation_plan_v1
 from pipeline.tests.test_evaluation_benchmark_runner_v1 import (
     _Predictor,
@@ -376,6 +379,14 @@ def test_interrupted_component_resumes_same_component_and_skips_completed_chapte
     )
     assert partial["events"][-1]["event"] == "component_halted"
     assert partial["events"][-1]["payload"]["resume_available"] is True
+    assert partial["events"][-1]["payload"]["reason_category"] == "operational"
+    assert partial["events"][-1]["severity"] == "warning"
+    assert sum(row["event"] == "component_halted" for row in partial["events"]) == 1
+    assert not any(row["event"] == "validation_failed" for row in partial["events"])
+    assert partial["events"][-1]["payload"]["checkpoint"]["artifact_kind"] == (
+        "evaluation_workflow_checkpoint_v1"
+    )
+    assert partial["recovery"] is not None
     assert any(row["artifact"]["artifact_kind"] == "evaluation_workflow_checkpoint_v1" for row in partial["artifact_index"]["artifacts"])
 
     result = _run(
@@ -542,6 +553,47 @@ def test_resume_recovers_same_attempt_after_crash_before_resume_event(
         "evalcomp_attempt_0002",
     }
     assert not (root / ".resume_intent.json").exists()
+
+
+def test_package_rejects_resealed_recovery_assignment_drift(
+    tmp_path: Path,
+) -> None:
+    sources = _sources()
+    manifest, preflight, overlays = _manifest_and_preflight(sources)
+    root = tmp_path / "benchmark"
+    context = _context()
+    _run(
+        root,
+        manifest,
+        preflight,
+        overlays,
+        _runtimes(root, sources, [_Predictor(0.5) for _ in sources]),
+        workflow_context=context,
+    )
+    original = json.loads(
+        (root / "recovery" / "assignment.json").read_text(encoding="utf-8")
+    )
+    bindings = original["semantic_bindings"]
+    changed = build_evaluation_recovery_assignment_v1(
+        workflow_run_id=original["workflow_run_id"],
+        component_run_id=original["component_run_id"],
+        input_set_sha256=bindings["input_set_sha256"],
+        settings_sha256="f" * 64,
+        evaluation_profile_sha256=bindings["evaluation_profile_sha256"],
+        stage_plan_sha256=bindings["stage_plan_sha256"],
+        sampling_sha256=bindings["sampling_sha256"],
+        semantic_contract_sha256=bindings["semantic_contract_sha256"],
+    )
+    (root / "recovery" / "assignment.json").write_text(
+        json.dumps(changed, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    with pytest.raises(ContractValidationError, match="assignment|binding"):
+        validate_evaluation_workflow_component_package_v1(
+            root, context.scoring_handoff, require_terminal=True
+        )
 
 
 def test_package_rejects_self_hashed_manifest_with_foreign_handoff_ref(
