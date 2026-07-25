@@ -17,6 +17,7 @@ from pipeline.ingest.document_loader import load_document
 from pipeline.scripts.prepare_source import prepare_source
 from services.source_lifecycle import (
     MANAGED_RUNTIME_MANIFEST_VERSION,
+    SOURCE_PACKAGE_STATUS_VERSION,
     SourceLifecycleError,
     freeze_managed_source_for_run,
     get_managed_runtime_context,
@@ -1009,7 +1010,7 @@ def _reuse_frozen_managed_runtime_for_run(
         )
 
     return {
-        "schema_version": run_start["schema_version"],
+        "schema_version": SOURCE_PACKAGE_STATUS_VERSION,
         "doc_id": context["doc_id"],
         "mode": "managed_run_started_frozen",
         "managed": True,

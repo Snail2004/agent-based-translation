@@ -461,6 +461,7 @@ def test_managed_runtime_first_run_freeze_is_idempotent_and_permanent(
         assert repeated is not None
         assert repeated["run_start_reused"] is True
         assert repeated["validation_mode"] == "sealed_run_start_receipt"
+        assert repeated["schema_version"] == first["schema_version"]
 
         with pytest.raises(project_runtime.ProjectRuntimeError) as alternate:
             project_runtime.freeze_managed_runtime_for_run(
