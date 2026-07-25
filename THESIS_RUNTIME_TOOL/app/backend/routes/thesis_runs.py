@@ -1114,15 +1114,21 @@ def estimate_preview():
             if entry is None:
                 raise RunControlError("run_not_found", f"Run {resume_run_id} not found.", 404)
             requested_resume_run_id = resume_run_id
+            supplied_repair_reason = request.args.get("repair_reason")
+            repair_reason = _resolved_resume_repair_reason(
+                entry,
+                supplied_repair_reason,
+            )
             entry = _resolve_resume_estimate_entry(registry, entry)
             resume_run_id = validate_run_id(
                 entry.get("run_id"),
                 required=True,
             )
-            repair_reason = _resolved_resume_repair_reason(
-                entry,
-                request.args.get("repair_reason"),
-            )
+            if repair_reason is None:
+                repair_reason = _resolved_resume_repair_reason(
+                    entry,
+                    supplied_repair_reason,
+                )
             repair_revision_preflight = _preflight_d2l_resume_revision(
                 entry,
                 repair_reason=repair_reason,

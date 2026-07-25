@@ -1731,11 +1731,20 @@ def test_resume_estimate_follows_completed_pre_provider_child(
         "_preflight_d2l_resume_revision",
         preflight,
     )
+    monkeypatch.setattr(
+        routes,
+        "_resolved_resume_repair_reason",
+        lambda entry, _supplied: (
+            "test_repair"
+            if entry["run_id"] == source["run_id"]
+            else None
+        ),
+    )
     client = app_module.create_app().test_client()
 
     response = client.get(
         "/api/thesis/runs/estimate-preview"
-        "?resume_run_id=run_resume_source&repair_reason=test_repair"
+        "?resume_run_id=run_resume_source"
     )
 
     assert response.status_code == 200
