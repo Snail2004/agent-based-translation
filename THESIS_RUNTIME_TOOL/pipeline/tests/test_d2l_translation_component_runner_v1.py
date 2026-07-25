@@ -633,6 +633,7 @@ def _write_b1_term_stage_script(tmp_path: Path) -> Path:
             """
             import json
             import sys
+            import time
             from pathlib import Path
 
             sys.path.insert(0, sys.argv[2])
@@ -649,6 +650,13 @@ def _write_b1_term_stage_script(tmp_path: Path) -> Path:
             root = Path(sys.argv[1])
             count_path = Path(sys.argv[3])
             candidate_count = int(sys.argv[4])
+            work_before_validation = (
+                len(sys.argv) > 5
+                and sys.argv[5] == "work_before_validation"
+            )
+            validation_delay_seconds = (
+                float(sys.argv[6]) if len(sys.argv) > 6 else 0.0
+            )
             manifest = json.loads(
                 (root / "component_manifest.json").read_text(
                     encoding="utf-8"
@@ -674,20 +682,24 @@ def _write_b1_term_stage_script(tmp_path: Path) -> Path:
                 producer=producer,
                 work_id=stage_work_id,
             )
-            observation_writer.append(
-                {
-                    "event": "validation_passed",
-                    "agent": producer,
-                    "severity": "info",
-                    "ts": "2026-07-25T00:00:02Z",
-                    "payload": {
-                        "validator_id": "d2l_candidate_discovery_validator_v2",
-                        "subject_ref": item_id,
-                        "reason_codes": ["exact_local_validation"],
-                        "retryable": False,
-                    },
-                }
-            )
+            def append_validation():
+                observation_writer.append(
+                    {
+                        "event": "validation_passed",
+                        "agent": producer,
+                        "severity": "info",
+                        "ts": "2026-07-25T00:00:02Z",
+                        "payload": {
+                            "validator_id": "d2l_candidate_discovery_validator_v2",
+                            "subject_ref": item_id,
+                            "reason_codes": ["exact_local_validation"],
+                            "retryable": False,
+                        },
+                    }
+                )
+
+            if not work_before_validation:
+                append_validation()
             work_journal = D2LStageWorkJournal(
                 path=(
                     root
@@ -715,6 +727,9 @@ def _write_b1_term_stage_script(tmp_path: Path) -> Path:
                 input_sha256=canonical_sha256({"window": "window_0001"}),
                 result=result,
             )
+            if work_before_validation:
+                time.sleep(validation_delay_seconds)
+                append_validation()
             observation_writer.append(
                 {
                     "event": "work_progress",
@@ -737,6 +752,188 @@ def _write_b1_term_stage_script(tmp_path: Path) -> Path:
         encoding="utf-8",
     )
     return script
+
+
+def test_live_term_projection_waits_for_matching_validation_event(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "component"
+    _write_payloads(root, attempt_id=1)
+    call_count = tmp_path / "b1_calls.txt"
+    script = _write_b1_term_stage_script(tmp_path)
+    raw_plan = _plan(attempt_id=1)
+    raw_plan["stages"][1]["command"] = [
+        sys.executable,
+        str(script),
+        str(root),
+        str(TOOL_ROOT),
+        str(call_count),
+        "2",
+        "work_before_validation",
+        "0.30",
+    ]
+    raw_plan["stages"][1]["total"] = 1
+    plan = ComponentPlan.from_mapping(raw_plan)
+    original_project = (
+        D2LTranslationComponentRunner._project_term_work_entry
+    )
+    deferred = {"count": 0}
+
+    def track_deferred(
+        runner: D2LTranslationComponentRunner,
+        **kwargs: object,
+    ) -> bool:
+        projected = original_project(runner, **kwargs)
+        if not projected:
+            deferred["count"] += 1
+        return projected
+
+    monkeypatch.setattr(
+        D2LTranslationComponentRunner,
+        "_project_term_work_entry",
+        track_deferred,
+    )
+
+    paused = D2LTranslationComponentRunner(
+        plan,
+        root,
+        stop_after_stage="b1_candidate_discovery",
+    ).run()
+
+    assert paused["terminal_event"] is None
+    assert deferred["count"] >= 1
+    assert call_count.read_text(encoding="ascii") == "1"
+    counts = _event_counts(root)
+    assert counts["term_lifecycle"] == 1
+    assert counts["validation_failed"] == 0
+    assert counts["run_failed"] == 0
+    events = [
+        json.loads(line)
+        for line in (root / "events.jsonl").read_text(
+            encoding="utf-8"
+        ).splitlines()
+    ]
+    assert sum(
+        row["event"] == "validation_passed"
+        and row["stage_id"] == "b1_candidate_discovery"
+        and row["payload"]["subject_ref"] == "b1_window_0001"
+        for row in events
+    ) == 1
+    manifest = json.loads(
+        (root / "component_manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest["status"] == "paused"
+    assert manifest["stages"][1]["status"] == "succeeded"
+
+
+def test_failure_closure_drains_durable_usage_before_terminal_snapshot(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "component"
+    _write_payloads(root, attempt_id=1)
+    raw_plan = _plan(attempt_id=1)
+    script = _write_streaming_stage_script(tmp_path)
+    preflight = raw_plan["stages"][0]
+    preflight["command"] = [
+        sys.executable,
+        str(script),
+        str(root),
+        str(TOOL_ROOT),
+    ]
+    preflight["cwd"] = str(TOOL_ROOT)
+    preflight["total"] = 2
+    preflight["receipt_ref"] = "artifacts/preflight_receipt.json"
+    preflight["artifact_specs"] = [
+        _artifact_spec(
+            "art_preflight_receipt",
+            "d2l_stage_event_receipt",
+            STAGE_RECEIPT_SCHEMA,
+            "artifacts/preflight_receipt.json",
+        )
+    ]
+    plan = ComponentPlan.from_mapping(raw_plan)
+    original_drain = (
+        D2LTranslationComponentRunner._drain_term_work_journal
+    )
+    injected = {"value": False}
+
+    def fail_after_usage(
+        runner: D2LTranslationComponentRunner,
+        stage: object,
+        **kwargs: object,
+    ) -> None:
+        if (
+            getattr(stage, "stage_id", None) == "preflight"
+            and runner._journal_cursor >= 4
+            and not injected["value"]
+        ):
+            injected["value"] = True
+            raise ComponentRunnerError("primary live projection failure")
+        original_drain(runner, stage, **kwargs)
+
+    monkeypatch.setattr(
+        D2LTranslationComponentRunner,
+        "_drain_term_work_journal",
+        fail_after_usage,
+    )
+
+    with pytest.raises(
+        ComponentRunnerError,
+        match="primary live projection failure",
+    ):
+        D2LTranslationComponentRunner(plan, root).run()
+
+    events = [
+        json.loads(line)
+        for line in (root / "events.jsonl").read_text(
+            encoding="utf-8"
+        ).splitlines()
+    ]
+    usage_events = [
+        row for row in events if row["event"] == "usage_snapshot"
+    ]
+    assert [row["payload"]["snapshot_kind"] for row in usage_events] == [
+        "accepted_result",
+        "component_final",
+    ]
+    assert events[-1]["event"] == "run_failed"
+    assert events[-1]["payload"]["message"] == (
+        "primary live projection failure"
+    )
+    validated = validate_translation_component_package(root)
+    assert validated["terminal_event"] == "run_failed"
+    assert validated["component_usage"]["accepted_result_count"] == 1
+
+
+def test_runner_preserves_primary_error_when_failure_closure_raises(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "component"
+    _write_payloads(root, attempt_id=1)
+    runner = D2LTranslationComponentRunner(
+        ComponentPlan.from_mapping(_plan(attempt_id=1)),
+        root,
+    )
+
+    def fail_execution() -> None:
+        raise ComponentRunnerError("primary execution failure")
+
+    def fail_closure(_exc: Exception) -> None:
+        raise ComponentRunnerError("secondary closure failure")
+
+    monkeypatch.setattr(runner, "_execute_remaining_stages", fail_execution)
+    monkeypatch.setattr(runner, "_fail", fail_closure)
+
+    with pytest.raises(
+        ComponentRunnerError,
+        match="primary execution failure",
+    ) as caught:
+        runner.run()
+    assert isinstance(caught.value.__cause__, ComponentRunnerError)
+    assert str(caught.value.__cause__) == "secondary closure failure"
 
 
 def test_runner_streams_partial_usage_and_resumes_without_double_count(
@@ -1797,7 +1994,7 @@ def test_term_lifecycle_repair_resume_backfills_attempt_two_without_b1_replay(
     monkeypatch.setattr(
         D2LTranslationComponentRunner,
         "_drain_term_work_journal",
-        lambda self, stage, *, projection_mode: None,
+        lambda self, stage, **_kwargs: None,
     )
     second = D2LTranslationComponentRunner(
         plan,
@@ -1920,7 +2117,7 @@ def test_term_lifecycle_partial_backfill_crash_resumes_without_duplicates(
     monkeypatch.setattr(
         D2LTranslationComponentRunner,
         "_drain_term_work_journal",
-        lambda self, stage, *, projection_mode: None,
+        lambda self, stage, **_kwargs: None,
     )
     D2LTranslationComponentRunner(
         plan,

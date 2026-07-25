@@ -602,7 +602,8 @@ class D2LTranslationComponentRunner:
         stage_id: str,
         entry: Mapping[str, Any],
         journal_ref: str,
-    ) -> dict[str, Any]:
+        allow_pending: bool = False,
+    ) -> dict[str, Any] | None:
         existing = self._existing_term_evidence(
             evidence_ref=journal_ref,
             evidence_sha256=str(entry["entry_sha256"]),
@@ -630,6 +631,8 @@ class D2LTranslationComponentRunner:
             and row["payload"]["subject_ref"] == entry["work_item_id"]
         ]
         if not candidates:
+            if allow_pending:
+                return None
             raise ComponentRunnerError(
                 "accepted work item lacks a validation_passed event"
             )
@@ -734,12 +737,16 @@ class D2LTranslationComponentRunner:
         entries: Sequence[Mapping[str, Any]],
         entry: Mapping[str, Any],
         projection_mode: str,
-    ) -> None:
+        allow_pending_validation: bool = False,
+    ) -> bool:
         validation_event = self._validation_event_for_work_entry(
             stage_id=stage.stage_id,
             entry=entry,
             journal_ref=journal_ref,
+            allow_pending=allow_pending_validation,
         )
+        if validation_event is None:
+            return False
         existing_evidence = self._existing_term_evidence(
             evidence_ref=journal_ref,
             evidence_sha256=str(entry["entry_sha256"]),
@@ -791,12 +798,14 @@ class D2LTranslationComponentRunner:
         )
         if evidence_key is not None:
             self._term_checked_evidence_keys.add(evidence_key)
+        return True
 
     def _drain_term_work_journal(
         self,
         stage: StagePlan,
         *,
         projection_mode: str,
+        allow_pending_validation: bool = False,
     ) -> None:
         if stage.stage_id not in {
             "b1_candidate_discovery",
@@ -810,13 +819,16 @@ class D2LTranslationComponentRunner:
         journal_ref = f"runtime/work_items/{stage.stage_id}.jsonl"
         entries = read_work_journal(self.root / journal_ref)
         for entry in entries:
-            self._project_term_work_entry(
+            projected = self._project_term_work_entry(
                 stage=stage,
                 journal_ref=journal_ref,
                 entries=entries,
                 entry=entry,
                 projection_mode=projection_mode,
+                allow_pending_validation=allow_pending_validation,
             )
+            if not projected:
+                break
 
     def _project_term_artifact(
         self,
@@ -1318,7 +1330,10 @@ class D2LTranslationComponentRunner:
             self._pause(pause.stage_id, pause.reason)
             return validate_translation_component_package(self.root, require_terminal=False)
         except Exception as exc:
-            self._fail(exc)
+            try:
+                self._fail(exc)
+            except Exception as closure_exc:
+                raise exc from closure_exc
             raise
 
     def _recover_stale_attempt(self) -> None:
@@ -1981,6 +1996,7 @@ class D2LTranslationComponentRunner:
                     self._drain_term_work_journal(
                         stage,
                         projection_mode="live",
+                        allow_pending_validation=True,
                     )
                     if (
                         self.pause_file is not None
@@ -2542,6 +2558,15 @@ class D2LTranslationComponentRunner:
             return
         failed_stage = self.manifest.get("active_stage_id")
         if failed_stage is not None:
+            stage = next(
+                item
+                for item in self.plan.stages
+                if item.stage_id == failed_stage
+            )
+            self._drain_observation_journal(
+                stage,
+                allow_incomplete_tail=True,
+            )
             row = self._stage_row(failed_stage)
             if row["status"] == "running":
                 row["status"] = "failed"
