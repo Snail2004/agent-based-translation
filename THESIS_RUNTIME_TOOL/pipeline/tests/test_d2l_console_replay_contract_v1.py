@@ -260,6 +260,38 @@ def test_usage_snapshots_preserve_attempt_cache_and_unknown_cost() -> None:
     }
 
 
+def test_usage_snapshot_allows_attempt_gap_without_accepted_usage() -> None:
+    first = build_component_usage_snapshot(
+        previous_snapshots=[],
+        workflow_run_id=WORKFLOW_RUN_ID,
+        component_run_id=COMPONENT_RUN_ID,
+        component_attempt_id=1,
+        stage_id="b1_candidate_discovery",
+        work_id="window_1",
+        accepted_usage=_accepted_provider(
+            "request_1",
+            attempt_usage_id="attempt_1",
+        ),
+    )
+
+    resumed = build_component_usage_snapshot(
+        previous_snapshots=[first],
+        workflow_run_id=WORKFLOW_RUN_ID,
+        component_run_id=COMPONENT_RUN_ID,
+        component_attempt_id=3,
+        stage_id="b1_candidate_discovery",
+        work_id="window_2",
+        accepted_usage=_accepted_provider(
+            "request_2",
+            attempt_usage_id="attempt_2",
+        ),
+    )
+
+    assert resumed["component_attempt_id"] == 3
+    assert resumed["snapshot_seq"] == 2
+    assert validate_component_usage_snapshot_sequence([first, resumed]) == resumed
+
+
 def test_usage_snapshot_preserves_unreported_provider_cache_as_unknown() -> None:
     first = build_component_usage_snapshot(
         previous_snapshots=[],

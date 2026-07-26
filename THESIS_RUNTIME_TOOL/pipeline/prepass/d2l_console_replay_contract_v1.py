@@ -939,9 +939,7 @@ def validate_component_usage_snapshot_sequence(
         if row["previous_snapshot_sha256"] != previous_sha:
             raise D2LConsoleContractError("usage snapshot previous hash mismatch")
         attempt = int(row["component_attempt_id"])
-        if previous_attempt is not None and (
-            attempt < previous_attempt or attempt > previous_attempt + 1
-        ):
+        if previous_attempt is not None and attempt < previous_attempt:
             raise D2LConsoleContractError("usage snapshot attempt progression is invalid")
         previous_attempt = attempt
         accepted = row["accepted_usage"]
