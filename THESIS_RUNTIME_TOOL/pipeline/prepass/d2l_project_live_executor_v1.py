@@ -1048,6 +1048,75 @@ def _split_b1_window(window: Mapping[str, Any]) -> list[dict[str, Any]]:
     ]
 
 
+def _split_b1_window_after_truncation(
+    window: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    """Bisect one failed packet without changing its source-block boundary."""
+    source_blocks = [
+        [str(block_id), str(text)]
+        for block_id, text in window["source_blocks"]
+    ]
+    if len(source_blocks) <= 1:
+        return [dict(window)]
+    block_tokens = [max(1, (len(text) + 3) // 4) for _, text in source_blocks]
+    target_tokens = max(1, (sum(block_tokens) + 1) // 2)
+    parts: list[dict[str, Any]] = []
+    current: list[list[str]] = []
+    current_tokens = 0
+    for source_block, token_count in zip(
+        source_blocks,
+        block_tokens,
+        strict=True,
+    ):
+        if current and current_tokens + token_count > target_tokens:
+            parts.append(
+                {
+                    "chapter_id": window["chapter_id"],
+                    "block_ids": [row[0] for row in current],
+                    "source_blocks": current,
+                    "estimated_source_tokens": current_tokens,
+                }
+            )
+            current = []
+            current_tokens = 0
+        current.append(source_block)
+        current_tokens += token_count
+    if current:
+        parts.append(
+            {
+                "chapter_id": window["chapter_id"],
+                "block_ids": [row[0] for row in current],
+                "source_blocks": current,
+                "estimated_source_tokens": current_tokens,
+            }
+        )
+    if len(parts) <= 1:
+        midpoint = len(source_blocks) // 2
+        groups = [source_blocks[:midpoint], source_blocks[midpoint:]]
+        parts = [
+            {
+                "chapter_id": window["chapter_id"],
+                "block_ids": [row[0] for row in group],
+                "source_blocks": group,
+                "estimated_source_tokens": sum(
+                    max(1, (len(text) + 3) // 4) for _, text in group
+                ),
+            }
+            for group in groups
+        ]
+    total = len(parts)
+    return [
+        {
+            **part,
+            "window_id": f"{window['window_id']}.part_{index:03d}",
+            "parent_window_id": str(window["window_id"]),
+            "window_part_index": index,
+            "window_part_count": total,
+        }
+        for index, part in enumerate(parts, start=1)
+    ]
+
+
 def _b1_split_fallback(
     *,
     client: Any,
@@ -1063,6 +1132,20 @@ def _b1_split_fallback(
     work_contract_id = str(role["semantic_role_sha256"])
     for part in parts:
         part_tag = f"b1_{part['window_id']}"
+        nested_parts = _split_b1_window_after_truncation(part)
+        nested_fallback = None
+        if len(nested_parts) > 1:
+            nested_fallback = (
+                lambda part=part, nested_parts=nested_parts: _b1_split_fallback(
+                    client=client,
+                    window=part,
+                    parts=nested_parts,
+                    source_manifest_sha256=source_manifest_sha256,
+                    role=role,
+                    observations=observations,
+                    work_journal=work_journal,
+                )
+            )
         part_messages = render_discovery_messages(
             chapter_id=LIVE_SCOPE_ID,
             window_id=part["window_id"],
@@ -1089,6 +1172,14 @@ def _b1_split_fallback(
             truncation_retry_array_name="candidate_observations",
             truncation_retry_item_limit=max(
                 1, int(role["generation"]["max_output_tokens"]) // 128
+            ),
+            truncation_fallback=nested_fallback,
+            prefer_truncation_fallback=(
+                nested_fallback is not None
+                and observations.has_terminal_validation_failure(
+                    subject_ref=part_tag,
+                    reason_code="response_truncated",
+                )
             ),
         )
         part_validations.append(part_validation)

@@ -629,6 +629,50 @@ class _InterruptAfterFirstSplitPartTransport(_SplitB1Transport):
         return super().response(role_id, messages, tag)
 
 
+class _TruncatedSplitPartTransport(_SplitB1Transport):
+    def __init__(
+        self,
+        source_by_block: dict[str, str],
+        *,
+        reject_first_level_call: bool = False,
+    ) -> None:
+        super().__init__(source_by_block)
+        self.reject_first_level_call = reject_first_level_call
+
+    def response(self, role_id: str, messages: list[dict], tag: str):
+        if role_id == "d2l.candidate_discovery":
+            user = "\n".join(
+                str(row.get("content") or "")
+                for row in messages
+                if row.get("role") == "user"
+            )
+            window_id = user.split("WINDOW_ID\n", 1)[1].split("\n", 1)[0]
+            if (
+                window_id.count(".part_") == 1
+                and window_id.endswith(".part_001")
+            ):
+                if self.reject_first_level_call:
+                    raise AssertionError("terminally failed split part was replayed")
+                return _TRUNCATED_JSON
+        return super().response(role_id, messages, tag)
+
+
+def _nested_split_b1_fixture(
+    campaign: dict,
+    rows: list[dict],
+) -> dict:
+    b1_rows = [row for row in rows if row["channel"] == "semantic_text"]
+    assert len(b1_rows) >= 3
+    first_window = campaign["universe"]["window_estimates"]["b1"]["windows"][0]
+    first_window["block_ids"] = [str(row["block_id"]) for row in b1_rows]
+    first_window["estimated_source_tokens"] = 1500
+    campaign["universe"]["window_estimates"]["b1"]["windows"] = [first_window]
+    for index, row in enumerate(b1_rows):
+        repeats = 50 if index < 2 else 100
+        row["clean_text"] = "dense-term " + ("dense source text " * repeats)
+    return first_window
+
+
 class _SemanticRepairTransport(_FakeTransport):
     def response(self, role_id: str, messages: list[dict], tag: str):
         user = "\n".join(
@@ -1076,6 +1120,124 @@ def test_b1_resume_reuses_accepted_internal_part_without_provider_replay(
     assert not any(
         row["tag"].startswith(f"b1_{first_window['window_id']}.semantic_")
         for row in resumed_calls
+    )
+
+
+def test_b1_truncated_internal_part_bisects_without_repeating_same_part(
+    tmp_path: Path,
+) -> None:
+    _job, campaign_root, campaign, project, rows, support = _prepared(tmp_path)
+    first_window = _nested_split_b1_fixture(campaign, rows)
+
+    component_root = campaign_root / "component"
+    component_root.mkdir()
+    stage = next(
+        item
+        for item in ComponentPlan.from_mapping(support["plan"]).stages
+        if item.stage_id == "b1_candidate_discovery"
+    )
+    transport = _TruncatedSplitPartTransport(
+        {
+            str(row["block_id"]): str(row["clean_text"] or row["source_text"])
+            for row in rows
+        }
+    )
+
+    payloads = execute_live_stage(
+        campaign=campaign,
+        project=project,
+        rows=rows,
+        stage_id=stage.stage_id,
+        component_root=component_root,
+        work_db=campaign_root / "state" / "work.sqlite3",
+        transport=transport,
+        component_attempt_id=1,
+        producer=stage.producer,
+        work_id=stage.work_id,
+    )
+
+    first_part = f"b1_{first_window['window_id']}.part_001"
+    first_part_calls = [
+        row for row in transport.calls if row["tag"].startswith(f"{first_part}.semantic_")
+    ]
+    assert [row["tag"] for row in first_part_calls] == [
+        f"{first_part}.semantic_1"
+    ]
+    assert any(
+        row["tag"].startswith(f"{first_part}.part_001.semantic_")
+        for row in transport.calls
+    )
+    receipt = next(
+        value for value in payloads.values() if "observations" in value
+    )
+    assert any(
+        row["event"] == "retry"
+        and row["payload"]["work_id"] == first_part
+        and row["payload"]["reason_code"] == "response_truncated_split"
+        for row in receipt["observations"]
+    )
+
+
+def test_b1_resume_terminally_truncated_part_starts_with_nested_parts(
+    tmp_path: Path,
+) -> None:
+    _job, campaign_root, campaign, project, rows, support = _prepared(tmp_path)
+    first_window = _nested_split_b1_fixture(campaign, rows)
+
+    component_root = campaign_root / "component"
+    component_root.mkdir()
+    stage = next(
+        item
+        for item in ComponentPlan.from_mapping(support["plan"]).stages
+        if item.stage_id == "b1_candidate_discovery"
+    )
+    first_part = (
+        f"b1_{first_window['window_id']}.part_001"
+    )
+    prior = _StageObservations(
+        campaign=campaign,
+        component_root=component_root,
+        component_attempt_id=1,
+        stage_id=stage.stage_id,
+        agent=stage.producer,
+        work_kind="windows",
+        work_id=stage.work_id,
+    )
+    prior.validation(
+        passed=False,
+        validator_id=live_executor.DISCOVERY_VALIDATOR_VERSION,
+        subject_ref=first_part,
+        reason_codes=["DiscoveryContractError", "response_truncated"],
+        retryable=False,
+    )
+    transport = _TruncatedSplitPartTransport(
+        {
+            str(row["block_id"]): str(row["clean_text"] or row["source_text"])
+            for row in rows
+        },
+        reject_first_level_call=True,
+    )
+
+    execute_live_stage(
+        campaign=campaign,
+        project=project,
+        rows=rows,
+        stage_id=stage.stage_id,
+        component_root=component_root,
+        work_db=campaign_root / "state" / "work.sqlite3",
+        transport=transport,
+        component_attempt_id=2,
+        producer=stage.producer,
+        work_id=stage.work_id,
+    )
+
+    assert any(
+        row["tag"].startswith(f"{first_part}.part_001.semantic_")
+        for row in transport.calls
+    )
+    assert not any(
+        row["tag"].startswith(f"{first_part}.semantic_")
+        for row in transport.calls
     )
 
 
