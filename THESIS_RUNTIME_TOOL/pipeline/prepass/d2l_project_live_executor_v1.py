@@ -114,6 +114,10 @@ class D2LProjectLiveExecutorError(RuntimeError):
     """Raised when a live stage cannot safely publish semantic output."""
 
 
+_B1_INTERNAL_SPLIT_THRESHOLD_TOKENS = 900
+_B1_INTERNAL_PART_TARGET_TOKENS = 700
+
+
 class ProjectTransport(Protocol):
     def build_client(
         self,
@@ -471,6 +475,9 @@ class _StageObservations:
         self.component_attempt_id = component_attempt_id
         self.journal_path = component_root / "runtime/component_observations.jsonl"
         existing = read_observation_journal(self.journal_path)
+        self.existing_observations = [
+            dict(entry["observation"]) for entry in existing
+        ]
         self.usage_snapshots = [
             dict(entry["observation"]["payload"])
             for entry in existing
@@ -484,6 +491,20 @@ class _StageObservations:
             stage_id=stage_id,
             producer=agent,
             work_id=work_id,
+        )
+
+    def has_terminal_validation_failure(
+        self,
+        *,
+        subject_ref: str,
+        reason_code: str,
+    ) -> bool:
+        return any(
+            row["event"] == "validation_failed"
+            and row["payload"].get("subject_ref") == subject_ref
+            and reason_code in row["payload"].get("reason_codes", [])
+            and row["payload"].get("retryable") is False
+            for row in self.existing_observations
         )
 
     def _append(self, event: str, payload: Mapping[str, Any], severity: str = "info") -> None:
@@ -810,14 +831,14 @@ def _semantic_call(
     work_contract_id: str,
     truncation_retry_array_name: str | None = None,
     truncation_retry_item_limit: int | None = None,
+    truncation_fallback: Callable[[], tuple[Any, Any]] | None = None,
+    prefer_truncation_fallback: bool = False,
 ) -> tuple[Any, Any]:
-    input_sha256 = replay_sha256(
-        {
-            "messages": messages,
-            "response_format": dict(response_format),
-            "validator_id": validator_id,
-            "retry_cap": retry_cap,
-        }
+    input_sha256 = _semantic_input_sha256(
+        messages=messages,
+        response_format=response_format,
+        validator_id=validator_id,
+        retry_cap=retry_cap,
     )
     durable_result = work_journal.lookup(
         work_item_id=tag,
@@ -842,6 +863,9 @@ def _semantic_call(
             retryable=False,
         )
         return None, validation
+
+    if prefer_truncation_fallback and truncation_fallback is not None:
+        return truncation_fallback()
 
     correction: str | None = None
     for semantic_attempt in range(1, retry_cap + 2):
@@ -923,6 +947,19 @@ def _semantic_call(
                 result=parsed,
             )
             return result, validation
+        if (
+            response_truncated
+            and truncation_fallback is not None
+            and semantic_attempt == 1
+        ):
+            observations.retry(
+                result=result,
+                work_id=tag,
+                index=semantic_attempt,
+                maximum=retry_cap,
+                reason_code="response_truncated_split",
+            )
+            return truncation_fallback()
         if semantic_attempt <= retry_cap:
             retry_reason = (
                 "response_truncated" if response_truncated else "local_validation_failed"
@@ -940,6 +977,191 @@ def _semantic_call(
             f"semantic response failed local validation for {tag}: {errors}"
         )
     raise AssertionError("semantic retry loop did not terminate")
+
+
+def _semantic_input_sha256(
+    *,
+    messages: list[dict[str, str]],
+    response_format: Mapping[str, Any],
+    validator_id: str,
+    retry_cap: int,
+) -> str:
+    return replay_sha256(
+        {
+            "messages": messages,
+            "response_format": dict(response_format),
+            "validator_id": validator_id,
+            "retry_cap": retry_cap,
+        }
+    )
+
+
+def _split_b1_window(window: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Create deterministic internal packets without changing top-level coverage."""
+    if int(window["estimated_source_tokens"]) <= _B1_INTERNAL_SPLIT_THRESHOLD_TOKENS:
+        return [dict(window)]
+    source_blocks = [
+        [str(block_id), str(text)]
+        for block_id, text in window["source_blocks"]
+    ]
+    parts: list[dict[str, Any]] = []
+    current: list[list[str]] = []
+    current_tokens = 0
+    for block_id, text in source_blocks:
+        block_tokens = max(1, (len(text) + 3) // 4)
+        if current and current_tokens + block_tokens > _B1_INTERNAL_PART_TARGET_TOKENS:
+            parts.append(
+                {
+                    "chapter_id": window["chapter_id"],
+                    "block_ids": [row[0] for row in current],
+                    "source_blocks": current,
+                    "estimated_source_tokens": current_tokens,
+                }
+            )
+            current = []
+            current_tokens = 0
+        current.append([block_id, text])
+        current_tokens += block_tokens
+    if current:
+        parts.append(
+            {
+                "chapter_id": window["chapter_id"],
+                "block_ids": [row[0] for row in current],
+                "source_blocks": current,
+                "estimated_source_tokens": current_tokens,
+            }
+        )
+    if len(parts) <= 1:
+        return [dict(window)]
+    total = len(parts)
+    return [
+        {
+            **part,
+            "window_id": (
+                f"{window['window_id']}.part_{index:03d}"
+            ),
+            "parent_window_id": str(window["window_id"]),
+            "window_part_index": index,
+            "window_part_count": total,
+        }
+        for index, part in enumerate(parts, start=1)
+    ]
+
+
+def _b1_split_fallback(
+    *,
+    client: Any,
+    window: Mapping[str, Any],
+    parts: Sequence[Mapping[str, Any]],
+    source_manifest_sha256: str,
+    role: Mapping[str, Any],
+    observations: _StageObservations,
+    work_journal: D2LStageWorkJournal,
+) -> tuple[Any, Any]:
+    part_validations: list[Any] = []
+    retry_cap = int(role["semantic_retry_cap"])
+    work_contract_id = str(role["semantic_role_sha256"])
+    for part in parts:
+        part_tag = f"b1_{part['window_id']}"
+        part_messages = render_discovery_messages(
+            chapter_id=LIVE_SCOPE_ID,
+            window_id=part["window_id"],
+            source_blocks=part["source_blocks"],
+        )
+        _, part_validation = _semantic_call(
+            client=client,
+            messages=part_messages,
+            response_format=DISCOVERY_RESPONSE_FORMAT,
+            tag=part_tag,
+            validator_id=DISCOVERY_VALIDATOR_VERSION,
+            parse=parse_discovery_json,
+            validate=lambda parsed, part=part: validate_discovery_output(
+                parsed,
+                chapter_id=LIVE_SCOPE_ID,
+                window_id=part["window_id"],
+                source_blocks=part["source_blocks"],
+                source_lineage_id=source_manifest_sha256,
+            ),
+            observations=observations,
+            retry_cap=retry_cap,
+            work_journal=work_journal,
+            work_contract_id=work_contract_id,
+            truncation_retry_array_name="candidate_observations",
+            truncation_retry_item_limit=max(
+                1, int(role["generation"]["max_output_tokens"]) // 128
+            ),
+        )
+        part_validations.append(part_validation)
+
+    merged: dict[str, dict[str, list[str]]] = {}
+    for validation in part_validations:
+        for row in _dataclass_json(validation)["observations"]:
+            surface = str(row["source_surface"])
+            entry = merged.setdefault(
+                surface,
+                {"anchor_block_ids": [], "source_block_ids": []},
+            )
+            for key in ("claimed_anchor_block_ids", "source_block_ids"):
+                target = (
+                    entry["anchor_block_ids"]
+                    if key == "claimed_anchor_block_ids"
+                    else entry["source_block_ids"]
+                )
+                for block_id in row[key]:
+                    if block_id not in target:
+                        target.append(block_id)
+    parsed = {
+        "chapter_id": LIVE_SCOPE_ID,
+        "window_id": window["window_id"],
+        "candidate_observations": [
+            {
+                "source_surface": surface,
+                "anchor_block_ids": list(
+                    value["anchor_block_ids"] or value["source_block_ids"][:3]
+                ),
+            }
+            for surface, value in sorted(
+                merged.items(),
+                key=lambda item: (item[0].casefold(), item[0]),
+            )
+        ],
+    }
+    validation = validate_discovery_output(
+        parsed,
+        chapter_id=LIVE_SCOPE_ID,
+        window_id=str(window["window_id"]),
+        source_blocks=window["source_blocks"],
+        source_lineage_id=source_manifest_sha256,
+    )
+    errors = [str(value) for value in validation.errors]
+    if errors:
+        raise D2LProjectLiveExecutorError(
+            f"split B1 response failed local validation for {window['window_id']}: {errors}"
+        )
+    original_messages = render_discovery_messages(
+        chapter_id=LIVE_SCOPE_ID,
+        window_id=window["window_id"],
+        source_blocks=window["source_blocks"],
+    )
+    work_journal.append(
+        work_item_id=f"b1_{window['window_id']}",
+        work_contract_id=work_contract_id,
+        input_sha256=_semantic_input_sha256(
+            messages=original_messages,
+            response_format=DISCOVERY_RESPONSE_FORMAT,
+            validator_id=DISCOVERY_VALIDATOR_VERSION,
+            retry_cap=retry_cap,
+        ),
+        result=parsed,
+    )
+    observations.validation(
+        passed=True,
+        validator_id=DISCOVERY_VALIDATOR_VERSION,
+        subject_ref=f"b1_{window['window_id']}",
+        reason_codes=["exact_local_validation", "internal_window_split"],
+        retryable=False,
+    )
+    return None, validation
 
 
 def _b1_stage(
@@ -969,11 +1191,26 @@ def _b1_stage(
             window_id=window["window_id"],
             source_blocks=window["source_blocks"],
         )
+        internal_parts = _split_b1_window(window)
+        truncation_fallback = None
+        if len(internal_parts) > 1:
+            truncation_fallback = lambda window=window, internal_parts=internal_parts: (
+                _b1_split_fallback(
+                    client=client,
+                    window=window,
+                    parts=internal_parts,
+                    source_manifest_sha256=source["manifest_sha256"],
+                    role=role,
+                    observations=observations,
+                    work_journal=work_journal,
+                )
+            )
+        tag = f"b1_{window['window_id']}"
         _, validation = _semantic_call(
             client=client,
             messages=messages,
             response_format=DISCOVERY_RESPONSE_FORMAT,
-            tag=f"b1_{window['window_id']}",
+            tag=tag,
             validator_id=DISCOVERY_VALIDATOR_VERSION,
             parse=parse_discovery_json,
             validate=lambda parsed, window=window: validate_discovery_output(
@@ -990,6 +1227,14 @@ def _b1_stage(
             truncation_retry_array_name="candidate_observations",
             truncation_retry_item_limit=max(
                 1, int(role["generation"]["max_output_tokens"]) // 128
+            ),
+            truncation_fallback=truncation_fallback,
+            prefer_truncation_fallback=(
+                truncation_fallback is not None
+                and observations.has_terminal_validation_failure(
+                    subject_ref=tag,
+                    reason_code="response_truncated",
+                )
             ),
         )
         normalized = _dataclass_json(validation)

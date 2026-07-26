@@ -578,6 +578,41 @@ class _FakeTransport:
         raise AssertionError(f"unexpected fake role: {role_id} ({tag})")
 
 
+class _SplitB1Transport(_FakeTransport):
+    def __init__(self, source_by_block: dict[str, str]) -> None:
+        super().__init__(source_by_block)
+        self.full_window_truncated = True
+
+    def response(self, role_id: str, messages: list[dict], tag: str):
+        if role_id != "d2l.candidate_discovery":
+            return super().response(role_id, messages, tag)
+        user = "\n".join(
+            str(row.get("content") or "")
+            for row in messages
+            if row.get("role") == "user"
+        )
+        window_id = user.split("WINDOW_ID\n", 1)[1].split("\n", 1)[0]
+        if self.full_window_truncated and ".part_" not in window_id:
+            self.full_window_truncated = False
+            return _TRUNCATED_JSON
+        marker = next(
+            line
+            for line in user.splitlines()
+            if line.startswith("[") and "] " in line
+        )
+        block_id, _source = marker[1:].split("] ", 1)
+        return {
+            "chapter_id": user.split("CHAPTER_ID\n", 1)[1].split("\n", 1)[0],
+            "window_id": window_id,
+            "candidate_observations": [
+                {
+                    "source_surface": "dense-term",
+                    "anchor_block_ids": [block_id],
+                }
+            ],
+        }
+
+
 class _SemanticRepairTransport(_FakeTransport):
     def response(self, role_id: str, messages: list[dict], tag: str):
         user = "\n".join(
@@ -825,6 +860,141 @@ def test_b1_truncated_response_retries_once_with_bounded_complete_output(
     ]
     assert len(retries) == 1
     assert retries[0]["payload"]["reason_code"] == "response_truncated"
+
+
+def test_b1_truncation_falls_back_to_internal_parts_and_seals_original_work(
+    tmp_path: Path,
+) -> None:
+    _job, campaign_root, campaign, project, rows, support = _prepared(tmp_path)
+    first_window = campaign["universe"]["window_estimates"]["b1"]["windows"][0]
+    first_ids = {str(value) for value in first_window["block_ids"]}
+    for row in rows:
+        if str(row["block_id"]) in first_ids:
+            row["clean_text"] = "dense-term " + ("dense source text " * 220)
+    first_window["estimated_source_tokens"] = 1500
+
+    component_root = campaign_root / "component"
+    component_root.mkdir()
+    plan = ComponentPlan.from_mapping(support["plan"])
+    stage = next(
+        item
+        for item in plan.stages
+        if item.stage_id == "b1_candidate_discovery"
+    )
+    transport = _SplitB1Transport(
+        {
+            str(row["block_id"]): str(row["clean_text"] or row["source_text"])
+            for row in rows
+        }
+    )
+
+    payloads = execute_live_stage(
+        campaign=campaign,
+        project=project,
+        rows=rows,
+        stage_id=stage.stage_id,
+        component_root=component_root,
+        work_db=campaign_root / "state" / "work.sqlite3",
+        transport=transport,
+        component_attempt_id=1,
+        producer=stage.producer,
+        work_id=stage.work_id,
+    )
+
+    candidate_calls = [
+        row
+        for row in transport.calls
+        if row["role_id"] == "d2l.candidate_discovery"
+    ]
+    original_prefix = "b1_" + first_window["window_id"]
+    assert candidate_calls[0]["tag"] == f"{original_prefix}.semantic_1"
+    assert any(".part_001.semantic_1" in row["tag"] for row in candidate_calls)
+    assert not any(
+        row["tag"] == f"{original_prefix}.semantic_2"
+        for row in candidate_calls
+    )
+    receipt = next(
+        value for value in payloads.values() if "observations" in value
+    )
+    retries = [
+        row for row in receipt["observations"] if row["event"] == "retry"
+    ]
+    assert [row["payload"]["reason_code"] for row in retries] == [
+        "response_truncated_split"
+    ]
+    assert any(
+        row["event"] == "validation_passed"
+        and row["payload"]["subject_ref"] == original_prefix
+        and "internal_window_split" in row["payload"]["reason_codes"]
+        for row in receipt["observations"]
+    )
+
+
+def test_b1_resume_after_terminal_truncation_starts_with_internal_part(
+    tmp_path: Path,
+) -> None:
+    _job, campaign_root, campaign, project, rows, support = _prepared(tmp_path)
+    first_window = campaign["universe"]["window_estimates"]["b1"]["windows"][0]
+    first_ids = {str(value) for value in first_window["block_ids"]}
+    for row in rows:
+        if str(row["block_id"]) in first_ids:
+            row["clean_text"] = "dense-term " + ("dense source text " * 220)
+    first_window["estimated_source_tokens"] = 1500
+
+    component_root = campaign_root / "component"
+    component_root.mkdir()
+    stage = next(
+        item
+        for item in ComponentPlan.from_mapping(support["plan"]).stages
+        if item.stage_id == "b1_candidate_discovery"
+    )
+    original_tag = f"b1_{first_window['window_id']}"
+    prior = _StageObservations(
+        campaign=campaign,
+        component_root=component_root,
+        component_attempt_id=1,
+        stage_id=stage.stage_id,
+        agent=stage.producer,
+        work_kind="windows",
+        work_id=stage.work_id,
+    )
+    prior.validation(
+        passed=False,
+        validator_id=live_executor.DISCOVERY_VALIDATOR_VERSION,
+        subject_ref=original_tag,
+        reason_codes=["DiscoveryContractError", "response_truncated"],
+        retryable=False,
+    )
+    transport = _SplitB1Transport(
+        {
+            str(row["block_id"]): str(row["clean_text"] or row["source_text"])
+            for row in rows
+        }
+    )
+
+    execute_live_stage(
+        campaign=campaign,
+        project=project,
+        rows=rows,
+        stage_id=stage.stage_id,
+        component_root=component_root,
+        work_db=campaign_root / "state" / "work.sqlite3",
+        transport=transport,
+        component_attempt_id=2,
+        producer=stage.producer,
+        work_id=stage.work_id,
+    )
+
+    candidate_calls = [
+        row
+        for row in transport.calls
+        if row["role_id"] == "d2l.candidate_discovery"
+    ]
+    assert candidate_calls[0]["tag"].endswith(".part_001.semantic_1")
+    assert not any(
+        row["tag"].startswith(f"{original_tag}.semantic_")
+        for row in candidate_calls
+    )
 
 
 def test_b1_reuses_durable_work_results_after_process_resume(
