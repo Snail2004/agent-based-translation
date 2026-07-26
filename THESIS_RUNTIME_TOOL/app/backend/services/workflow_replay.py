@@ -6,6 +6,7 @@ import os
 import secrets
 import threading
 import time
+from collections import deque
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation
@@ -29,6 +30,7 @@ from services.thesis_runs import validate_job_id, validate_run_id
 
 
 WORKFLOW_REPLAY_READ_SCHEMA = "workflow_replay_read_v1"
+WORKFLOW_LIVE_CONSOLE_SCHEMA = "workflow_live_console_v1"
 WORKFLOW_ARTIFACT_READ_SCHEMA = "workflow_artifact_read_v1"
 WORKFLOW_SETUP_SCHEMA_ID = "WorkflowSetupV1"
 WORKFLOW_PREFLIGHT_SCHEMA_ID = "WorkflowPreflightV1"
@@ -48,6 +50,9 @@ MAX_EVENT_STREAM_BYTES = 128 * 1024 * 1024
 MAX_EVENT_COUNT = 100_000
 PREFLIGHT_TTL_SECONDS = 30 * 60
 MAX_ACTIVE_PREFLIGHTS = 64
+LIVE_CONSOLE_EVENT_LIMIT = 400
+LIVE_CONSOLE_PAYLOAD_LIMIT = 8 * 1024
+LIVE_CONSOLE_TAIL_BYTES = 4 * 1024 * 1024
 
 SHARED_SETTINGS_ID = "shared_llm_transport_catalog_v1"
 D2L_SETTINGS_ID = "d2l_workflow_settings_v1"
@@ -75,6 +80,8 @@ class _WorkflowPreflightToken:
 
 _preflight_tokens: dict[str, _WorkflowPreflightToken] = {}
 _preflight_lock = threading.Lock()
+_live_console_cache: dict[str, tuple[tuple[int, int, int, int], dict[str, Any]]] = {}
+_live_console_cache_lock = threading.Lock()
 
 
 class WorkflowReplayError(ValueError):
@@ -1585,6 +1592,314 @@ def read_workflow_replay(
             )
 
 
+def read_workflow_live_console(
+    entry: Mapping[str, Any],
+    *,
+    jobs_root: str | Path,
+) -> dict[str, Any]:
+    """Read a bounded presentation snapshot without validating the full package.
+
+    This path is intentionally display-only. Mutating actions, artifact reads,
+    Resume and final Replay continue to use the authoritative validators.
+    """
+
+    root = _root_for_entry(entry, jobs_root=jobs_root)
+    manifest_path = root / "workflow_manifest.json"
+    events_path = root / "events.jsonl"
+    cache_key = _live_console_file_key(manifest_path, events_path)
+    cache_id = str(root)
+    with _live_console_cache_lock:
+        cached = _live_console_cache.get(cache_id)
+        if cached is not None and cached[0] == cache_key:
+            return cached[1]
+
+    try:
+        manifest = _read_json(manifest_path)
+        raw_events, tail_truncated = _read_regular_tail_bytes(
+            events_path,
+            max_bytes=LIVE_CONSOLE_TAIL_BYTES,
+        )
+        if _live_console_file_key(manifest_path, events_path) != cache_key:
+            raise WorkflowReplayError(
+                "workflow_live_snapshot_changed",
+                "Live Console snapshot changed while it was being read.",
+                409,
+            )
+        result = _build_workflow_live_console(
+            entry,
+            manifest=manifest,
+            raw_events=raw_events,
+            tail_truncated=tail_truncated,
+        )
+    except (OSError, WorkflowReplayContractError, WorkflowReplayError) as exc:
+        with _live_console_cache_lock:
+            cached = _live_console_cache.get(cache_id)
+            if cached is not None:
+                return cached[1]
+        if isinstance(exc, WorkflowReplayError):
+            raise
+        raise WorkflowReplayError(
+            "workflow_live_snapshot_unavailable",
+            f"Live Console snapshot is temporarily unavailable: {exc}",
+            409,
+        ) from exc
+
+    with _live_console_cache_lock:
+        _live_console_cache[cache_id] = (cache_key, result)
+        if len(_live_console_cache) > 8:
+            oldest = next(iter(_live_console_cache))
+            if oldest != cache_id:
+                _live_console_cache.pop(oldest, None)
+    return result
+
+
+def _live_console_file_key(
+    manifest_path: Path,
+    events_path: Path,
+) -> tuple[int, int, int, int]:
+    manifest_stat = manifest_path.stat()
+    events_stat = events_path.stat()
+    return (
+        manifest_stat.st_mtime_ns,
+        manifest_stat.st_size,
+        events_stat.st_mtime_ns,
+        events_stat.st_size,
+    )
+
+
+def _build_workflow_live_console(
+    entry: Mapping[str, Any],
+    *,
+    manifest: Any,
+    raw_events: bytes,
+    tail_truncated: bool,
+) -> dict[str, Any]:
+    if not isinstance(manifest, Mapping):
+        raise WorkflowReplayError(
+            "workflow_live_manifest_invalid",
+            "Live Console manifest is not an object.",
+            409,
+        )
+    workflow_run_id = str(entry.get("workflow_run_id") or "")
+    job_id = str(entry.get("job_id") or "")
+    if (
+        manifest.get("workflow_run_id") != workflow_run_id
+        or manifest.get("job_id") != job_id
+    ):
+        raise WorkflowReplayError(
+            "workflow_live_identity_drift",
+            "Live Console manifest identity differs from the run registry.",
+            409,
+        )
+    latest_seq = manifest.get("latest_event_seq")
+    if isinstance(latest_seq, bool) or not isinstance(latest_seq, int) or latest_seq < 0:
+        raise WorkflowReplayError(
+            "workflow_live_manifest_invalid",
+            "Live Console manifest has no valid event cursor.",
+            409,
+        )
+
+    visible_events: deque[dict[str, Any]] = deque(maxlen=LIVE_CONSOLE_EVENT_LIMIT)
+    latest_usage: Mapping[str, Any] | None = None
+    observed_seq = 0
+    first_seq = 0
+    for line in raw_events.splitlines():
+        if not line:
+            raise WorkflowReplayError(
+                "workflow_live_event_invalid",
+                "Live Console event stream contains a blank row.",
+                409,
+            )
+        try:
+            event = json.loads(line.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise WorkflowReplayError(
+                "workflow_live_event_invalid",
+                "Live Console event stream contains an incomplete JSON row.",
+                409,
+            ) from exc
+        seq = event.get("seq") if isinstance(event, Mapping) else None
+        if (
+            isinstance(seq, bool)
+            or not isinstance(seq, int)
+            or seq <= 0
+            or event.get("workflow_run_id") != workflow_run_id
+            or (observed_seq and seq != observed_seq + 1)
+        ):
+            raise WorkflowReplayError(
+                "workflow_live_event_invalid",
+                "Live Console event identity or sequence is inconsistent.",
+                409,
+            )
+        if first_seq == 0:
+            first_seq = seq
+        observed_seq = seq
+        event_name = event.get("event")
+        if (
+            event_name == "usage_snapshot"
+            and (event.get("component") or {}).get("component_id") == "translation"
+        ):
+            latest_usage = event
+            continue
+        if event_name == "term_lifecycle":
+            continue
+        visible_events.append(_compact_live_console_event(event))
+
+    if observed_seq != latest_seq:
+        raise WorkflowReplayError(
+            "workflow_live_event_exact_cover",
+            "Live Console manifest and event cursor are between publications.",
+            409,
+        )
+    status = str(manifest.get("status") or "running").lower()
+    source_mode = "replay" if status in {"failed", "succeeded"} else "live"
+    resume = manifest.get("resume") if isinstance(manifest.get("resume"), Mapping) else {}
+    events = list(visible_events)
+    return {
+        "schema": WORKFLOW_LIVE_CONSOLE_SCHEMA,
+        "presentation_only": True,
+        "run_id": entry["run_id"],
+        "workflow_run_id": workflow_run_id,
+        "job_id": job_id,
+        "manifest": dict(manifest),
+        "events": events,
+        "usage": _live_console_usage(latest_usage, workflow_run_id),
+        "source_mode": source_mode,
+        "cursor": {
+            "window_start_seq": events[0]["seq"] if events else latest_seq,
+            "through_seq": latest_seq,
+            "latest_seq": latest_seq,
+            "terminal": status in {"failed", "succeeded"},
+            "truncated": tail_truncated or first_seq > 1,
+        },
+        "actions": {
+            "pause": {
+                "allowed": source_mode == "live" and status == "running",
+                "method": "POST",
+                "href": f"/api/thesis/runs/{entry['run_id']}/pause",
+            },
+            "resume": {
+                "allowed": source_mode == "live" and bool(resume.get("available")),
+                "method": "POST",
+                "href": f"/api/thesis/runs/{entry['run_id']}/resume",
+                "component_id": resume.get("component_id"),
+            },
+            "replay": {
+                "allowed": True,
+                "method": "GET",
+                "href": f"/api/thesis/runs/{entry['run_id']}/workflow-replay?after_seq=0&wait_ms=0",
+            },
+            "score": {
+                "allowed": False,
+                "blocking_reasons": ["presentation_snapshot_not_scoring_authority"],
+            },
+        },
+    }
+
+
+def _compact_live_console_event(event: Mapping[str, Any]) -> dict[str, Any]:
+    row = dict(event)
+    payload = row.get("payload")
+    if not isinstance(payload, Mapping):
+        return row
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    if len(encoded) <= LIVE_CONSOLE_PAYLOAD_LIMIT:
+        return row
+    keep = {
+        "progress",
+        "completed",
+        "total",
+        "unit",
+        "work_id",
+        "work_kind",
+        "current_work_id",
+        "validator_id",
+        "subject_ref",
+        "reason_codes",
+        "retryable",
+        "retry_kind",
+        "retry_count",
+        "outcome",
+        "index",
+        "max",
+        "logical_request_id",
+        "checkpoint_ref",
+        "checkpoint_sha256",
+        "paused_reason",
+        "resume_available",
+        "artifact_ref",
+        "artifact_kind",
+        "schema_version",
+        "sha256",
+        "sha256_kind",
+        "stage_id",
+        "status",
+        "exit_code",
+    }
+    row["payload"] = {
+        key: value for key, value in payload.items() if key in keep
+    }
+    row["payload"]["presentation_details_omitted"] = True
+    return row
+
+
+def _live_console_usage(
+    event: Mapping[str, Any] | None,
+    workflow_run_id: str,
+) -> dict[str, Any] | None:
+    if event is None:
+        return None
+    payload = event.get("payload")
+    component = event.get("component")
+    if not isinstance(payload, Mapping) or not isinstance(component, Mapping):
+        return None
+    totals = payload.get("component_cumulative")
+    if not isinstance(totals, Mapping):
+        return None
+    cache = totals.get("cache_counters")
+    cache = cache if isinstance(cache, Mapping) else {}
+    total = {
+        "component_id": "translation",
+        "component_run_id": payload.get("component_run_id"),
+        "component_attempt_id": payload.get("component_attempt_id"),
+        "component_attempt_index": payload.get("component_attempt_id"),
+        "stage_id": None,
+        "snapshot_seq": payload.get("snapshot_seq"),
+        "accepted_through_component_seq": component.get("component_seq"),
+        "physical_call_count": totals.get("physical_attempt_count"),
+        "cache_observation_count": totals.get("cache_observation_count"),
+        "prompt_tokens": totals.get("prompt_tokens"),
+        "completion_tokens": totals.get("completion_tokens"),
+        "reasoning_tokens": totals.get("reasoning_tokens"),
+        "cached_input_tokens": totals.get("cached_input_tokens"),
+        "total_tokens": totals.get("total_tokens"),
+        "cache_hit_count": cache.get("hit", 0),
+        "cache_miss_count": cache.get("miss", 0),
+        "unknown_attempt_count": 0,
+        "cost_status": totals.get("cost_status"),
+        "cost_usd": totals.get("cost_usd"),
+        "currency": totals.get("currency"),
+        "snapshot_sha256": payload.get("snapshot_sha256"),
+    }
+    return {
+        "schema_id": "WorkflowUsageReadModelV1",
+        "schema_version": "1.0.0",
+        "workflow_run_id": workflow_run_id,
+        "validated": True,
+        "calls": [],
+        "stage_totals": [],
+        "component_totals": [total],
+        "workflow_total": None,
+        "validation": {
+            "valid": True,
+            "authority": "producer_snapshots_and_neutral_relay",
+            "presentation_only": True,
+        },
+    }
 def read_workflow_artifact(
     entry: Mapping[str, Any],
     *,
@@ -3392,6 +3707,35 @@ def _read_regular_bytes(path: Path, *, max_bytes: int) -> bytes:
             413,
         )
     return path.read_bytes()
+
+
+def _read_regular_tail_bytes(
+    path: Path,
+    *,
+    max_bytes: int,
+) -> tuple[bytes, bool]:
+    if path.is_symlink() or not path.is_file():
+        raise WorkflowReplayError(
+            "workflow_replay_file_invalid",
+            "Workflow replay file is missing or unsafe.",
+            409,
+        )
+    size = path.stat().st_size
+    truncated = size > max_bytes
+    with path.open("rb") as handle:
+        if truncated:
+            handle.seek(size - max_bytes)
+        raw = handle.read(max_bytes)
+    if not truncated:
+        return raw, False
+    first_newline = raw.find(b"\n")
+    if first_newline < 0:
+        raise WorkflowReplayError(
+            "workflow_live_event_too_large",
+            "A single Live Console event exceeds the bounded tail size.",
+            413,
+        )
+    return raw[first_newline + 1 :], True
 
 
 __all__ = [

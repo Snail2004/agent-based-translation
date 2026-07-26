@@ -167,7 +167,7 @@
     listThesisObservabilityCalls: (jobId) => request(`/thesis/observability/${encodeURIComponent(jobId)}/calls`),
     getThesisObservabilityCall: (jobId, callId) => request(`/thesis/observability/${encodeURIComponent(jobId)}/calls/${encodeURIComponent(callId)}`),
     getVersion: () => request("/version"),
-    listThesisRuns: () => request("/thesis/runs"),
+    listThesisRuns: () => request("/thesis/runs?projection=registry"),
     createThesisRun: (payload) => request("/thesis/runs", { method: "POST", body: payload || {} }),
     getThesisRun: (runId) => request(`/thesis/runs/${encodeURIComponent(runId)}`),
     getThesisRunLog: (runId, offset) => request(`/thesis/runs/${encodeURIComponent(runId)}/log?offset=${encodeURIComponent(offset || 0)}`),
@@ -206,6 +206,9 @@
       });
       return request(`/thesis/runs/${encodeURIComponent(runId)}/workflow-replay?${query.toString()}`);
     },
+    getWorkflowLiveConsole: (runId) => request(
+      `/thesis/runs/${encodeURIComponent(runId)}/workflow-live-console`,
+    ),
     getWorkflowReplayArtifact: (runId, artifactRef) => {
       const query = new URLSearchParams({ artifact_ref: String(artifactRef || "") });
       return requestBlob(`/thesis/runs/${encodeURIComponent(runId)}/workflow-replay/artifact?${query.toString()}`);

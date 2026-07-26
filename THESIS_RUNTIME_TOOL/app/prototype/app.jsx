@@ -1879,6 +1879,8 @@ function App() {
     setLoading(true);
     setBootError(null);
     try {
+      const requestedView = viewFromLocation();
+      const runSurfaceBoot = ["console", "report", "story-bible"].includes(requestedView);
       API.getVersion()
         .then(value => setAppVersion({ ui_version: UI_VERSION, ...(value || {}) }))
         .catch(() => setAppVersion({ ui_version: UI_VERSION, backend_version: "unknown", git_sha: "unknown" }));
@@ -1895,6 +1897,34 @@ function App() {
         navigateView("project", { replace: true });
         setLoading(false);
         return;
+      }
+      if (runSurfaceBoot) {
+        const jobId = chosen.source === "thesis"
+          ? thesisJobId(chosen.doc_id)
+          : String(chosen.runtime_job_id || "");
+        if (jobId) {
+          const runtimeProject = list.find(project => project.doc_id === chosen.runtime_doc_id)
+            || list.find(project => project.job_id === jobId)
+            || chosen;
+          const runtimeDocId = isThesisDatasetId(runtimeProject.doc_id)
+            ? runtimeProject.doc_id
+            : `${THESIS_PREFIX}${jobId}`;
+          const title = runtimeProject.title || chosen.runtime_title || chosen.title || jobId;
+          setActiveDocId(runtimeDocId);
+          setDocInfo({
+            doc_id: runtimeDocId,
+            read_only: true,
+            metadata: { title },
+            thesis: {
+              job_id: jobId,
+              document_doc_id: runtimeProject.display_doc_id || chosen.display_doc_id || title,
+            },
+          });
+          localStorage.setItem(STORAGE_DOC, runtimeDocId);
+          setBootError(null);
+          setLoading(false);
+          return;
+        }
       }
       setActiveDocId(chosen.doc_id);
       if (chosen.source === "thesis") {
@@ -1924,7 +1954,10 @@ function App() {
 
   useEffect(() => { boot(); }, []);
 
-  const block = blocks.find(b => b.block_id === selectedId) || blocks[0] || null;
+  const runSurfaceWithoutDataset = ["console", "report", "story-bible"].includes(view);
+  const block = blocks.find(b => b.block_id === selectedId) || blocks[0] || (runSurfaceWithoutDataset
+    ? { block_id: "", chapter_id: "", block_type: "paragraph", order_index: 0, quality_flags: [] }
+    : null);
   const readOnly = !!docInfo?.read_only || String(activeDocId || "").startsWith(THESIS_PREFIX);
   const runtimeJobId = thesisJobId(activeDocId)
     || (projectRuntime?.prepared && projectRuntime?.project_id === activeDocId ? projectRuntime.job_id : "");
@@ -2456,6 +2489,21 @@ function App() {
 
   useEffect(() => {
     if (!selectedRunId) return undefined;
+    const selected = (thesisRuns || []).find(run => run.run_id === selectedRunId);
+    const isWorkflowRun = Boolean(
+      selected?.workflow_run_id
+      || selected?.workflow_replay_available === true
+      || selected?.script === "run_d2l_project_campaign"
+      || selected?.script === "run_workflow_orchestrator_v1",
+    );
+    if (isWorkflowRun) {
+      setSelectedRunLog({ run_id: selectedRunId, log: "", offset: 0, running: false, status: "" });
+      setSelectedRunEvents({ run_id: selectedRunId, events: [], offset: 0, running: false, status: "", aggregate: emptyRunEventAggregate() });
+      setRunBlockPreview([]);
+      setRunWatchlist([]);
+      setRunReportSummary(null);
+      return undefined;
+    }
     let cancelled = false;
     let timer = null;
     async function poll() {
@@ -2520,7 +2568,7 @@ function App() {
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [selectedRunId]);
+  }, [selectedRunId, thesisRuns]);
 
   const selectedWorkflowRun = useMemo(
     () => (thesisRuns || []).find(run => run.run_id === selectedRunId) || null,
@@ -2541,7 +2589,7 @@ function App() {
       return undefined;
     }
     const adapter = window.WorkflowReplayAdapter;
-    if (!adapter?.mergeReplayEnvelope) return undefined;
+    if (!adapter?.projectLiveConsoleEnvelope) return undefined;
     if (workflowReplayRunRef.current !== selectedRunId) {
       workflowReplayRunRef.current = selectedRunId;
       workflowReplayPackageRef.current = null;
@@ -2550,19 +2598,18 @@ function App() {
     let cancelled = false;
     let timer = null;
     async function tailParentWorkflow() {
-      const acceptedThrough = workflowReplayPackageRef.current?.events?.length || 0;
       try {
-        const response = await API.getWorkflowReplay(selectedRunId, acceptedThrough, 1500);
+        const response = await API.getWorkflowLiveConsole(selectedRunId);
         if (cancelled) return;
         const envelope = response?.workflow_replay || response;
-        const merged = await adapter.mergeReplayEnvelope(workflowReplayPackageRef.current, envelope);
+        const model = adapter.projectLiveConsoleEnvelope(envelope);
         if (cancelled) return;
-        workflowReplayPackageRef.current = merged.package;
-        setWorkflowReplay(merged.model);
-        if (!merged.model.valid) return;
-        const status = String(merged.model.manifest?.status || "").toLowerCase();
+        workflowReplayPackageRef.current = null;
+        setWorkflowReplay(model);
+        if (!model.valid) return;
+        const status = String(model.manifest?.status || "").toLowerCase();
         if (!["done", "failed", "blocked", "cancelled", "canceled"].includes(status)) {
-          timer = setTimeout(tailParentWorkflow, 150);
+          timer = setTimeout(tailParentWorkflow, 1500);
         }
       } catch (err) {
         if (cancelled) return;
@@ -2572,7 +2619,7 @@ function App() {
           setWorkflowReplay(null);
           return;
         }
-        timer = setTimeout(tailParentWorkflow, 2200);
+        timer = setTimeout(tailParentWorkflow, 2500);
       }
     }
     tailParentWorkflow();

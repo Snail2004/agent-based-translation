@@ -2674,6 +2674,49 @@
     return { package: merged, model };
   }
 
+  function projectLiveConsoleEnvelope(envelope) {
+    const manifest = deepClone(envelope?.manifest || null);
+    const parentEvents = Array.isArray(envelope?.events) ? deepClone(envelope.events) : [];
+    const usageErrors = [];
+    const usage = validateUsageReadModel(
+      deepClone(envelope?.usage || null),
+      manifest,
+      usageErrors,
+    );
+    const events = projectEvents(parentEvents);
+    const checkpoints = events.filter(event => event?.event === "checkpoint");
+    const operationalFacts = events
+      .filter(event => containsOperationalFact(event?.payload))
+      .map(event => ({
+        seq: event.seq,
+        stage_id: event.stage_id,
+        event: event.event,
+        payload: event.payload,
+      }));
+    return Object.freeze({
+      contract: "workflow_live_console_ui_projection_v1",
+      valid: Boolean(manifest && usageErrors.length === 0),
+      errors: usageErrors,
+      presentationOnly: true,
+      sourceMode: envelope?.source_mode === "replay" ? "replay" : "live",
+      manifest,
+      artifactIndex: null,
+      events,
+      stagePlan: buildStagePlan(manifest?.stages || []),
+      artifacts: [],
+      scoring: { handoff: null, receipt: null, receiptStatus: null, inputSetSha256: null, arms: [], reports: [] },
+      evaluationScope: null,
+      scoreReadiness: Object.freeze({ allowed: false, blockingReasons: ["presentation_snapshot_not_scoring_authority"] }),
+      usage,
+      termLifecycle: { valid: false, errors: [], rows: [], summary: null },
+      operationalFacts,
+      latestCheckpoint: checkpoints.length ? checkpoints[checkpoints.length - 1] : null,
+      cursor: deepClone(envelope?.cursor || null),
+      actions: deepClone(envelope?.actions || {}),
+      artifactLinks: {},
+    });
+  }
+
   async function fetchJson(url) {
     const response = await fetch(url, { cache: "no-store" });
     if (!response.ok) throw new Error(`${response.status} ${response.statusText}: ${url}`);
@@ -2704,6 +2747,7 @@
     validateEvaluationConsoleReadModel,
     foldEvaluationConsoleCursor,
     mergeReplayEnvelope,
+    projectLiveConsoleEnvelope,
     isActiveRegistryRun,
     newestActiveRegistryRun,
     chooseRunRegistrySelection,

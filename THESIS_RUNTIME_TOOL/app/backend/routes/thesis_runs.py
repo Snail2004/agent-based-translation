@@ -72,6 +72,7 @@ from services.workflow_replay import (
     get_workflow_setup,
     initialize_workflow_parent,
     read_workflow_artifact,
+    read_workflow_live_console,
     read_workflow_replay,
     resolve_workflow_launch,
     workflow_replay_root,
@@ -1289,8 +1290,30 @@ def _resume_admission_locked(handler):
 
 @bp.get("/thesis/runs")
 def list_runs():
+    unknown = sorted(set(request.args) - {"projection"})
+    if unknown:
+        return error(
+            "run_list_query_invalid",
+            "Unsupported query fields: " + ", ".join(unknown),
+            400,
+        )
+    projection = request.args.get("projection")
+    if projection not in {None, "registry"}:
+        return error(
+            "run_list_projection_invalid",
+            "projection must be registry when provided.",
+            400,
+        )
     rows = _get_registry().list_runs()
-    return ok([_public_run_entry(row) for row in rows])
+    return ok(
+        [
+            _public_run_entry(
+                row,
+                include_component=projection != "registry",
+            )
+            for row in rows
+        ]
+    )
 
 
 @bp.get("/thesis/runs/prompt-preview")
@@ -1512,6 +1535,29 @@ def workflow_replay(run_id: str):
                 jobs_root=_jobs_root(),
                 after_seq=_query_int("after_seq") or 0,
                 wait_ms=_query_int("wait_ms") or 0,
+            )
+        )
+    except RunControlError as exc:
+        return error(exc.code, exc.message, exc.status)
+    except WorkflowReplayError as exc:
+        return error(exc.code, str(exc), exc.status)
+
+
+@bp.get("/thesis/runs/<run_id>/workflow-live-console")
+def workflow_live_console(run_id: str):
+    """Return a bounded, presentation-only Live Console snapshot."""
+
+    try:
+        if request.args:
+            raise WorkflowReplayError(
+                "workflow_live_console_query_invalid",
+                "workflow-live-console does not accept query fields.",
+            )
+        entry = _run_entry(run_id)
+        return ok(
+            read_workflow_live_console(
+                entry,
+                jobs_root=_jobs_root(),
             )
         )
     except RunControlError as exc:
@@ -2569,7 +2615,11 @@ def _public_argv_preview(entry: dict, argv: list[str]) -> list[str]:
     ]
 
 
-def _public_run_entry(entry: dict) -> dict:
+def _public_run_entry(
+    entry: dict,
+    *,
+    include_component: bool = True,
+) -> dict:
     row = dict(entry)
     if row.get("script") not in _D2L_COMPONENT_SCRIPTS:
         return row
@@ -2584,7 +2634,18 @@ def _public_run_entry(entry: dict) -> dict:
     row["cache_path"] = None
     row["prompt_preview_token"] = None
     row["component_events_withheld"] = True
-    row["component"] = _d2l_component_projection(entry)
+    row["workflow_replay_available"] = bool(row.get("workflow_run_id"))
+    row["component"] = (
+        _d2l_component_projection(entry)
+        if include_component
+        else {
+            "component_id": row.get("component_id") or D2L_COMPONENT_ID,
+            "registry_status": row.get("status"),
+            "component_status": "deferred",
+            "component_attempt_id": row.get("component_attempt_id"),
+            "validation": {"state": "deferred"},
+        }
+    )
     return row
 
 

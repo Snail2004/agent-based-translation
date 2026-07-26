@@ -5117,6 +5117,61 @@ def test_route_workflow_replay_long_poll_does_not_revalidate_unchanged_parent(
     assert len(validation_calls) == 1
 
 
+def test_run_list_registry_projection_skips_component_package_validation(
+    tmp_path,
+    monkeypatch,
+):
+    client, routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    registry.create_run(
+        script="run_d2l_project_campaign",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="run_registry_summary",
+        job_id="job_registry_summary",
+        workflow_run_id="workflow_registry_summary",
+        component_id="translation",
+        component_run_id="translation_registry_summary",
+        component_attempt_id=3,
+    )
+
+    def forbidden(_entry):
+        raise AssertionError("component package validation must not run")
+
+    monkeypatch.setattr(routes, "_d2l_component_projection", forbidden)
+    response = client.get("/api/thesis/runs?projection=registry")
+
+    assert response.status_code == 200
+    row = next(
+        item for item in response.get_json()["data"]
+        if item["run_id"] == "run_registry_summary"
+    )
+    assert row["component"]["validation"] == {"state": "deferred"}
+    assert row["workflow_replay_available"] is True
+
+
+def test_workflow_live_console_skips_authoritative_parent_validator(
+    tmp_path,
+    monkeypatch,
+):
+    client, _routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    _register_parent_workflow_fixture(tmp_path, registry)
+    workflow_service = importlib.import_module("services.workflow_replay")
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("full parent validation must not run")
+
+    monkeypatch.setattr(workflow_service, "_load_validated_parent", forbidden)
+    response = client.get(
+        "/api/thesis/runs/run_parent_replay/workflow-live-console"
+    )
+
+    assert response.status_code == 200
+    data = response.get_json()["data"]
+    assert data["schema"] == "workflow_live_console_v1"
+    assert data["presentation_only"] is True
+    assert data["cursor"]["through_seq"] == 4
+    assert [event["seq"] for event in data["events"]] == [1, 2, 3, 4]
+
+
 def test_route_workflow_replay_rejects_unindexed_paths_and_parent_drift(
     tmp_path,
     monkeypatch,

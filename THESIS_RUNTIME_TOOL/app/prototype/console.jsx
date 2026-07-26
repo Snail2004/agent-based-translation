@@ -4220,6 +4220,7 @@ function AgentConsoleView(props) {
       : workflowRecorded && !sourceIsTerminal ? "SNAPSHOT"
       : stalled ? "STALLED"
       : st.paused ? "PAUSED"
+        : String(sourceRunStatus || "").toLowerCase() === "paused" ? "PAUSED"
         : isOpenRun && !running ? "CONNECTING"
           : String(runStatus || "idle").toUpperCase();
   const workflowPaused = Boolean(workflowReplay && sourceRunStatus === "paused");
@@ -4595,7 +4596,7 @@ function AgentConsoleView(props) {
                 </div>
                 <div className="workflow-compact-stream">
                   <span>{uiText("luồng", "stream")}</span>
-                  <strong>{truncated ? uiText("bị cắt", "truncated") : partialLine ? uiText("dòng chưa đủ", "partial line") : isOpenRun ? (running ? uiText("trực tiếp", "live") : uiText("đang kết nối", "connecting")) : uiText("đã đóng", "closed")}</strong>
+                  <strong>{truncated ? uiText("bị cắt", "truncated") : partialLine ? uiText("dòng chưa đủ", "partial line") : workflowPaused ? uiText("đã dừng", "paused") : isOpenRun ? (running ? uiText("trực tiếp", "live") : uiText("đang kết nối", "connecting")) : uiText("đã đóng", "closed")}</strong>
                 </div>
               </section>
               <ConsoleUsageSummary
@@ -4630,7 +4631,7 @@ function AgentConsoleView(props) {
               {armsLabel && <div className="kv-row"><span className="kv-label">{uiText("nhánh", "arms")}</span><span className={"kv-value " + (isCompareRun ? "kv-good" : "kv-dim")}>{armsLabel}</span></div>}
               <div className="kv-row"><span className="kv-label">{uiText("tầng đã thấy", "stages seen")}</span><span className="kv-value">{st.stagesSeen} / {consoleStagePlan.length}</span></div>
               <div className="kv-row"><span className="kv-label">{uiText("sự kiện", "events")}</span><span className="kv-value">{formatConsoleInt(st.totalEvents)}</span></div>
-              <div className="kv-row"><span className="kv-label">{uiText("luồng", "stream")}</span><span className="kv-value kv-dim">{truncated ? uiText("bị cắt", "truncated") : partialLine ? uiText("dòng chưa đủ", "partial line") : isOpenRun ? (running ? uiText("trực tiếp", "live") : uiText("đang kết nối", "connecting")) : uiText("đã đóng", "closed")}</span></div>
+              <div className="kv-row"><span className="kv-label">{uiText("luồng", "stream")}</span><span className="kv-value kv-dim">{truncated ? uiText("bị cắt", "truncated") : partialLine ? uiText("dòng chưa đủ", "partial line") : workflowPaused ? uiText("đã dừng", "paused") : isOpenRun ? (running ? uiText("trực tiếp", "live") : uiText("đang kết nối", "connecting")) : uiText("đã đóng", "closed")}</span></div>
               <div className="section-label">:: {uiText("chi phí & cache", "cost & cache")}</div>
               <div className="kv-row"><span className="kv-label">{uiText("tổng cap", "cap total")}</span><span className="kv-value">{st.cumulativeCost != null ? "$" + st.cumulativeCost.toFixed(4) : "—"}</span></div>
               <div className="kv-row kv-row-bar"><span className="kv-label">{uiText("cap / ngân sách", "cap / budget")}</span><span className="kv-value kv-dim">{st.cumulativeCost != null ? "$" + st.cumulativeCost.toFixed(3) : "—"} / {st.budgetCap != null ? "$" + st.budgetCap.toFixed(2) : "—"}</span></div>
