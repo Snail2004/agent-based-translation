@@ -146,6 +146,11 @@ def test_runner_writes_replayable_component_package(tmp_path: Path) -> None:
     assert (root / "workflow_settings.json").is_file()
     assert package["usage_snapshots"][-1]["current_record"]["kind"] == "final"
     assert events[-2]["event"] == "usage_snapshot"
+    assert len(package["console_projections"]) == len(events)
+    assert package["console_projections"][-1]["through_component_seq"] == len(events)
+    assert [
+        row["projection_index"] for row in package["console_projections"]
+    ] == list(range(1, len(events) + 1))
 
 
 def test_runner_replay_package_uses_exact_selected_scope(tmp_path: Path) -> None:
@@ -407,6 +412,12 @@ def test_interrupted_component_resumes_same_component_and_skips_completed_chapte
     assert any(row["event"] == "component_resumed" for row in events)
     attempts = {row["component_attempt_id"] for row in events}
     assert attempts == {"evalcomp_attempt_0001", "evalcomp_attempt_0002"}
+    assert {
+        row["component_attempt_id"] for row in package["console_projections"]
+    } == attempts
+    assert [
+        row["through_component_seq"] for row in package["console_projections"]
+    ] == list(range(1, len(events) + 1))
     manifests = list((root / "manifest_revisions").glob("*.json"))
     assert len(manifests) == 2
     assert json.loads((root / "component_manifest.json").read_text(encoding="utf-8"))[

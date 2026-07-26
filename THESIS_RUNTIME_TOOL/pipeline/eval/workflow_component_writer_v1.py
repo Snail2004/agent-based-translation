@@ -23,6 +23,7 @@ from pipeline.eval.contracts_v1 import (
     require_rfc3339,
     require_sha256,
     require_string,
+    require_unique,
     seal_payload,
     verify_payload_hash,
 )
@@ -61,6 +62,15 @@ from pipeline.eval.workflow_repair_v1 import (
     validate_evaluation_repair_plan_v1,
     write_evaluation_repair_plan_v1,
 )
+from pipeline.eval.workflow_console_projection_v1 import (
+    CONSOLE_PROJECTION_ARTIFACT_KIND,
+    CONSOLE_PROJECTION_SCHEMA_VERSION,
+    build_evaluation_console_projection_v1,
+    console_projection_artifact_ref_v1,
+    normalize_console_diagnostic_bindings_v1,
+    validate_evaluation_console_projection_chain_v1,
+    validate_evaluation_console_projection_v1,
+)
 from pipeline.llm_backend import (
     SharedLlmAttemptLedger,
     validate_llm_run_records,
@@ -95,6 +105,68 @@ def _stable_sha256(value: Any) -> str:
         allow_nan=False,
     ).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
+
+
+def _console_diagnostic_bindings_from_root(
+    component_root: Path,
+    journal: Sequence[Mapping[str, Any]],
+) -> tuple[dict[str, str], ...]:
+    incident_ids = [
+        require_string(
+            record["payload"].get("incident_id"),
+            path="$.journal.payload.incident_id",
+        )
+        for record in journal
+        if record["event"] == "incident_recorded"
+    ]
+    require_unique(incident_ids, path="$.journal[*].payload.incident_id")
+    diagnostics_root = component_root / "recovery" / "diagnostics"
+    actual_ids = {path.stem for path in diagnostics_root.glob("*.json")}
+    if actual_ids != set(incident_ids):
+        raise ContractValidationError(
+            "console_diagnostic_cover",
+            str(diagnostics_root),
+            "diagnostic files do not exactly cover incident journal records",
+        )
+    bindings: list[dict[str, str]] = []
+    for incident_id in incident_ids:
+        path = diagnostics_root / f"{incident_id}.json"
+        if (
+            path.is_symlink()
+            or not path.is_file()
+            or path.resolve().parent != diagnostics_root.resolve()
+        ):
+            raise ContractValidationError(
+                "console_diagnostic_path",
+                str(path),
+                "diagnostic path is missing or escapes the component root",
+            )
+        raw = _load_json(path)
+        if raw.get("incident_id") != incident_id:
+            raise ContractValidationError(
+                "console_diagnostic_binding",
+                str(path),
+                "diagnostic incident identity differs from the journal",
+            )
+        bindings.append(
+            {
+                "incident_id": incident_id,
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            }
+        )
+    return normalize_console_diagnostic_bindings_v1(bindings)
+
+
+def _console_artifact_stage_id_for_event(
+    event: Mapping[str, Any],
+    stage_ids: Sequence[str],
+) -> str:
+    if event["stage_id"] in stage_ids:
+        return event["stage_id"]
+    current_stage_id = event["payload"].get("current_stage_id")
+    if current_stage_id in stage_ids:
+        return current_stage_id
+    return stage_ids[0]
 
 
 def _build_recovery_assignment_from_component_v1(
@@ -253,10 +325,13 @@ class EvaluationWorkflowComponentWriterV1:
         self.receipt_path = self.root / "scoring_receipt.json"
         self.checkpoints_root = self.root / "checkpoints"
         self.usage_snapshots_root = self.root / "usage_snapshots"
+        self.console_projections_root = self.root / "console_projections"
         self.resume_intent_path = self.root / ".resume_intent.json"
         self._events: list[dict[str, Any]] = []
         self._manifest_revisions: list[dict[str, Any]] = []
         self._artifact_rows: list[dict[str, Any]] = []
+        self._console_projections: list[dict[str, Any]] = []
+        self._console_projection_loaded = False
         self._usage_tracker = EvaluationComponentUsageTrackerV1(
             workflow_run_id=self.workflow_run_id,
             component_run_id=self.component_run_id,
@@ -272,6 +347,7 @@ class EvaluationWorkflowComponentWriterV1:
             self.recovered_resume = self._recover_resume_intent()
             self._load_existing()
             self._init_recovery_store()
+            self._sync_console_projections()
             return
         component_paths = (
             self.events_path,
@@ -280,6 +356,7 @@ class EvaluationWorkflowComponentWriterV1:
             self.workflow_settings_path,
             self.manifest_revisions_root,
             self.event_records_root,
+            self.console_projections_root,
         )
         if any(path.exists() for path in component_paths):
             raise ContractValidationError(
@@ -421,6 +498,7 @@ class EvaluationWorkflowComponentWriterV1:
                 component_attempt_id=self.component_attempt_id,
                 component_attempt_index=self.component_attempt_index,
             )
+        self._sync_console_projections()
         return True
 
     @property
@@ -705,6 +783,7 @@ class EvaluationWorkflowComponentWriterV1:
         self._events.append(row)
         self._persist_event_projection()
         self._validate_stream()
+        self._sync_console_projections()
         return copy.deepcopy(row)
 
     def start_stage(self, stage_id: str, *, work_total: int, work_unit: str) -> None:
@@ -1405,6 +1484,147 @@ class EvaluationWorkflowComponentWriterV1:
             work_id=recovery_work_id,
         )
 
+    def _sync_console_projections(self) -> None:
+        """Publish one bounded display projection for each immutable event."""
+
+        if self.recovery is None or not self._events:
+            return
+        recovery_package = self.recovery.validate()
+        journal_records = tuple(recovery_package["journal"])
+        diagnostics = self._console_diagnostic_bindings(
+            recovery_package["journal"]
+        )
+        if not self._console_projection_loaded:
+            indexed = [
+                row
+                for row in self._artifact_rows
+                if row["artifact"]["artifact_kind"]
+                == CONSOLE_PROJECTION_ARTIFACT_KIND
+            ]
+            loaded = [
+                (
+                    validate_evaluation_console_projection_v1(
+                        _load_json(self.root / row["artifact"]["artifact_ref"])
+                    ),
+                    row,
+                )
+                for row in indexed
+            ]
+            loaded.sort(key=lambda pair: pair[0]["projection_index"])
+            self._console_projections = [pair[0] for pair in loaded]
+            indexed = [pair[1] for pair in loaded]
+            if self._console_projections:
+                if len(self._console_projections) > len(self._events):
+                    raise ContractValidationError(
+                        "console_projection_exact_cover",
+                        str(self.artifact_index_path),
+                        "Console projections exceed the event prefix",
+                    )
+                validate_evaluation_console_projection_chain_v1(
+                    self._console_projections,
+                    manifest=self.manifest,
+                    events=self._events[: len(self._console_projections)],
+                    recovery_journal=journal_records,
+                    diagnostic_bindings=diagnostics,
+                )
+                self._validate_console_artifact_links(indexed)
+            self._console_projection_loaded = True
+
+        while len(self._console_projections) < len(self._events):
+            event_index = len(self._console_projections)
+            event = self._events[event_index]
+            is_latest = event_index == len(self._events) - 1
+            if is_latest:
+                journal_prefix = journal_records
+                diagnostic_prefix = diagnostics
+            elif self._console_projections:
+                previous_prefixes = self._console_projections[-1]["prefixes"]
+                journal_prefix = journal_records[
+                    : previous_prefixes["recovery_journal"]["record_count"]
+                ]
+                diagnostic_prefix = diagnostics[
+                    : previous_prefixes["diagnostics"]["record_count"]
+                ]
+            else:
+                journal_prefix = journal_records[:0]
+                diagnostic_prefix = diagnostics[:0]
+            projection = build_evaluation_console_projection_v1(
+                self.manifest,
+                event,
+                previous_projection=(
+                    None
+                    if not self._console_projections
+                    else self._console_projections[-1]
+                ),
+                recovery_journal=journal_prefix,
+                diagnostic_bindings=diagnostic_prefix,
+                producer_code_commit=self.producer_code_commit,
+            )
+            relative_ref = console_projection_artifact_ref_v1(projection)
+            _write_immutable_json(self.root / relative_ref, projection)
+            previous_ref = (
+                ()
+                if not self._console_projections
+                else (
+                    console_projection_artifact_ref_v1(
+                        self._console_projections[-1],
+                    ),
+                )
+            )
+            self.add_artifact(
+                relative_ref,
+                artifact_kind=CONSOLE_PROJECTION_ARTIFACT_KIND,
+                schema_version=CONSOLE_PROJECTION_SCHEMA_VERSION,
+                stage_id=self._console_artifact_stage_id(event),
+                created_by_event_id=event["event_id"],
+                parent_artifact_refs=previous_ref,
+            )
+            self._console_projections.append(projection)
+
+    def _console_artifact_stage_id(self, event: Mapping[str, Any]) -> str:
+        return _console_artifact_stage_id_for_event(event, self.stage_ids)
+
+    def _console_diagnostic_bindings(
+        self, journal: Sequence[Mapping[str, Any]]
+    ) -> tuple[dict[str, str], ...]:
+        return _console_diagnostic_bindings_from_root(self.root, journal)
+
+    def _validate_console_artifact_links(
+        self, indexed: Sequence[Mapping[str, Any]]
+    ) -> None:
+        if len(indexed) != len(self._console_projections):
+            raise ContractValidationError(
+                "console_artifact_cover",
+                str(self.artifact_index_path),
+                "projection artifacts and validated projections differ in count",
+            )
+        for index, row in enumerate(indexed):
+            projection = self._console_projections[index]
+            expected_ref = console_projection_artifact_ref_v1(projection)
+            if row["artifact"]["artifact_ref"] != expected_ref:
+                raise ContractValidationError(
+                    "console_artifact_binding",
+                    str(self.artifact_index_path),
+                    "projection artifact reference is not content addressed",
+                )
+            expected_parents = (
+                []
+                if index == 0
+                else [console_projection_artifact_ref_v1(self._console_projections[index - 1])]
+            )
+            if row["parent_artifact_refs"] != expected_parents:
+                raise ContractValidationError(
+                    "console_artifact_lineage",
+                    str(self.artifact_index_path),
+                    "projection artifact parent lineage drift",
+                )
+            if row["created_by_event_id"] != self._events[index]["event_id"]:
+                raise ContractValidationError(
+                    "console_artifact_event",
+                    str(self.artifact_index_path),
+                    "projection artifact is bound to the wrong event",
+                )
+
     def _persist_manifest_revision(self, manifest: Mapping[str, Any]) -> None:
         revision = manifest["manifest_revision"]
         digest = manifest["integrity"]["manifest_sha256"]
@@ -1846,12 +2066,130 @@ def validate_evaluation_workflow_component_package_v1(
             recovery_root,
             assignment=expected_assignment,
         )
+    console_artifact_rows = [
+        row
+        for row in index["artifacts"]
+        if row["artifact"]["artifact_kind"] == CONSOLE_PROJECTION_ARTIFACT_KIND
+    ]
+    console_root = package_root / "console_projections"
+    console_projections: tuple[dict[str, Any], ...] = ()
+    if console_artifact_rows or console_root.exists():
+        if recovery is None:
+            raise ContractValidationError(
+                "console_recovery_binding",
+                str(package_root),
+                "Console projections require the sealed recovery package",
+            )
+        if not console_artifact_rows:
+            raise ContractValidationError(
+                "console_artifact_cover",
+                str(console_root),
+                "Console projection directory is not represented in the artifact index",
+            )
+        if not console_root.is_dir() or console_root.is_symlink():
+            raise ContractValidationError(
+                "console_artifact_path",
+                str(console_root),
+                "Console projection root must be a local package directory",
+            )
+        actual_refs: set[str] = set()
+        for path in console_root.iterdir():
+            if path.is_symlink() or not path.is_file() or path.suffix != ".json":
+                raise ContractValidationError(
+                    "console_artifact_path",
+                    str(path),
+                    "Console projection root contains an unexpected entry",
+                )
+            actual_refs.add(path.relative_to(package_root).as_posix())
+        indexed_refs = {
+            row["artifact"]["artifact_ref"] for row in console_artifact_rows
+        }
+        if actual_refs != indexed_refs:
+            raise ContractValidationError(
+                "console_artifact_cover",
+                str(console_root),
+                "Console projection files and artifact index do not have exact cover",
+            )
+        loaded_console = [
+            (
+                validate_evaluation_console_projection_v1(
+                    _load_json(package_root / row["artifact"]["artifact_ref"])
+                ),
+                row,
+            )
+            for row in console_artifact_rows
+        ]
+        loaded_console.sort(key=lambda pair: pair[0]["projection_index"])
+        console_projections = validate_evaluation_console_projection_chain_v1(
+            [pair[0] for pair in loaded_console],
+            manifest=manifest,
+            events=normalized_events,
+            recovery_journal=recovery["journal"],
+            diagnostic_bindings=_console_diagnostic_bindings_from_root(
+                package_root,
+                recovery["journal"],
+            ),
+        )
+        ordered_console_rows = [pair[1] for pair in loaded_console]
+        declared_stage_ids = tuple(stage["stage_id"] for stage in manifest["stages"])
+        for projection_index, (projection, artifact_row, event) in enumerate(
+            zip(
+                console_projections,
+                ordered_console_rows,
+                normalized_events,
+                strict=True,
+            )
+        ):
+            expected_ref = console_projection_artifact_ref_v1(projection)
+            artifact_binding = artifact_row["artifact"]
+            if (
+                artifact_binding["artifact_ref"] != expected_ref
+                or artifact_binding["schema_version"]
+                != CONSOLE_PROJECTION_SCHEMA_VERSION
+                or artifact_binding["sha256_kind"] != "physical"
+            ):
+                raise ContractValidationError(
+                    "console_artifact_binding",
+                    artifact_binding["artifact_ref"],
+                    "Console projection artifact binding is not exact",
+                )
+            expected_parents = (
+                []
+                if projection_index == 0
+                else [
+                    console_projection_artifact_ref_v1(
+                        console_projections[projection_index - 1]
+                    )
+                ]
+            )
+            if artifact_row["parent_artifact_refs"] != expected_parents:
+                raise ContractValidationError(
+                    "console_artifact_lineage",
+                    expected_ref,
+                    "Console projection parent lineage drift",
+                )
+            if artifact_row["created_by_event_id"] != event["event_id"]:
+                raise ContractValidationError(
+                    "console_artifact_event",
+                    expected_ref,
+                    "Console projection is bound to the wrong component event",
+                )
+            if artifact_row["stage_id"] != _console_artifact_stage_id_for_event(
+                event,
+                declared_stage_ids,
+            ):
+                raise ContractValidationError(
+                    "console_artifact_stage",
+                    expected_ref,
+                    "Console projection is bound to the wrong component stage",
+                )
     return {
         "manifest": manifest,
         "events": tuple(copy.deepcopy(normalized_events)),
         "receipt": receipt,
         "workflow_settings": settings,
         "usage_snapshots": tuple(copy.deepcopy(usage_snapshots)),
+        "console_projections": tuple(copy.deepcopy(console_projections)),
         "artifact_index": index,
         "recovery": recovery,
     }
