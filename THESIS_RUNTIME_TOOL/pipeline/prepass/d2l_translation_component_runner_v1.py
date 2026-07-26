@@ -72,6 +72,7 @@ from pipeline.prepass.d2l_repair_resume_v1 import (
     validate_repair_receipt,
 )
 from pipeline.prepass.d2l_resume_checkpoint_receipt_v1 import (
+    can_reuse_term_lifecycle_projection,
     D2LResumeCheckpointReceiptError,
     VALIDATION_MODE as RESUME_CHECKPOINT_VALIDATION_MODE,
     validate_resume_checkpoint_receipt,
@@ -624,34 +625,31 @@ class D2LTranslationComponentRunner:
         stage_id: str,
         entry: Mapping[str, Any],
         journal_ref: str,
+        events_by_id: Mapping[str, Mapping[str, Any]],
+        validation_events_by_subject: Mapping[
+            tuple[str, str], Sequence[Mapping[str, Any]]
+        ],
         allow_pending: bool = False,
     ) -> dict[str, Any] | None:
         existing = self._existing_term_evidence(
             evidence_ref=journal_ref,
             evidence_sha256=str(entry["entry_sha256"]),
         )
-        events = self._component_events()
         if existing is not None:
-            event = next(
-                (
-                    row
-                    for row in events
-                    if row["event_id"] == existing["validation_event_id"]
-                ),
-                None,
+            event = events_by_id.get(
+                str(existing["validation_event_id"])
             )
             if event is None:
                 raise ComponentRunnerError(
                     "existing term lifecycle validation event is missing"
                 )
-            return event
-        candidates = [
-            row
-            for row in events
-            if row["event"] == "validation_passed"
-            and row["stage_id"] == stage_id
-            and row["payload"]["subject_ref"] == entry["work_item_id"]
-        ]
+            return dict(event)
+        candidates = list(
+            validation_events_by_subject.get(
+                (stage_id, str(entry["work_item_id"])),
+                (),
+            )
+        )
         if not candidates:
             if allow_pending:
                 return None
@@ -769,12 +767,18 @@ class D2LTranslationComponentRunner:
         entries: Sequence[Mapping[str, Any]],
         entry: Mapping[str, Any],
         projection_mode: str,
+        events_by_id: Mapping[str, Mapping[str, Any]],
+        validation_events_by_subject: Mapping[
+            tuple[str, str], Sequence[Mapping[str, Any]]
+        ],
         allow_pending_validation: bool = False,
     ) -> bool:
         validation_event = self._validation_event_for_work_entry(
             stage_id=stage.stage_id,
             entry=entry,
             journal_ref=journal_ref,
+            events_by_id=events_by_id,
+            validation_events_by_subject=validation_events_by_subject,
             allow_pending=allow_pending_validation,
         )
         if validation_event is None:
@@ -856,6 +860,23 @@ class D2LTranslationComponentRunner:
         self._initialize_term_lifecycle_state()
         journal_ref = f"runtime/work_items/{stage.stage_id}.jsonl"
         entries = read_work_journal(self.root / journal_ref)
+        component_events = self._component_events()
+        events_by_id = {
+            str(event["event_id"]): event for event in component_events
+        }
+        validation_events_by_subject: dict[
+            tuple[str, str], list[Mapping[str, Any]]
+        ] = {}
+        for event in component_events:
+            if event["event"] != "validation_passed":
+                continue
+            subject_ref = event["payload"].get("subject_ref")
+            if not isinstance(subject_ref, str):
+                continue
+            validation_events_by_subject.setdefault(
+                (str(event["stage_id"]), subject_ref),
+                [],
+            ).append(event)
         for entry in entries:
             projected = self._project_term_work_entry(
                 stage=stage,
@@ -863,6 +884,10 @@ class D2LTranslationComponentRunner:
                 entries=entries,
                 entry=entry,
                 projection_mode=projection_mode,
+                events_by_id=events_by_id,
+                validation_events_by_subject=(
+                    validation_events_by_subject
+                ),
                 allow_pending_validation=allow_pending_validation,
             )
             if not projected:
@@ -1403,7 +1428,11 @@ class D2LTranslationComponentRunner:
             self._execute_remaining_stages()
             return self._finish_success()
         except _PauseRun as pause:
-            self._pause(pause.stage_id, pause.reason)
+            self._pause(
+                pause.stage_id,
+                pause.reason,
+                project_term_lifecycle=pause.project_term_lifecycle,
+            )
             return validate_resume_checkpoint_receipt(self.root)
         except Exception as exc:
             try:
@@ -2096,6 +2125,7 @@ class D2LTranslationComponentRunner:
                 raise _PauseRun(
                     stage.stage_id,
                     "stage_process_launch_failed",
+                    project_term_lifecycle=False,
                 ) from exc
             try:
                 while process.poll() is None:
@@ -2543,6 +2573,7 @@ class D2LTranslationComponentRunner:
                 stage,
                 allow_incomplete_tail=False,
             )
+        work_journals = self._work_journal_checkpoint_state()
         term_lifecycle_projection_complete = False
         if project_term_lifecycle:
             term_lifecycle_projection_complete = (
@@ -2551,6 +2582,32 @@ class D2LTranslationComponentRunner:
                 )
                 is True
             )
+        else:
+            validated_previous = self._resume_checkpoint_validation
+            term_lifecycle_projection_complete = bool(
+                validated_previous
+                and validated_previous.get(
+                    "term_lifecycle_projection_complete"
+                )
+                and validated_previous.get(
+                    "work_journal_checkpoint_state"
+                )
+                == work_journals
+            )
+            if not term_lifecycle_projection_complete:
+                term_lifecycle_projection_complete = (
+                    can_reuse_term_lifecycle_projection(
+                        self.root,
+                        workflow_run_id=str(
+                            self.manifest["workflow_run_id"]
+                        ),
+                        component_run_id=str(
+                            self.manifest["component_run_id"]
+                        ),
+                        maximum_component_attempt_id=self._current_attempt,
+                        work_journals=work_journals,
+                    )
+                )
         journal_entries = read_observation_journal(self.observation_journal_path)
         usage_snapshots = [
             dict(entry["observation"]["payload"])
@@ -2580,7 +2637,7 @@ class D2LTranslationComponentRunner:
             "latest_usage_snapshot_sha256": self._latest_usage_snapshot_sha256(
                 journal_entries
             ),
-            "work_journals": self._work_journal_checkpoint_state(),
+            "work_journals": work_journals,
         }
         checkpoint_ref = f"checkpoints/checkpoint_a{self._current_attempt}_{stage_id}.json"
         checkpoint = build_checkpoint(
@@ -2846,10 +2903,17 @@ class D2LTranslationComponentRunner:
 
 
 class _PauseRun(Exception):
-    def __init__(self, stage_id: str, reason: str) -> None:
+    def __init__(
+        self,
+        stage_id: str,
+        reason: str,
+        *,
+        project_term_lifecycle: bool = True,
+    ) -> None:
         super().__init__(reason)
         self.stage_id = stage_id
         self.reason = reason
+        self.project_term_lifecycle = project_term_lifecycle
 
 
 def preflight_resume_runtime_revision_from_plan_file(

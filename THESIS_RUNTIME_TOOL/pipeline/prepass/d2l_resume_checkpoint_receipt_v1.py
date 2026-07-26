@@ -199,6 +199,72 @@ def _artifact_file_bindings(
     return rows
 
 
+def can_reuse_term_lifecycle_projection(
+    component_root: str | Path,
+    *,
+    workflow_run_id: str,
+    component_run_id: str,
+    maximum_component_attempt_id: int,
+    work_journals: Mapping[str, Mapping[str, Any]],
+) -> bool:
+    """Return whether the last sealed projection still covers current journals."""
+
+    root = Path(component_root).resolve()
+    try:
+        receipt = _load_json(
+            root / RECEIPT_REF,
+            "Resume checkpoint receipt",
+        )
+        if receipt.get("schema_version") != SCHEMA_VERSION:
+            return False
+        integrity = _mapping(receipt.get("integrity"), "receipt integrity")
+        if integrity.get("receipt_sha256") != _receipt_sha256(receipt):
+            return False
+        if (
+            receipt.get("workflow_run_id") != workflow_run_id
+            or receipt.get("component_run_id") != component_run_id
+            or not receipt.get("term_lifecycle_projection_complete")
+        ):
+            return False
+        receipt_attempt = receipt.get("component_attempt_id")
+        if (
+            isinstance(receipt_attempt, bool)
+            or not isinstance(receipt_attempt, int)
+            or receipt_attempt > maximum_component_attempt_id
+        ):
+            return False
+
+        expected = {
+            str(stage_id): {
+                "journal_ref": str(binding["journal_ref"]),
+                "journal_sha256": str(binding["journal_sha256"]),
+                "entry_count": int(binding["entry_count"]),
+                "last_entry_sha256": binding["last_entry_sha256"],
+            }
+            for stage_id, binding in work_journals.items()
+        }
+        observed: dict[str, dict[str, Any]] = {}
+        for raw in receipt.get("work_journals") or []:
+            binding = _mapping(raw, "receipt work journal")
+            stage_id = str(binding.get("stage_id") or "")
+            if not stage_id or stage_id in observed:
+                return False
+            observed[stage_id] = {
+                "journal_ref": str(binding.get("journal_ref") or ""),
+                "journal_sha256": str(binding.get("journal_sha256") or ""),
+                "entry_count": int(binding.get("entry_count") or 0),
+                "last_entry_sha256": binding.get("last_entry_sha256"),
+            }
+        return observed == expected
+    except (
+        D2LResumeCheckpointReceiptError,
+        KeyError,
+        TypeError,
+        ValueError,
+    ):
+        return False
+
+
 def write_resume_checkpoint_receipt(
     component_root: str | Path,
     *,
@@ -618,6 +684,7 @@ def validate_resume_checkpoint_receipt(
 
 
 __all__ = [
+    "can_reuse_term_lifecycle_projection",
     "D2LResumeCheckpointReceiptError",
     "RECEIPT_REF",
     "SCHEMA_VERSION",

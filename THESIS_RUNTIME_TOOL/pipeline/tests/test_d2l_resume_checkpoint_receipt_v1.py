@@ -7,6 +7,7 @@ import pytest
 
 import pipeline.prepass.d2l_translation_component_runner_v1 as runner_module
 from pipeline.prepass.d2l_resume_checkpoint_receipt_v1 import (
+    can_reuse_term_lifecycle_projection,
     D2LResumeCheckpointReceiptError,
     RECEIPT_REF,
     VALIDATION_MODE,
@@ -83,6 +84,54 @@ def test_resume_uses_checkpoint_receipt_without_full_prefix_validation(
     assert result["terminal_event"] == "run_done"
     assert result["component_attempt_id"] == 2
     assert paused_full_validation_calls == 0
+
+
+def test_stage_launch_failure_reuses_complete_term_projection(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root, plan = _paused_component(tmp_path)
+    prior = validate_resume_checkpoint_receipt(root)
+    assert prior["term_lifecycle_projection_complete"] is True
+    assert can_reuse_term_lifecycle_projection(
+        root,
+        workflow_run_id=plan.workflow_run_id,
+        component_run_id=plan.component_run_id,
+        maximum_component_attempt_id=1,
+        work_journals=prior["work_journal_checkpoint_state"],
+    )
+
+    def reject_backfill(*args, **kwargs):
+        raise AssertionError("unchanged term journals were backfilled")
+
+    class RejectStageLaunch:
+        def __init__(self, **kwargs):
+            raise runner_module.D2LStageProcessTreeError(
+                "synthetic guard startup pressure"
+            )
+
+    monkeypatch.setattr(
+        D2LTranslationComponentRunner,
+        "_backfill_term_lifecycle",
+        reject_backfill,
+    )
+    monkeypatch.setattr(
+        runner_module,
+        "D2LGuardedStageProcess",
+        RejectStageLaunch,
+    )
+
+    paused = D2LTranslationComponentRunner(plan, root).run(resume=True)
+
+    assert paused["component_attempt_id"] == 2
+    assert paused["term_lifecycle_projection_complete"] is True
+    manifest = json.loads(
+        (root / "component_manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest["status"] == "paused"
+    assert manifest["resume"]["paused_reason"] == (
+        "stage_process_launch_failed"
+    )
 
 
 def test_receipt_rejects_event_tail_drift(tmp_path: Path) -> None:
