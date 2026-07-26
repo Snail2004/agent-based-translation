@@ -462,6 +462,9 @@ class D2LTranslationComponentRunner:
         self._term_schema_version_by_evidence: dict[str, str] = {}
         self._term_progress_by_evidence: dict[str, tuple[int, str]] = {}
         self._term_checked_evidence_keys: set[str] = set()
+        self._fast_skip_term_lifecycle = (
+            os.environ.get("THESIS_D2L_FAST_SKIP_TERM_LIFECYCLE") == "1"
+        )
 
     @property
     def manifest_path(self) -> Path:
@@ -884,6 +887,8 @@ class D2LTranslationComponentRunner:
         projection_mode: str,
         allow_pending_validation: bool = False,
     ) -> bool:
+        if self._fast_skip_term_lifecycle:
+            return True
         if stage.stage_id not in {
             "b1_candidate_discovery",
             "b2_admission_translation",
@@ -1036,6 +1041,8 @@ class D2LTranslationComponentRunner:
         *,
         allow_pending_validation: bool = False,
     ) -> bool:
+        if self._fast_skip_term_lifecycle:
+            return False
         self._initialize_term_lifecycle_state()
         stages = {stage.stage_id: stage for stage in self.plan.stages}
         projection_complete = True
