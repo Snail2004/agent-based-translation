@@ -581,7 +581,7 @@ class _FakeTransport:
 class _SplitB1Transport(_FakeTransport):
     def __init__(self, source_by_block: dict[str, str]) -> None:
         super().__init__(source_by_block)
-        self.full_window_truncated = True
+        self.full_window_truncated = False
 
     def response(self, role_id: str, messages: list[dict], tag: str):
         if role_id != "d2l.candidate_discovery":
@@ -611,6 +611,22 @@ class _SplitB1Transport(_FakeTransport):
                 }
             ],
         }
+
+
+class _InterruptAfterFirstSplitPartTransport(_SplitB1Transport):
+    def __init__(self, source_by_block: dict[str, str]) -> None:
+        super().__init__(source_by_block)
+        self.interrupted = False
+
+    def response(self, role_id: str, messages: list[dict], tag: str):
+        if (
+            role_id == "d2l.candidate_discovery"
+            and ".part_002." in tag
+            and not self.interrupted
+        ):
+            self.interrupted = True
+            raise RuntimeError("synthetic interruption after accepted part")
+        return super().response(role_id, messages, tag)
 
 
 class _SemanticRepairTransport(_FakeTransport):
@@ -862,7 +878,7 @@ def test_b1_truncated_response_retries_once_with_bounded_complete_output(
     assert retries[0]["payload"]["reason_code"] == "response_truncated"
 
 
-def test_b1_truncation_falls_back_to_internal_parts_and_seals_original_work(
+def test_b1_dense_window_starts_with_internal_parts_and_seals_original_work(
     tmp_path: Path,
 ) -> None:
     _job, campaign_root, campaign, project, rows, support = _prepared(tmp_path)
@@ -907,10 +923,9 @@ def test_b1_truncation_falls_back_to_internal_parts_and_seals_original_work(
         if row["role_id"] == "d2l.candidate_discovery"
     ]
     original_prefix = "b1_" + first_window["window_id"]
-    assert candidate_calls[0]["tag"] == f"{original_prefix}.semantic_1"
-    assert any(".part_001.semantic_1" in row["tag"] for row in candidate_calls)
+    assert candidate_calls[0]["tag"].endswith(".part_001.semantic_1")
     assert not any(
-        row["tag"] == f"{original_prefix}.semantic_2"
+        row["tag"].startswith(f"{original_prefix}.semantic_")
         for row in candidate_calls
     )
     receipt = next(
@@ -919,9 +934,7 @@ def test_b1_truncation_falls_back_to_internal_parts_and_seals_original_work(
     retries = [
         row for row in receipt["observations"] if row["event"] == "retry"
     ]
-    assert [row["payload"]["reason_code"] for row in retries] == [
-        "response_truncated_split"
-    ]
+    assert retries == []
     assert any(
         row["event"] == "validation_passed"
         and row["payload"]["subject_ref"] == original_prefix
@@ -994,6 +1007,75 @@ def test_b1_resume_after_terminal_truncation_starts_with_internal_part(
     assert not any(
         row["tag"].startswith(f"{original_tag}.semantic_")
         for row in candidate_calls
+    )
+
+
+def test_b1_resume_reuses_accepted_internal_part_without_provider_replay(
+    tmp_path: Path,
+) -> None:
+    _job, campaign_root, campaign, project, rows, support = _prepared(tmp_path)
+    first_window = campaign["universe"]["window_estimates"]["b1"]["windows"][0]
+    first_ids = {str(value) for value in first_window["block_ids"]}
+    for row in rows:
+        if str(row["block_id"]) in first_ids:
+            row["clean_text"] = "dense-term " + ("dense source text " * 220)
+    first_window["estimated_source_tokens"] = 1500
+
+    component_root = campaign_root / "component"
+    component_root.mkdir()
+    stage = next(
+        item
+        for item in ComponentPlan.from_mapping(support["plan"]).stages
+        if item.stage_id == "b1_candidate_discovery"
+    )
+    transport = _InterruptAfterFirstSplitPartTransport(
+        {
+            str(row["block_id"]): str(row["clean_text"] or row["source_text"])
+            for row in rows
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="synthetic interruption"):
+        execute_live_stage(
+            campaign=campaign,
+            project=project,
+            rows=rows,
+            stage_id=stage.stage_id,
+            component_root=component_root,
+            work_db=campaign_root / "state" / "work.sqlite3",
+            transport=transport,
+            component_attempt_id=1,
+            producer=stage.producer,
+            work_id=stage.work_id,
+        )
+    calls_before_resume = len(transport.calls)
+    assert any(
+        row["tag"].endswith(".part_001.semantic_1")
+        for row in transport.calls
+    )
+
+    execute_live_stage(
+        campaign=campaign,
+        project=project,
+        rows=rows,
+        stage_id=stage.stage_id,
+        component_root=component_root,
+        work_db=campaign_root / "state" / "work.sqlite3",
+        transport=transport,
+        component_attempt_id=2,
+        producer=stage.producer,
+        work_id=stage.work_id,
+    )
+
+    resumed_calls = transport.calls[calls_before_resume:]
+    assert resumed_calls
+    assert not any(
+        row["tag"].endswith(".part_001.semantic_1")
+        for row in resumed_calls
+    )
+    assert not any(
+        row["tag"].startswith(f"b1_{first_window['window_id']}.semantic_")
+        for row in resumed_calls
     )
 
 

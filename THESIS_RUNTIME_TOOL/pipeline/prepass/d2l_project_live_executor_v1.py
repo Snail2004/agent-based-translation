@@ -1229,13 +1229,10 @@ def _b1_stage(
                 1, int(role["generation"]["max_output_tokens"]) // 128
             ),
             truncation_fallback=truncation_fallback,
-            prefer_truncation_fallback=(
-                truncation_fallback is not None
-                and observations.has_terminal_validation_failure(
-                    subject_ref=tag,
-                    reason_code="response_truncated",
-                )
-            ),
+            # Dense windows already have a deterministic internal partition.
+            # Reuse any durable top-level result first, then execute/reuse the
+            # parts directly instead of spending one doomed full-window call.
+            prefer_truncation_fallback=truncation_fallback is not None,
         )
         normalized = _dataclass_json(validation)
         accepted_observations += len(normalized["observations"])
