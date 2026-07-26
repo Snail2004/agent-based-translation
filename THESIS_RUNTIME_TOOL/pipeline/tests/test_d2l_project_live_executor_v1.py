@@ -1855,3 +1855,81 @@ def test_live_executor_b2_uses_matching_v37_prompt_schema_and_validator(
         row["response_format"] == live_executor.b2_contract.RESPONSE_FORMAT
         for row in b2_calls
     )
+
+
+def test_live_executor_b2_repairs_only_foreign_evidence_ids(tmp_path: Path) -> None:
+    _job, campaign_root, campaign, project, rows, support = _prepared(tmp_path)
+    component_root = campaign_root / "component"
+    component_root.mkdir()
+    transport = support["transport"]
+
+    b1 = execute_live_stage(
+        campaign=campaign,
+        project=project,
+        rows=rows,
+        stage_id="b1_candidate_discovery",
+        component_root=component_root,
+        work_db=campaign_root / "state/work.sqlite3",
+        transport=transport,
+        component_attempt_id=1,
+        producer=_STAGE_PRODUCERS["b1_candidate_discovery"],
+        work_id="work_b1_candidate_discovery",
+    )
+    _write_json(
+        component_root / "artifacts/b1_candidate_discovery/candidates.json",
+        b1["art_b1_candidate_discovery"],
+    )
+    index = execute_live_stage(
+        campaign=campaign,
+        project=project,
+        rows=rows,
+        stage_id="candidate_index",
+        component_root=component_root,
+        work_db=campaign_root / "state/work.sqlite3",
+        transport=None,
+        component_attempt_id=1,
+        producer=_STAGE_PRODUCERS["candidate_index"],
+        work_id="work_candidate_index",
+    )
+    _write_json(
+        component_root / "artifacts/candidate_index/index.json",
+        index["art_candidate_index"],
+    )
+
+    original = transport.response
+
+    def foreign_evidence_response(
+        role_id: str, messages: list[dict], tag: str
+    ):
+        payload = original(role_id, messages, tag)
+        if role_id == "d2l.b2.admission":
+            payload = deepcopy(payload)
+            payload["decisions"][0]["evidence_block_ids"] = ["not-supplied"]
+        return payload
+
+    transport.response = foreign_evidence_response
+    before_calls = transport.call_count
+    result = execute_live_stage(
+        campaign=campaign,
+        project=project,
+        rows=rows,
+        stage_id="b2_admission_translation",
+        component_root=component_root,
+        work_db=campaign_root / "state/work.sqlite3",
+        transport=transport,
+        component_attempt_id=1,
+        producer=_STAGE_PRODUCERS["b2_admission_translation"],
+        work_id="work_b2_admission_translation",
+    )
+
+    assert transport.call_count == before_calls + 1
+    decision = result["art_b2_admission"]["consolidation_index"]["decisions"][0]
+    candidate = index["art_candidate_index"]["candidates"][0]
+    assert decision["evidence_block_ids"] == candidate["evidence_block_ids"]
+    receipt = next(value for value in result.values() if "observations" in value)
+    assert any(
+        row["event"] == "validation_passed"
+        and "fixed_only_candidate_evidence_allowlist"
+        in row["payload"]["reason_codes"]
+        for row in receipt["observations"]
+    )

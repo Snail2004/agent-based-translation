@@ -833,6 +833,9 @@ def _semantic_call(
     truncation_retry_item_limit: int | None = None,
     truncation_fallback: Callable[[], tuple[Any, Any]] | None = None,
     prefer_truncation_fallback: bool = False,
+    normalize: (
+        Callable[[dict[str, Any]], tuple[dict[str, Any], tuple[str, ...]]] | None
+    ) = None,
 ) -> tuple[Any, Any]:
     input_sha256 = _semantic_input_sha256(
         messages=messages,
@@ -847,6 +850,8 @@ def _semantic_call(
     )
     if durable_result is not None:
         parsed = parse(durable_result)
+        if normalize is not None:
+            parsed, _normalization_reasons = normalize(parsed)
         validation = validate(parsed)
         errors = [
             str(value) for value in getattr(validation, "errors", ())
@@ -913,6 +918,7 @@ def _semantic_call(
         observations.response(result=result, work_id=tag)
         errors: list[str] = []
         validation = None
+        normalization_reasons: tuple[str, ...] = ()
         try:
             response_value: Any = result.parsed_json
             if response_value is None:
@@ -920,6 +926,8 @@ def _semantic_call(
                     normalize_prompt_json_envelope(result.text)
                 )
             parsed = parse(response_value)
+            if normalize is not None:
+                parsed, normalization_reasons = normalize(parsed)
             validation = validate(parsed)
             errors.extend(str(value) for value in getattr(validation, "errors", ()))
         except Exception as exc:
@@ -936,7 +944,11 @@ def _semantic_call(
             passed=passed,
             validator_id=validator_id,
             subject_ref=tag,
-            reason_codes=["exact_local_validation"] if passed else sorted(set(errors)),
+            reason_codes=(
+                ["exact_local_validation", *normalization_reasons]
+                if passed
+                else sorted(set([*errors, *normalization_reasons]))
+            ),
             retryable=not passed and semantic_attempt <= retry_cap,
         )
         if passed:
@@ -977,6 +989,63 @@ def _semantic_call(
             f"semantic response failed local validation for {tag}: {errors}"
         )
     raise AssertionError("semantic retry loop did not terminate")
+
+
+def _normalize_b2_candidate_evidence(
+    parsed: dict[str, Any], *, packet: Mapping[str, Any]
+) -> tuple[dict[str, Any], tuple[str, ...]]:
+    """Repair only citations that fall outside the candidate's sealed allow-list.
+
+    The model still owns the decision, target, and rationale.  Evidence IDs are
+    source-owned packet facts, so replacing an invalid citation with the
+    candidate's supplied IDs is a mechanical, auditable repair and does not
+    require another provider call.
+    """
+    repaired = deepcopy(parsed)
+    allowed_by_candidate = {
+        str(row["candidate_id"]): [
+            str(value) for value in row["evidence_block_ids"]
+        ]
+        for row in packet["candidates"]
+    }
+    changed = False
+
+    def repair_ids(value: Any, allowed: list[str]) -> Any:
+        nonlocal changed
+        if (
+            not isinstance(value, list)
+            or not value
+            or not all(isinstance(item, str) for item in value)
+            or set(value).issubset(set(allowed))
+        ):
+            return value
+        retained = [item for item in value if item in allowed]
+        replacement = retained or list(allowed)
+        if replacement != value:
+            changed = True
+        return replacement
+
+    decisions = repaired.get("decisions")
+    if isinstance(decisions, list):
+        for decision in decisions:
+            if not isinstance(decision, dict):
+                continue
+            allowed = allowed_by_candidate.get(str(decision.get("candidate_id")))
+            if not allowed:
+                continue
+            decision["evidence_block_ids"] = repair_ids(
+                decision.get("evidence_block_ids"), allowed
+            )
+            alternates = decision.get("alternates")
+            if isinstance(alternates, list):
+                for alternate in alternates:
+                    if isinstance(alternate, dict):
+                        alternate["evidence_block_ids"] = repair_ids(
+                            alternate.get("evidence_block_ids"), allowed
+                        )
+    if not changed:
+        return repaired, ()
+    return repaired, ("fixed_only_candidate_evidence_allowlist",)
 
 
 def _semantic_input_sha256(
@@ -1560,6 +1629,9 @@ def _b2_stage(
             retry_cap=int(role["semantic_retry_cap"]),
             work_journal=work_journal,
             work_contract_id=str(role["semantic_role_sha256"]),
+            normalize=lambda parsed, packet=packet: (
+                _normalize_b2_candidate_evidence(parsed, packet=packet)
+            ),
         )
         validations.append((packet, validation))
         packet_records.append(
