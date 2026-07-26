@@ -2302,22 +2302,33 @@ def project_artifact_term_batches(
             "candidate_index.candidates",
         )
         for index, raw in enumerate(candidates):
+            candidate_label = f"candidate_index.candidates[{index}]"
             candidate = dict(
-                _require_mapping(raw, f"candidate_index.candidates[{index}]")
+                _require_mapping(raw, candidate_label)
             )
             candidate_id = str(
                 _term_string(
                     candidate.get("candidate_id"),
-                    f"candidate_index.candidates[{index}].candidate_id",
+                    f"{candidate_label}.candidate_id",
                     maximum=191,
                 )
             )
-            surfaces = list(candidate.get("surfaces") or [])
-            if not surfaces and candidate.get("surface"):
-                surfaces = [candidate["surface"]]
-            logical_subject = str(
+            raw_surfaces = list(candidate.get("surfaces") or [])
+            if not raw_surfaces and candidate.get("surface"):
+                raw_surfaces = [candidate["surface"]]
+            surfaces = [
+                _term_source_surface(
+                    surface,
+                    f"{candidate_label}.surfaces[{surface_index}]",
+                    maximum=256,
+                )
+                for surface_index, surface in enumerate(raw_surfaces)
+            ]
+            logical_subject = _term_source_surface(
                 candidate.get("normalized_surface")
-                or (surfaces[0] if surfaces else candidate_id)
+                or (surfaces[0] if surfaces else candidate_id),
+                f"{candidate_label}.normalized_surface",
+                maximum=256,
             )
             rows.append(
                 _build_term_row(
@@ -3129,6 +3140,7 @@ class D2LTranslationComponentEventWriter:
         manifest: Mapping[str, Any],
         component_attempt_id: int,
         recover_existing_attempt: bool = False,
+        trusted_existing_summary: Mapping[str, Any] | None = None,
     ) -> None:
         self.path = Path(path)
         self.manifest = validate_component_manifest(manifest)
@@ -3145,7 +3157,62 @@ class D2LTranslationComponentEventWriter:
         self._recovery_checkpoint_only = False
         self._closed = False
         self._recover_existing_attempt = recover_existing_attempt
-        self._seq = self._load_existing()
+        self._seq = (
+            self._load_existing()
+            if trusted_existing_summary is None
+            else self._load_trusted_existing(trusted_existing_summary)
+        )
+
+    def _load_trusted_existing(
+        self,
+        summary: Mapping[str, Any],
+    ) -> int:
+        """Open an already validated checkpoint prefix without rescanning it."""
+
+        if not self.path.is_file() or self.path.stat().st_size == 0:
+            raise D2LConsoleContractError(
+                "trusted component event prefix is missing"
+            )
+        row = dict(_require_mapping(summary, "trusted_existing_summary"))
+        if set(row) != {
+            "last_component_seq",
+            "last_component_attempt_id",
+            "terminal_event",
+        }:
+            raise D2LConsoleContractError(
+                "trusted component event summary fields are invalid"
+            )
+        last_seq = _require_int(
+            row["last_component_seq"],
+            "trusted last_component_seq",
+            minimum=1,
+        )
+        last_attempt = _require_int(
+            row["last_component_attempt_id"],
+            "trusted last_component_attempt_id",
+            minimum=1,
+        )
+        if row["terminal_event"] is not None:
+            raise D2LConsoleContractError(
+                "trusted Resume prefix cannot be terminal"
+            )
+        if self.component_attempt_id == last_attempt:
+            if not self._recover_existing_attempt:
+                raise D2LConsoleContractError(
+                    "opening an existing nonterminal stream requires a new component attempt"
+                )
+            self._recovery_checkpoint_only = True
+            return last_seq
+        if self.component_attempt_id != last_attempt + 1:
+            raise D2LConsoleContractError(
+                "resume must increment component_attempt_id by one"
+            )
+        if self.manifest["reconstructed"]:
+            raise D2LConsoleContractError(
+                "reconstructed component cannot resume"
+            )
+        self._requires_resume = True
+        return last_seq
 
     def _load_existing(self) -> int:
         if not self.path.exists() or self.path.stat().st_size == 0:

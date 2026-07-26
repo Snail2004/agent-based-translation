@@ -1861,6 +1861,111 @@ def test_resume_estimate_follows_completed_pre_provider_child(
     assert spawned == [resumed_entry["run_id"]]
 
 
+def test_d2l_resume_estimate_reuses_checkpoint_receipt_and_binds_drift(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv(
+        "THESIS_TOOL_PROJECTS_ROOT",
+        str(tmp_path / "projects"),
+    )
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    contract = importlib.import_module(
+        "pipeline.prepass.d2l_console_replay_contract_v1"
+    )
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    source, campaign_root = _create_resumable_d2l_run(
+        tmp_path,
+        registry,
+        run_id="run_fast_resume",
+    )
+    registry.update_run(
+        source["run_id"],
+        script="run_workflow_orchestrator_v1",
+        allow_api=True,
+    )
+    routes.set_registry(registry)
+    monkeypatch.setattr(routes, "LIVE_START_ALLOWED", True)
+    monkeypatch.setattr(
+        routes,
+        "_preflight_d2l_resume_revision",
+        lambda _entry, *, repair_reason: {
+            "schema_version": "d2l_resume_revision_preflight_v1",
+            "mode": "direct",
+            "effective_code_revision": "A" * 40,
+            "repair_reason": repair_reason,
+            "preflight_sha256": "B" * 64,
+        },
+    )
+    full_validation_calls = 0
+    original_full_validation = contract.validate_translation_component_package
+
+    def count_full_validation(*args, **kwargs):
+        nonlocal full_validation_calls
+        full_validation_calls += 1
+        return original_full_validation(*args, **kwargs)
+
+    monkeypatch.setattr(
+        contract,
+        "validate_translation_component_package",
+        count_full_validation,
+    )
+    monkeypatch.setattr(
+        routes,
+        "spawn_run",
+        lambda *_args, **_kwargs: pytest.fail(
+            "drift must reject before creating a Resume child"
+        ),
+    )
+    client = app_module.create_app().test_client()
+    baseline_full_validation_calls = full_validation_calls
+
+    estimate = client.get(
+        "/api/thesis/runs/estimate-preview"
+        "?resume_run_id=run_fast_resume"
+    )
+
+    assert estimate.status_code == 200
+    preview = estimate.get_json()["data"]
+    assert preview["resume_package_preflight"]["validation_mode"] == (
+        "sealed_checkpoint_receipt"
+    )
+    assert preview["resume_package_preflight"]["receipt_sha256"]
+    assert full_validation_calls == baseline_full_validation_calls
+
+    receipt_path = (
+        campaign_root
+        / "component"
+        / "runtime"
+        / "resume_checkpoint_receipt_v1.json"
+    )
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    receipt["validation_mode"] = "tampered"
+    receipt_path.write_text(
+        json.dumps(receipt, ensure_ascii=False, sort_keys=True),
+        encoding="utf-8",
+    )
+
+    rejected = client.post(
+        "/api/thesis/runs/run_fast_resume/resume",
+        json={"confirm_token": preview["confirm_token"]},
+    )
+
+    assert rejected.status_code == 409
+    assert rejected.get_json()["errors"][0]["code"] == (
+        "resume_package_preflight_drift"
+    )
+    assert full_validation_calls == baseline_full_validation_calls + 1
+    assert registry.find_resume_children("run_fast_resume") == []
+
+
 def test_route_repair_preflight_rejects_before_child_and_freeze(
     tmp_path,
     monkeypatch,

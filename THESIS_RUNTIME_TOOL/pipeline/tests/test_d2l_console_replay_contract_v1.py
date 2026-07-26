@@ -19,6 +19,7 @@ from pipeline.prepass.d2l_console_replay_contract_v1 import (
     canonical_json_bytes,
     canonical_sha256,
     file_sha256,
+    project_artifact_term_batches,
     project_work_journal_term_batches,
     scoring_fragment_sha256,
     term_work_completed,
@@ -987,6 +988,60 @@ def test_term_lifecycle_normalizes_line_wrapped_surface_but_rejects_unsafe_contr
                 }
             ]
         )
+
+
+def test_candidate_index_term_projection_normalizes_line_wrapped_surfaces() -> None:
+    batches = project_artifact_term_batches(
+        artifact={
+            "artifact_ref": "art_candidate_index",
+            "artifact_kind": "candidate_index",
+            "schema_version": "d2l_candidate_index_v2",
+            "sha256": "A" * 64,
+            "sha256_kind": "physical",
+            "component_attempt_id": 10,
+            "producer_stage_id": "candidate_index",
+        },
+        artifact_value={
+            "candidates": [
+                {
+                    "candidate_id": "candidate_left_hand_side_derivative",
+                    "normalized_surface": "left-hand-side\nderivative",
+                    "surfaces": ["left-hand-side\nderivative"],
+                    "source_row_hashes": ["B" * 64],
+                    "source_block_ids": ["d2l_block_001"],
+                },
+                {
+                    "candidate_id": "candidate_sentiment_analysis",
+                    "normalized_surface": "sentiment\nanalysis",
+                    "surfaces": ["sentiment\nanalysis"],
+                    "source_row_hashes": ["C" * 64],
+                    "source_block_ids": ["d2l_block_002"],
+                },
+            ]
+        },
+        created_event={
+            "event_id": "evt_candidate_index_created",
+            "component_seq": 3641,
+        },
+        previous_rows=[],
+        completed=1,
+        total=1,
+        unit="artifacts",
+        through_work_id="work_candidate_index",
+    )
+
+    rows = [
+        row
+        for batch in batches
+        for row in batch["rows"]
+    ]
+    assert sorted(row["surfaces"][0] for row in rows) == [
+        "left-hand-side derivative",
+        "sentiment analysis",
+    ]
+    assert all(row["state"] == "aggregated" for row in rows)
+    for batch in batches:
+        validate_term_lifecycle_batch(batch, stage_id="candidate_index")
 
 
 def test_term_lifecycle_over_cap_splits_with_exact_stable_cover() -> None:

@@ -826,7 +826,7 @@ def _append_resume_repair_reason(
 _RECOVERED_PAUSE_REPAIR_REASONS = {
     "journal_publication_race_recovered": "journal_publication_race_recovery",
 }
-_RESUME_CONFIRMATION_BINDING_SCHEMA = "resume_confirmation_binding_v1"
+_RESUME_CONFIRMATION_BINDING_SCHEMA = "resume_confirmation_binding_v2"
 _RESUME_LINEAGE_IDENTITY_FIELDS = (
     "script",
     "job_id",
@@ -853,13 +853,20 @@ def _resolved_resume_repair_reason(
         return str(stored).strip()
     if entry.get("script") not in _D2L_COMPONENT_SCRIPTS:
         return None
-    component = _d2l_component_projection(entry)
-    if (
-        component.get("component_status") != "paused"
-        or (component.get("validation") or {}).get("state") != "valid"
-    ):
-        return None
-    resume = component.get("resume") or {}
+    package_state = entry.get("_resume_package_state")
+    if not isinstance(package_state, dict):
+        component = _d2l_component_projection(entry)
+        if (
+            component.get("component_status") != "paused"
+            or (component.get("validation") or {}).get("state") != "valid"
+        ):
+            return None
+        resume = component.get("resume") or {}
+    else:
+        manifest = package_state.get("manifest") or {}
+        if manifest.get("status") != "paused":
+            return None
+        resume = manifest.get("resume") or {}
     if not resume.get("resume_available"):
         return None
     return _RECOVERED_PAUSE_REPAIR_REASONS.get(resume.get("paused_reason"))
@@ -917,6 +924,7 @@ def _resume_confirmation_binding(
     entry: dict,
     repair_reason: str | None,
     repair_revision_preflight: dict | None,
+    resume_package_preflight: dict | None,
 ) -> dict:
     preflight_sha256 = (
         repair_revision_preflight.get("preflight_sha256")
@@ -950,6 +958,11 @@ def _resume_confirmation_binding(
         "launch_binding_sha256": entry.get("launch_binding_sha256"),
         "repair_reason": repair_reason,
         "repair_revision_preflight_sha256": preflight_sha256,
+        "resume_package_preflight_sha256": (
+            resume_package_preflight.get("preflight_sha256")
+            if isinstance(resume_package_preflight, dict)
+            else None
+        ),
     }
 
 
@@ -1014,6 +1027,112 @@ def _is_translation_component_entry(entry: dict) -> bool:
     )
 
 
+def _translation_resume_package_state(entry: dict) -> dict:
+    manifest_path = _manifest_path_for_entry(entry)
+    component_root = manifest_path.parent
+    try:
+        from pipeline.prepass.d2l_console_replay_contract_v1 import (
+            D2LConsoleContractError,
+            validate_translation_component_package,
+        )
+        from pipeline.prepass.d2l_resume_checkpoint_receipt_v1 import (
+            D2LResumeCheckpointReceiptError,
+            validate_resume_checkpoint_receipt,
+        )
+
+        try:
+            validation = validate_resume_checkpoint_receipt(component_root)
+        except (
+            D2LResumeCheckpointReceiptError,
+            KeyError,
+            OSError,
+            TypeError,
+            ValueError,
+        ):
+            validation = validate_translation_component_package(
+                component_root,
+                require_terminal=False,
+            )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (
+        D2LConsoleContractError,
+        OSError,
+        json.JSONDecodeError,
+    ) as exc:
+        raise RunControlError(
+            "d2l_component_not_ready",
+            "D2L component package is not valid for Resume.",
+            409,
+        ) from exc
+    if not isinstance(manifest, dict):
+        raise RunControlError(
+            "resume_manifest_invalid",
+            "Resume manifest must be a JSON object.",
+            409,
+        )
+    resume = manifest.get("resume") or {}
+    checkpoint_ref = resume.get("checkpoint_ref")
+    checkpoint_sha256 = resume.get("checkpoint_sha256")
+    runner_plan_sha256 = None
+    if checkpoint_ref:
+        checkpoint_path = component_root / str(checkpoint_ref)
+        try:
+            checkpoint = json.loads(
+                checkpoint_path.read_text(encoding="utf-8")
+            )
+        except (OSError, json.JSONDecodeError) as exc:
+            raise RunControlError(
+                "resume_checkpoint_invalid",
+                "D2L Resume checkpoint is not readable.",
+                409,
+            ) from exc
+        state = checkpoint.get("state") or {}
+        if not isinstance(state, dict):
+            raise RunControlError(
+                "resume_checkpoint_invalid",
+                "D2L Resume checkpoint state is invalid.",
+                409,
+            )
+        runner_plan_sha256 = state.get("runner_plan_sha256")
+    facts = {
+        "schema_version": "d2l_resume_package_preflight_v1",
+        "validation_mode": validation.get("validation_mode", "full"),
+        "receipt_sha256": validation.get("receipt_sha256"),
+        "workflow_run_id": manifest.get("workflow_run_id"),
+        "component_run_id": manifest.get("component_run_id"),
+        "component_attempt_id": manifest.get("component_attempt_id"),
+        "component_status": manifest.get("status"),
+        "active_stage_id": manifest.get("active_stage_id"),
+        "component_manifest_sha256": validation[
+            "component_manifest_sha256"
+        ],
+        "artifact_index_sha256": validation["artifact_index_sha256"],
+        "event_count": validation["event_count"],
+        "checkpoint_ref": checkpoint_ref,
+        "checkpoint_sha256": checkpoint_sha256,
+        "runner_plan_sha256": runner_plan_sha256,
+        "config_sha256": manifest.get("config_sha256"),
+        "code_revision": manifest.get("code_revision"),
+        "selected_chapter_ids": manifest.get("selected_chapter_ids") or [],
+    }
+    preflight_sha256 = hashlib.sha256(
+        json.dumps(
+            facts,
+            ensure_ascii=True,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest().upper()
+    return {
+        "manifest": manifest,
+        "validation": validation,
+        "preflight": {
+            **facts,
+            "preflight_sha256": preflight_sha256,
+        },
+    }
+
+
 def _resolve_resume_estimate_entry(
     registry: RunRegistry,
     entry: dict,
@@ -1024,6 +1143,7 @@ def _resolve_resume_estimate_entry(
         return entry
     current = entry
     seen: set[str] = set()
+    traversed_child = False
     while True:
         run_id = str(current.get("run_id") or "")
         if not run_id or run_id in seen:
@@ -1035,7 +1155,7 @@ def _resolve_resume_estimate_entry(
         seen.add(run_id)
         children = registry.find_resume_children(run_id)
         if not children:
-            return current
+            break
         if len(children) != 1:
             raise RunControlError(
                 "resume_lineage_ambiguous",
@@ -1067,36 +1187,23 @@ def _resolve_resume_estimate_entry(
                 "A newer Resume child is still active.",
                 409,
             )
-        try:
-            from pipeline.prepass.d2l_console_replay_contract_v1 import (
-                D2LConsoleContractError,
-                validate_translation_component_package,
-            )
-
-            manifest_path = _manifest_path_for_entry(child)
-            validate_translation_component_package(
-                manifest_path.parent,
-                require_terminal=False,
-            )
-            manifest = json.loads(
-                manifest_path.read_text(encoding="utf-8")
-            )
-        except (D2LConsoleContractError, OSError, json.JSONDecodeError) as exc:
-            raise RunControlError(
-                "resume_child_not_recoverable",
-                "The latest Resume child is not a valid paused Resume source.",
-                409,
-            ) from exc
-        resume = manifest.get("resume") or {}
-        if manifest.get("status") != "paused" or not resume.get(
-            "resume_available"
-        ):
-            raise RunControlError(
-                "resume_child_not_recoverable",
-                "The latest Resume child is not a valid paused Resume source.",
-                409,
-            )
         current = child
+        traversed_child = True
+    package_state = _translation_resume_package_state(current)
+    manifest = package_state["manifest"]
+    resume = manifest.get("resume") or {}
+    if traversed_child and (
+        manifest.get("status") != "paused"
+        or not resume.get("resume_available")
+    ):
+        raise RunControlError(
+            "resume_child_not_recoverable",
+            "The latest Resume child is not a valid paused Resume source.",
+            409,
+        )
+    resolved = dict(current)
+    resolved["_resume_package_state"] = package_state
+    return resolved
 
 
 def _preflight_d2l_resume_revision(
@@ -1352,25 +1459,24 @@ def estimate_preview():
                 raise RunControlError("run_not_found", f"Run {resume_run_id} not found.", 404)
             requested_resume_run_id = resume_run_id
             supplied_repair_reason = request.args.get("repair_reason")
+            entry = _resolve_resume_estimate_entry(registry, entry)
             repair_reason = _resolved_resume_repair_reason_from_lineage(
                 registry,
                 entry,
                 supplied_repair_reason,
             )
-            entry = _resolve_resume_estimate_entry(registry, entry)
             resume_run_id = validate_run_id(
                 entry.get("run_id"),
                 required=True,
             )
-            if repair_reason is None:
-                repair_reason = _resolved_resume_repair_reason_from_lineage(
-                    registry,
-                    entry,
-                    supplied_repair_reason,
-                )
             repair_revision_preflight = _preflight_d2l_resume_revision(
                 entry,
                 repair_reason=repair_reason,
+            )
+            resume_package_preflight = (
+                entry["_resume_package_state"]["preflight"]
+                if _is_translation_component_entry(entry)
+                else None
             )
             argv = _append_resume_repair_reason(
                 build_resume_argv_from_entry(entry),
@@ -1382,6 +1488,7 @@ def estimate_preview():
                 entry=entry,
                 repair_reason=repair_reason,
                 repair_revision_preflight=repair_revision_preflight,
+                resume_package_preflight=resume_package_preflight,
             )
             token = issue_estimate_token_for_argv(
                 job_id=job_id,
@@ -1405,6 +1512,9 @@ def estimate_preview():
                     "selected_chapter_ids": entry.get("selected_chapter_ids") or [],
                     "repair_reason": repair_reason,
                     "repair_revision_preflight": repair_revision_preflight,
+                    "resume_package_preflight": (
+                        resume_package_preflight
+                    ),
                     "confirm_token": token,
                     "confirm_token_ttl_seconds": 30 * 60,
                     "argv_preview": _public_argv_preview(entry, argv),
@@ -2195,26 +2305,21 @@ def resume_thesis_run(run_id: str):
                 ]
                 attempt_index = int(component_attempt) + 1
             else:
-                try:
-                    from pipeline.prepass.d2l_console_replay_contract_v1 import (
-                        D2LConsoleContractError,
-                        validate_translation_component_package,
+                package_state = _translation_resume_package_state(entry)
+                validation = package_state["validation"]
+                manifest = package_state["manifest"]
+                resume_package_preflight = package_state["preflight"]
+                if confirmation_binding is not None and (
+                    resume_package_preflight["preflight_sha256"]
+                    != confirmation_binding.get(
+                        "resume_package_preflight_sha256"
                     )
-
-                    validation = validate_translation_component_package(
-                        manifest_path.parent,
-                        require_terminal=False,
-                    )
-                except (
-                    D2LConsoleContractError,
-                    OSError,
-                    json.JSONDecodeError,
-                ) as exc:
+                ):
                     raise RunControlError(
-                        "d2l_component_not_ready",
-                        "D2L component package is not valid for Resume.",
+                        "resume_package_preflight_drift",
+                        "Resume package changed after estimate; refresh and confirm again.",
                         409,
-                    ) from exc
+                    )
                 if manifest.get("status") in {
                     "succeeded",
                     "failed",

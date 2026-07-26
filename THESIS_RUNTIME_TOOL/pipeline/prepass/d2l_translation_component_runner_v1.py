@@ -71,6 +71,12 @@ from pipeline.prepass.d2l_repair_resume_v1 import (
     validate_mechanical_repair_paths,
     validate_repair_receipt,
 )
+from pipeline.prepass.d2l_resume_checkpoint_receipt_v1 import (
+    D2LResumeCheckpointReceiptError,
+    VALIDATION_MODE as RESUME_CHECKPOINT_VALIDATION_MODE,
+    validate_resume_checkpoint_receipt,
+    write_resume_checkpoint_receipt,
+)
 from pipeline.prepass.d2l_stage_work_journal_v1 import (
     read_work_journal,
     work_journal_state,
@@ -439,6 +445,7 @@ class D2LTranslationComponentRunner:
         self._repair_receipt_register = False
         self._repair_delta: dict[str, Any] | None = None
         self._revision_preflight_done = False
+        self._resume_checkpoint_validation: dict[str, Any] | None = None
         self._pending_journal_recovery: (
             tuple[StagePlan, Path, dict[str, Any]] | None
         ) = None
@@ -837,7 +844,7 @@ class D2LTranslationComponentRunner:
         *,
         projection_mode: str,
         allow_pending_validation: bool = False,
-    ) -> None:
+    ) -> bool:
         if stage.stage_id not in {
             "b1_candidate_discovery",
             "b2_admission_translation",
@@ -845,7 +852,7 @@ class D2LTranslationComponentRunner:
             "auditor_target_collision",
             "auditor_multi_target",
         }:
-            return
+            return True
         self._initialize_term_lifecycle_state()
         journal_ref = f"runtime/work_items/{stage.stage_id}.jsonl"
         entries = read_work_journal(self.root / journal_ref)
@@ -859,7 +866,8 @@ class D2LTranslationComponentRunner:
                 allow_pending_validation=allow_pending_validation,
             )
             if not projected:
-                break
+                return False
+        return True
 
     def _project_term_artifact(
         self,
@@ -963,9 +971,14 @@ class D2LTranslationComponentRunner:
         ):
             self._project_term_artifact(stage=stage, artifact=artifact)
 
-    def _backfill_term_lifecycle(self) -> None:
+    def _backfill_term_lifecycle(
+        self,
+        *,
+        allow_pending_validation: bool = False,
+    ) -> bool:
         self._initialize_term_lifecycle_state()
         stages = {stage.stage_id: stage for stage in self.plan.stages}
+        projection_complete = True
         for stage_id in (
             "b1_candidate_discovery",
             "b2_admission_translation",
@@ -973,9 +986,14 @@ class D2LTranslationComponentRunner:
             "auditor_target_collision",
             "auditor_multi_target",
         ):
-            self._drain_term_work_journal(
-                stages[stage_id],
-                projection_mode="resume_backfill",
+            projection_complete = (
+                self._drain_term_work_journal(
+                    stages[stage_id],
+                    projection_mode="resume_backfill",
+                    allow_pending_validation=allow_pending_validation,
+                )
+                is True
+                and projection_complete
             )
         created_seq: dict[str, int] = {
             str(event["event_id"]): int(event["component_seq"])
@@ -991,6 +1009,7 @@ class D2LTranslationComponentRunner:
         ):
             stage = stages[str(artifact["producer_stage_id"])]
             self._project_term_artifact(stage=stage, artifact=artifact)
+        return projection_complete
 
     def _semantic_contract_sha256(self) -> str:
         plan = self.plan.canonical_mapping()
@@ -1164,17 +1183,19 @@ class D2LTranslationComponentRunner:
     def _latest_indexed_repair_anchor(self) -> dict[str, Any] | None:
         if not self.manifest_path.is_file() or not self.index_path.is_file():
             return None
-        validate_translation_component_package(
-            self.root,
-            require_terminal=False,
-        )
+        package_validation = self._validate_paused_resume_package()
         manifest = validate_component_manifest(
             _load_json(self.manifest_path, "component manifest")
         )
         index = validate_artifact_index(
             _load_json(self.index_path, "artifact index"),
             manifest=manifest,
-            artifact_root=self.root,
+            artifact_root=(
+                None
+                if package_validation.get("validation_mode")
+                == RESUME_CHECKPOINT_VALIDATION_MODE
+                else self.root
+            ),
         )
         repairs = [
             dict(row)
@@ -1255,6 +1276,25 @@ class D2LTranslationComponentRunner:
             "sealed_code_revision": sealed_revision,
             "effective_code_revision": receipt["effective_code_revision"],
         }
+
+    def _validate_paused_resume_package(self) -> dict[str, Any]:
+        if self._resume_checkpoint_validation is not None:
+            return self._resume_checkpoint_validation
+        try:
+            validation = validate_resume_checkpoint_receipt(self.root)
+        except (
+            D2LResumeCheckpointReceiptError,
+            KeyError,
+            OSError,
+            TypeError,
+            ValueError,
+        ):
+            validation = validate_translation_component_package(
+                self.root,
+                require_terminal=False,
+            )
+        self._resume_checkpoint_validation = dict(validation)
+        return self._resume_checkpoint_validation
 
     def _prepare_repair_receipt(
         self,
@@ -1364,7 +1404,7 @@ class D2LTranslationComponentRunner:
             return self._finish_success()
         except _PauseRun as pause:
             self._pause(pause.stage_id, pause.reason)
-            return validate_translation_component_package(self.root, require_terminal=False)
+            return validate_resume_checkpoint_receipt(self.root)
         except Exception as exc:
             try:
                 self._fail(exc)
@@ -1520,11 +1560,9 @@ class D2LTranslationComponentRunner:
         self._set_status("running", active_stage_id=STAGE_IDS[0])
 
     def _open_resume(self) -> None:
-        # Validate the complete paused package before changing the current
-        # manifest/index attempt or invoking any child command.
-        package_validation = validate_translation_component_package(
-            self.root, require_terminal=False
-        )
+        # A checkpoint receipt avoids rescanning the immutable accepted prefix.
+        # Missing or drifted receipts fall back to the owning full validator.
+        package_validation = self._validate_paused_resume_package()
         self.manifest = _load_json(self.manifest_path, "component manifest")
         current = validate_component_manifest(self.manifest)
         expected_immutable = {
@@ -1566,8 +1604,31 @@ class D2LTranslationComponentRunner:
             raise ComponentRunnerError("resume checkpoint has no sealed runner plan")
         if checkpoint_plan_sha != self.plan.plan_sha256:
             raise ComponentRunnerError("resume runner plan hash mismatch")
-        journal_entries = read_observation_journal(self.observation_journal_path)
-        journal_state = observation_journal_state(journal_entries)
+        fast_validation = (
+            package_validation.get("validation_mode")
+            == RESUME_CHECKPOINT_VALIDATION_MODE
+        )
+        if fast_validation:
+            journal_state = dict(
+                package_validation["observation_journal_state"]
+            )
+            journal_entry_count = int(journal_state["entry_count"])
+            latest_usage_sha = package_validation.get(
+                "latest_usage_snapshot_sha256"
+            )
+            work_journal_state = package_validation[
+                "work_journal_checkpoint_state"
+            ]
+        else:
+            journal_entries = read_observation_journal(
+                self.observation_journal_path
+            )
+            journal_state = observation_journal_state(journal_entries)
+            journal_entry_count = len(journal_entries)
+            latest_usage_sha = self._latest_usage_snapshot_sha256(
+                journal_entries
+            )
+            work_journal_state = self._work_journal_checkpoint_state()
         if (
             checkpoint_state.get("observation_journal_entry_count")
             != journal_state["entry_count"]
@@ -1575,7 +1636,6 @@ class D2LTranslationComponentRunner:
             != journal_state["last_entry_sha256"]
         ):
             raise ComponentRunnerError("resume observation journal lineage mismatch")
-        latest_usage_sha = self._latest_usage_snapshot_sha256(journal_entries)
         if (
             checkpoint_state.get("latest_usage_snapshot_sha256")
             != latest_usage_sha
@@ -1583,15 +1643,13 @@ class D2LTranslationComponentRunner:
             != latest_usage_sha
         ):
             raise ComponentRunnerError("resume usage snapshot lineage mismatch")
-        if checkpoint_state.get("work_journals", {}) != (
-            self._work_journal_checkpoint_state()
-        ):
+        if checkpoint_state.get("work_journals", {}) != work_journal_state:
             raise ComponentRunnerError("resume work journal lineage mismatch")
         next_attempt = int(current["component_attempt_id"]) + 1
         if self.resume_attempt_preparer is not None:
             self.resume_attempt_preparer(next_attempt)
         self._prepare_repair_receipt(current=current, resume=resume)
-        self._journal_cursor = len(journal_entries)
+        self._journal_cursor = journal_entry_count
         self._current_attempt = next_attempt
         self.manifest = dict(current)
         self.manifest["component_attempt_id"] = self._current_attempt
@@ -1611,6 +1669,9 @@ class D2LTranslationComponentRunner:
             self.root / "events.jsonl",
             manifest=self.manifest,
             component_attempt_id=self._current_attempt,
+            trusted_existing_summary=package_validation.get(
+                "event_writer_summary"
+            ),
         )
         self.writer.emit(
             "run_resumed",
@@ -1643,9 +1704,16 @@ class D2LTranslationComponentRunner:
             previous_component_attempt_id=self._current_attempt - 1,
             paused_reason=str(resume["paused_reason"]),
         )
-        # Project accepted historical terminology only after the Resume
-        # boundary is durable and before any stage subprocess can run.
-        self._backfill_term_lifecycle()
+        # Legacy packages need historical projection. A fast receipt certifies
+        # that the pause boundary already drained the term lifecycle journals.
+        if not (
+            package_validation.get("validation_mode")
+            == RESUME_CHECKPOINT_VALIDATION_MODE
+            and package_validation.get(
+                "term_lifecycle_projection_complete"
+            )
+        ):
+            self._backfill_term_lifecycle()
 
     def _register_repair_receipt(self, *, stage_id: str) -> None:
         if self._repair_receipt is None or self._repair_receipt_path is None:
@@ -2475,12 +2543,21 @@ class D2LTranslationComponentRunner:
                 stage,
                 allow_incomplete_tail=False,
             )
-            if project_term_lifecycle:
-                self._drain_term_work_journal(
-                    stage,
-                    projection_mode="live",
+        term_lifecycle_projection_complete = False
+        if project_term_lifecycle:
+            term_lifecycle_projection_complete = (
+                self._backfill_term_lifecycle(
+                    allow_pending_validation=True,
                 )
+                is True
+            )
         journal_entries = read_observation_journal(self.observation_journal_path)
+        usage_snapshots = [
+            dict(entry["observation"]["payload"])
+            for entry in journal_entries
+            if entry["observation"]["event"] == "usage_snapshot"
+        ]
+        latest_usage_snapshot = usage_snapshots[-1] if usage_snapshots else None
         journal_state = observation_journal_state(journal_entries)
         stage_row = self._stage_row(stage_id)
         if stage_row["status"] == "running":
@@ -2543,6 +2620,16 @@ class D2LTranslationComponentRunner:
             "paused_reason": reason,
         }
         self._save_manifest()
+        write_resume_checkpoint_receipt(
+            self.root,
+            latest_usage_snapshot=latest_usage_snapshot,
+            term_lifecycle_projection_complete=(
+                term_lifecycle_projection_complete
+            ),
+        )
+        self._resume_checkpoint_validation = validate_resume_checkpoint_receipt(
+            self.root
+        )
 
     def _emit_component_final_usage_snapshot(self) -> None:
         entries = read_observation_journal(self.observation_journal_path)
