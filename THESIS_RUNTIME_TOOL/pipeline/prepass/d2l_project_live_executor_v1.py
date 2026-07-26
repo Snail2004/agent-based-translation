@@ -994,12 +994,12 @@ def _semantic_call(
 def _normalize_b2_candidate_evidence(
     parsed: dict[str, Any], *, packet: Mapping[str, Any]
 ) -> tuple[dict[str, Any], tuple[str, ...]]:
-    """Repair only citations that fall outside the candidate's sealed allow-list.
+    """Repair source-owned citations and one exact misplaced review directive.
 
-    The model still owns the decision, target, and rationale.  Evidence IDs are
-    source-owned packet facts, so replacing an invalid citation with the
-    candidate's supplied IDs is a mechanical, auditable repair and does not
-    require another provider call.
+    The model still owns the substantive decision, target, and rationale.
+    Evidence IDs are source-owned packet facts.  A response that explicitly
+    requests review but encodes it as an admit with no target is also
+    mechanically equivalent to the contract's review decision.
     """
     repaired = deepcopy(parsed)
     allowed_by_candidate = {
@@ -1008,10 +1008,11 @@ def _normalize_b2_candidate_evidence(
         ]
         for row in packet["candidates"]
     }
-    changed = False
+    evidence_changed = False
+    review_changed = False
 
     def repair_ids(value: Any, allowed: list[str]) -> Any:
-        nonlocal changed
+        nonlocal evidence_changed
         if (
             not isinstance(value, list)
             or not value
@@ -1022,7 +1023,7 @@ def _normalize_b2_candidate_evidence(
         retained = [item for item in value if item in allowed]
         replacement = retained or list(allowed)
         if replacement != value:
-            changed = True
+            evidence_changed = True
         return replacement
 
     decisions = repaired.get("decisions")
@@ -1030,6 +1031,19 @@ def _normalize_b2_candidate_evidence(
         for decision in decisions:
             if not isinstance(decision, dict):
                 continue
+            if (
+                decision.get("decision") == "admit"
+                and decision.get("directive") == "review"
+                and "primary_target_vi" in decision
+                and decision["primary_target_vi"] is None
+                and "primary_use" in decision
+                and decision["primary_use"] is None
+                and decision.get("alternates") == []
+            ):
+                decision["decision"] = "review"
+                decision["canonical_source"] = None
+                decision["directive"] = None
+                review_changed = True
             allowed = allowed_by_candidate.get(str(decision.get("candidate_id")))
             if not allowed:
                 continue
@@ -1043,9 +1057,12 @@ def _normalize_b2_candidate_evidence(
                         alternate["evidence_block_ids"] = repair_ids(
                             alternate.get("evidence_block_ids"), allowed
                         )
-    if not changed:
-        return repaired, ()
-    return repaired, ("fixed_only_candidate_evidence_allowlist",)
+    reason_codes: list[str] = []
+    if evidence_changed:
+        reason_codes.append("fixed_only_candidate_evidence_allowlist")
+    if review_changed:
+        reason_codes.append("fixed_only_review_directive_misplacement")
+    return repaired, tuple(reason_codes)
 
 
 def _semantic_input_sha256(

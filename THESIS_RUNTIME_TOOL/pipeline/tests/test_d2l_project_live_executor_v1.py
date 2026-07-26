@@ -1933,3 +1933,76 @@ def test_live_executor_b2_repairs_only_foreign_evidence_ids(tmp_path: Path) -> N
         in row["payload"]["reason_codes"]
         for row in receipt["observations"]
     )
+
+
+def test_b2_normalizer_repairs_exact_misplaced_review_directive() -> None:
+    packet = {
+        "candidates": [
+            {
+                "candidate_id": "cand_review",
+                "evidence_block_ids": ["block_1"],
+            }
+        ]
+    }
+    parsed = {
+        "decisions": [
+            {
+                "candidate_id": "cand_review",
+                "decision": "admit",
+                "canonical_source": "fractionally-strided",
+                "directive": "review",
+                "primary_target_vi": None,
+                "primary_use": None,
+                "alternates": [],
+                "evidence_block_ids": ["block_1"],
+                "rationale": "The evidence is insufficient for a safe target.",
+            }
+        ]
+    }
+
+    normalized, reason_codes = live_executor._normalize_b2_candidate_evidence(
+        parsed,
+        packet=packet,
+    )
+
+    decision = normalized["decisions"][0]
+    assert decision["decision"] == "review"
+    assert decision["canonical_source"] is None
+    assert decision["directive"] is None
+    assert decision["primary_target_vi"] is None
+    assert decision["alternates"] == []
+    assert reason_codes == ("fixed_only_review_directive_misplacement",)
+
+
+def test_b2_normalizer_does_not_rewrite_nonexact_review_shapes() -> None:
+    packet = {
+        "candidates": [
+            {
+                "candidate_id": "cand_review",
+                "evidence_block_ids": ["block_1"],
+            }
+        ]
+    }
+    parsed = {
+        "decisions": [
+            {
+                "candidate_id": "cand_review",
+                "decision": "admit",
+                "canonical_source": "fractionally-strided",
+                "directive": "review",
+                "primary_target_vi": "phan so buoc",
+                "primary_use": None,
+                "alternates": [],
+                "evidence_block_ids": ["block_1"],
+                "rationale": "This has a target and is not the fixed-only case.",
+            }
+        ]
+    }
+
+    normalized, reason_codes = live_executor._normalize_b2_candidate_evidence(
+        parsed,
+        packet=packet,
+    )
+
+    assert normalized == parsed
+    assert reason_codes == ()
