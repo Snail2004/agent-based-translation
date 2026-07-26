@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from copy import deepcopy
 import json
 import re
 import unicodedata
@@ -380,13 +381,92 @@ def build_component_plan(index: Mapping[str, Any]) -> dict[str, Any]:
     return plan
 
 
+def partition_oversized_components(
+    *,
+    plan: Mapping[str, Any],
+    index: Mapping[str, Any],
+    caps: ConsolidationCaps,
+    min_excerpt_chars: int,
+) -> dict[str, Any]:
+    """Split only atomic components that cannot fit the sealed request caps."""
+
+    caps.validate()
+    if not isinstance(min_excerpt_chars, int) or min_excerpt_chars < 128:
+        raise ConsolidationPlanError("min_excerpt_chars must be at least 128")
+    _verify_sealed_mapping(plan, "plan_sha256", "component plan")
+    _verify_sealed_mapping(index, "index_sha256", "consolidation index")
+    if plan.get("source_index_sha256") != index.get("index_sha256"):
+        raise ConsolidationPlanError("Plan and index lineage do not match")
+
+    block_map = {
+        str(row["block_id"]): str(row["text"]) for row in index["source_blocks"]
+    }
+    projected: list[dict[str, Any]] = []
+    for component in plan["components"]:
+        if _component_fits_caps(
+            component=component,
+            block_map=block_map,
+            caps=caps,
+            min_excerpt_chars=min_excerpt_chars,
+        ):
+            projected.append(deepcopy(component))
+            continue
+        projected.extend(
+            _partition_atomic_component(
+                component=component,
+                block_map=block_map,
+                caps=caps,
+                min_excerpt_chars=min_excerpt_chars,
+            )
+        )
+
+    expected_members = {
+        str(member["candidate_id"])
+        for component in plan["components"]
+        for member in component["members"]
+    }
+    actual_members = [
+        str(member["candidate_id"])
+        for component in projected
+        for member in component["members"]
+    ]
+    if len(actual_members) != len(set(actual_members)):
+        raise ConsolidationPlanError(
+            "Partitioned components contain duplicate candidates"
+        )
+    if set(actual_members) != expected_members:
+        raise ConsolidationPlanError(
+            "Partitioned components do not exact-cover source component members"
+        )
+
+    payload = deepcopy(dict(plan))
+    payload.pop("plan_sha256", None)
+    payload["components"] = sorted(projected, key=_component_sort_key)
+    payload["counts"] = dict(payload["counts"])
+    payload["counts"]["components"] = len(payload["components"])
+    payload["counts"]["component_members"] = len(actual_members)
+    payload["plan_sha256"] = _sha256_json(payload)
+    return payload
+
+
 def packetize_components(
     *,
     plan: Mapping[str, Any],
     index: Mapping[str, Any],
     caps: ConsolidationCaps,
+    oversized_component_min_excerpt_chars: int | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     caps.validate()
+    if (
+        oversized_component_min_excerpt_chars is not None
+        and (
+            not isinstance(oversized_component_min_excerpt_chars, int)
+            or oversized_component_min_excerpt_chars < 128
+        )
+    ):
+        raise ConsolidationPlanError(
+            "oversized_component_min_excerpt_chars must be at least 128"
+        )
     _verify_sealed_mapping(plan, "plan_sha256", "component plan")
     _verify_sealed_mapping(index, "index_sha256", "consolidation index")
     if plan.get("source_index_sha256") != index.get("index_sha256"):
@@ -407,6 +487,15 @@ def packetize_components(
             current = trial
             continue
         if not current:
+            compact = _fit_oversized_component_packet(
+                component=component,
+                block_map=block_map,
+                caps=caps,
+                min_excerpt_chars=oversized_component_min_excerpt_chars,
+            )
+            if compact is not None:
+                packets.append(compact)
+                continue
             raise ConsolidationPlanError(
                 f"Component cannot fit packet caps: {component['component_id']}"
             )
@@ -417,6 +506,16 @@ def packetize_components(
             render_messages(single), RESPONSE_FORMAT
         )
         if not _packet_fits(single, single_tokens, caps):
+            compact = _fit_oversized_component_packet(
+                component=component,
+                block_map=block_map,
+                caps=caps,
+                min_excerpt_chars=oversized_component_min_excerpt_chars,
+            )
+            if compact is not None:
+                packets.append(compact)
+                current = []
+                continue
             raise ConsolidationPlanError(
                 f"Component cannot fit packet caps: {component['component_id']}"
             )
@@ -874,7 +973,10 @@ def _to_nonadmitted_ledger(row: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _make_packet(
-    components: Sequence[Mapping[str, Any]], block_map: Mapping[str, str]
+    components: Sequence[Mapping[str, Any]],
+    block_map: Mapping[str, str],
+    *,
+    source_text_limit: int | None = None,
 ) -> dict[str, Any]:
     if not components:
         raise ConsolidationPlanError("Cannot create an empty packet")
@@ -902,6 +1004,32 @@ def _make_packet(
         raise ConsolidationPlanError(
             "Component cites unavailable blocks: " + ", ".join(missing)
         )
+    block_surfaces: dict[str, list[str]] = {block_id: [] for block_id in block_ids}
+    for component in components:
+        for member in component["members"]:
+            surfaces = [
+                str(value)
+                for value in member["surfaces"]
+                if isinstance(value, str) and value
+            ]
+            for block_id in member["evidence_block_ids"]:
+                if block_id in block_surfaces:
+                    block_surfaces[block_id].extend(surfaces)
+    projected_blocks = [
+        {
+            "block_id": block_id,
+            "text": (
+                _evidence_excerpt(
+                    block_map[block_id],
+                    surfaces=block_surfaces[block_id],
+                    limit=source_text_limit,
+                )
+                if source_text_limit is not None
+                else block_map[block_id]
+            ),
+        }
+        for block_id in block_ids
+    ]
     identity = {
         "plan_version": PLAN_VERSION,
         "chapter_id": next(iter(chapter_ids)),
@@ -910,15 +1038,242 @@ def _make_packet(
         "prompt_sha256": prompt_sha256(),
         "response_schema_sha256": response_schema_sha256(),
     }
+    if source_text_limit is not None:
+        identity["source_text_projection_sha256"] = _sha256_json(projected_blocks)
     return {
         "packet_id": "conpkt_" + _sha256_json(identity)[:24].lower(),
         "chapter_id": next(iter(chapter_ids)),
         "components": packet_components,
-        "source_blocks": [
-            {"block_id": block_id, "text": block_map[block_id]}
-            for block_id in block_ids
-        ],
+        "source_blocks": projected_blocks,
     }
+
+
+def _fit_oversized_component_packet(
+    *,
+    component: Mapping[str, Any],
+    block_map: Mapping[str, str],
+    caps: ConsolidationCaps,
+    min_excerpt_chars: int | None,
+) -> dict[str, Any] | None:
+    if min_excerpt_chars is None:
+        return None
+    original = _make_packet([component], block_map)
+    if (
+        len(original["components"]) > caps.max_components
+        or len(component["members"]) > caps.max_members
+        or len(original["source_blocks"]) > caps.max_unique_blocks
+    ):
+        return None
+    maximum = max(len(str(row["text"])) for row in original["source_blocks"])
+    if maximum <= min_excerpt_chars:
+        return None
+
+    lower = min_excerpt_chars
+    upper = maximum
+    best: dict[str, Any] | None = None
+    while lower <= upper:
+        limit = (lower + upper) // 2
+        packet = _make_packet(
+            [component],
+            block_map,
+            source_text_limit=limit,
+        )
+        prompt_tokens = estimate_prompt_tokens(
+            render_messages(packet), RESPONSE_FORMAT
+        )
+        if _packet_fits(packet, prompt_tokens, caps):
+            best = packet
+            lower = limit + 1
+        else:
+            upper = limit - 1
+    return best
+
+
+def _component_fits_caps(
+    *,
+    component: Mapping[str, Any],
+    block_map: Mapping[str, str],
+    caps: ConsolidationCaps,
+    min_excerpt_chars: int,
+) -> bool:
+    packet = _make_packet([component], block_map)
+    prompt_tokens = estimate_prompt_tokens(render_messages(packet), RESPONSE_FORMAT)
+    if _packet_fits(packet, prompt_tokens, caps):
+        return True
+    return (
+        _fit_oversized_component_packet(
+            component=component,
+            block_map=block_map,
+            caps=caps,
+            min_excerpt_chars=min_excerpt_chars,
+        )
+        is not None
+    )
+
+
+def _partition_atomic_component(
+    *,
+    component: Mapping[str, Any],
+    block_map: Mapping[str, str],
+    caps: ConsolidationCaps,
+    min_excerpt_chars: int,
+) -> list[dict[str, Any]]:
+    members = {
+        str(row["candidate_id"]): deepcopy(row) for row in component["members"]
+    }
+    groups: dict[str, set[str]] = {
+        candidate_id: {candidate_id} for candidate_id in members
+    }
+    owner = {candidate_id: candidate_id for candidate_id in members}
+    edges = [deepcopy(row) for row in component["edges"]]
+
+    for edge in sorted(edges, key=_partition_edge_sort_key):
+        left_id = str(edge["left_candidate_id"])
+        right_id = str(edge["right_candidate_id"])
+        left_owner = owner[left_id]
+        right_owner = owner[right_id]
+        if left_owner == right_owner:
+            continue
+        merged_ids = groups[left_owner] | groups[right_owner]
+        merged = _derived_component(
+            source_component=component,
+            member_ids=merged_ids,
+            members=members,
+            edges=edges,
+        )
+        if not _component_fits_caps(
+            component=merged,
+            block_map=block_map,
+            caps=caps,
+            min_excerpt_chars=min_excerpt_chars,
+        ):
+            continue
+        merged_owner = min(merged_ids, key=_text_sort_key)
+        del groups[left_owner]
+        del groups[right_owner]
+        groups[merged_owner] = merged_ids
+        for candidate_id in merged_ids:
+            owner[candidate_id] = merged_owner
+
+    result = [
+        _derived_component(
+            source_component=component,
+            member_ids=member_ids,
+            members=members,
+            edges=edges,
+        )
+        for member_ids in groups.values()
+    ]
+    if len(result) <= 1:
+        raise ConsolidationPlanError(
+            f"Component cannot be safely partitioned: {component['component_id']}"
+        )
+    for row in result:
+        if not _component_fits_caps(
+            component=row,
+            block_map=block_map,
+            caps=caps,
+            min_excerpt_chars=min_excerpt_chars,
+        ):
+            raise ConsolidationPlanError(
+                f"Partitioned component cannot fit packet caps: {row['component_id']}"
+            )
+    return sorted(result, key=_component_sort_key)
+
+
+def _derived_component(
+    *,
+    source_component: Mapping[str, Any],
+    member_ids: set[str],
+    members: Mapping[str, Mapping[str, Any]],
+    edges: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    selected_members = sorted(
+        [deepcopy(members[candidate_id]) for candidate_id in member_ids],
+        key=_candidate_sort_key,
+    )
+    selected_edges = sorted(
+        [
+            deepcopy(edge)
+            for edge in edges
+            if str(edge["left_candidate_id"]) in member_ids
+            and str(edge["right_candidate_id"]) in member_ids
+        ],
+        key=_edge_sort_key,
+    )
+    reasons = {
+        str(signal)
+        for edge in selected_edges
+        for signal in edge["signals"]
+    }
+    if any(len(member["target_proposals"]) > 1 for member in selected_members):
+        reasons.add("multiple_targets")
+    if not reasons:
+        reasons.update(str(value) for value in source_component["reason_codes"])
+    reason_codes = sorted(reasons, key=_text_sort_key)
+    source_block_ids = sorted(
+        _stable_unique(
+            str(block_id)
+            for member in selected_members
+            for block_id in member["evidence_block_ids"]
+        ),
+        key=_text_sort_key,
+    )
+    identity = {
+        "source_component_id": str(source_component["component_id"]),
+        "member_candidate_ids": sorted(member_ids, key=_text_sort_key),
+        "reason_codes": reason_codes,
+        "edges": selected_edges,
+    }
+    return {
+        "component_id": "cmp_" + _sha256_json(identity)[:24].lower(),
+        "chapter_id": str(source_component["chapter_id"]),
+        "reason_codes": reason_codes,
+        "members": selected_members,
+        "edges": selected_edges,
+        "source_block_ids": source_block_ids,
+    }
+
+
+def _partition_edge_sort_key(row: Mapping[str, Any]) -> tuple[Any, ...]:
+    signals = {str(value) for value in row["signals"]}
+    priority = (
+        4 * int("shared_target" in signals)
+        + 3 * int("source_form_variant" in signals)
+        + int("source_token_containment" in signals)
+    )
+    return (-priority, *_edge_sort_key(row))
+
+
+def _evidence_excerpt(
+    text: str,
+    *,
+    surfaces: Sequence[str],
+    limit: int,
+) -> str:
+    if len(text) <= limit:
+        return text
+    body_limit = max(1, limit - 6)
+    folded = text.casefold()
+    matches: list[tuple[int, int]] = []
+    for surface in sorted(set(surfaces), key=lambda value: (len(value), value.casefold())):
+        needle = surface.casefold()
+        if not needle:
+            continue
+        start = folded.find(needle)
+        if start >= 0:
+            matches.append((start, start + len(surface)))
+    if matches:
+        anchor_start, anchor_end = min(matches)
+        center = (anchor_start + anchor_end) // 2
+        start = max(0, min(len(text) - body_limit, center - body_limit // 2))
+    else:
+        start = 0
+    end = min(len(text), start + body_limit)
+    prefix = "..." if start > 0 else ""
+    suffix = "..." if end < len(text) else ""
+    excerpt = prefix + text[start:end] + suffix
+    return excerpt[:limit]
 
 
 def _packet_fits(

@@ -220,6 +220,100 @@ def test_packetizer_fails_closed_when_atomic_component_exceeds_cap() -> None:
         )
 
 
+def test_packetizer_can_excerpt_only_an_oversized_atomic_component() -> None:
+    index = _index(
+        [
+            _row(
+                "cand_large",
+                "large term",
+                "thuật ngữ lớn",
+                "b001",
+                alternatives=("cách gọi dài",),
+            )
+        ],
+        long_text=True,
+    )
+    index["source_blocks"][0]["text"] = (
+        ("unrelated technical context " * 500)
+        + "large term appears in decisive context "
+        + ("supporting technical context " * 500)
+    )
+    index["index_sha256"] = plan._sha256_json(
+        {key: value for key, value in index.items() if key != "index_sha256"}
+    )
+    component_plan = plan.build_component_plan(index)
+
+    packets, dry = plan.packetize_components(
+        plan=component_plan,
+        index=index,
+        caps=plan.ConsolidationCaps(prompt_token_cap=1500),
+        oversized_component_min_excerpt_chars=128,
+    )
+
+    assert len(packets) == 1
+    assert "large term" in packets[0]["source_blocks"][0]["text"]
+    assert len(packets[0]["source_blocks"][0]["text"]) < len(
+        index["source_blocks"][0]["text"]
+    )
+    assert dry["packets"][0]["prompt_tokens_est"] <= 1500
+    assert dry["totals"]["component_count"] == 1
+    assert dry["totals"]["member_count"] == 1
+
+
+def test_partition_oversized_component_prefers_strong_variant_edges() -> None:
+    index = _index(
+        [
+            _row("cand_layer", "layer", "lớp", "b001"),
+            _row("cand_layers", "layers", "lớp", "b002"),
+            _row("cand_hidden", "hidden layer", "lớp ẩn", "b003"),
+            _row("cand_custom", "custom layer", "lớp tùy chỉnh", "b004"),
+            _row("cand_output", "output layer", "lớp đầu ra", "b005"),
+        ]
+    )
+    component_plan = plan.build_component_plan(index)
+    assert len(component_plan["components"]) == 1
+
+    partitioned = plan.partition_oversized_components(
+        plan=component_plan,
+        index=index,
+        caps=plan.ConsolidationCaps(
+            max_components=6,
+            max_members=2,
+            max_unique_blocks=4,
+            prompt_token_cap=6000,
+        ),
+        min_excerpt_chars=128,
+    )
+    member_sets = [
+        {member["candidate_id"] for member in component["members"]}
+        for component in partitioned["components"]
+    ]
+
+    assert {"cand_layer", "cand_layers"} in member_sets
+    assert set().union(*member_sets) == {
+        "cand_layer",
+        "cand_layers",
+        "cand_hidden",
+        "cand_custom",
+        "cand_output",
+    }
+    assert sum(len(member_ids) for member_ids in member_sets) == 5
+    packets, dry = plan.packetize_components(
+        plan=partitioned,
+        index=index,
+        caps=plan.ConsolidationCaps(
+            max_components=6,
+            max_members=2,
+            max_unique_blocks=4,
+            prompt_token_cap=6000,
+        ),
+        oversized_component_min_excerpt_chars=128,
+    )
+    assert packets
+    assert dry["totals"]["member_count"] == 5
+    assert dry["totals"]["component_count"] == len(partitioned["components"])
+
+
 def test_writer_is_deterministic_and_retains_all_member_evidence() -> None:
     index = _index(
         [

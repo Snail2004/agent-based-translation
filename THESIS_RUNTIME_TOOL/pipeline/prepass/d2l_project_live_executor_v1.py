@@ -36,6 +36,7 @@ from pipeline.prepass.d2l_b2_consolidation_plan_v1 import (
     build_component_plan as build_morphology_plan,
     build_draft_package,
     packetize_components,
+    partition_oversized_components,
 )
 from pipeline.prepass.d2l_b2_multi_target_plan_v1 import (
     MultiTargetCaps,
@@ -1834,11 +1835,19 @@ def _morphology_stage(
     source_index = b2.get("consolidation_index")
     if not isinstance(source_index, Mapping):
         raise D2LProjectLiveExecutorError("B2 artifact lacks consolidation index")
-    plan = _augment_morphology_plan(build_morphology_plan(source_index))
+    caps = ConsolidationCaps()
+    plan = partition_oversized_components(
+        plan=build_morphology_plan(source_index),
+        index=source_index,
+        caps=caps,
+        min_excerpt_chars=192,
+    )
+    plan = _augment_morphology_plan(plan)
     packets, dry = packetize_components(
         plan=plan,
         index=source_index,
-        caps=ConsolidationCaps(),
+        caps=caps,
+        oversized_component_min_excerpt_chars=192,
     )
     role = _role(campaign["config"], "d2l.b2.morphology")
     validations: list[tuple[Mapping[str, Any], Any]] = []
