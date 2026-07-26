@@ -26,6 +26,7 @@ from pipeline.prepass.d2l_console_replay_contract_v1 import (
     COMPONENT_ID,
     D2LTranslationComponentEventWriter,
     STAGE_IDS,
+    TERM_LIFECYCLE_SCHEMA,
     build_checkpoint,
     build_component_manifest,
     build_component_usage_snapshot,
@@ -450,6 +451,7 @@ class D2LTranslationComponentRunner:
         ] = {}
         self._term_batch_ids_by_evidence: dict[str, list[str]] = {}
         self._term_projection_mode_by_evidence: dict[str, str] = {}
+        self._term_schema_version_by_evidence: dict[str, str] = {}
         self._term_checked_evidence_keys: set[str] = set()
 
     @property
@@ -557,6 +559,17 @@ class D2LTranslationComponentRunner:
                 )
             self._term_projection_mode_by_evidence[evidence_key] = (
                 current_mode
+            )
+            prior_schema = self._term_schema_version_by_evidence.get(
+                evidence_key
+            )
+            current_schema = str(batch["schema_version"])
+            if prior_schema is not None and prior_schema != current_schema:
+                raise ComponentRunnerError(
+                    "one term lifecycle evidence has multiple schemas"
+                )
+            self._term_schema_version_by_evidence[evidence_key] = (
+                current_schema
             )
             if batch["batch_id"] in seen_batches:
                 continue
@@ -689,6 +702,16 @@ class D2LTranslationComponentRunner:
                 "term lifecycle projection mode drift"
             )
         self._term_projection_mode_by_evidence[evidence_key] = projection_mode
+        schema_version = str(batches[0]["schema_version"])
+        prior_schema_version = self._term_schema_version_by_evidence.get(
+            evidence_key
+        )
+        if (
+            prior_schema_version is not None
+            and prior_schema_version != schema_version
+        ):
+            raise ComponentRunnerError("term lifecycle evidence schema drift")
+        self._term_schema_version_by_evidence[evidence_key] = schema_version
         for batch in batches:
             if (
                 batch["evidence"] != evidence
@@ -765,6 +788,7 @@ class D2LTranslationComponentRunner:
             return
         if existing_evidence is None:
             previous_rows = list(self._term_rows_by_id.values())
+            schema_version = TERM_LIFECYCLE_SCHEMA
         else:
             evidence_key = existing_evidence_key
             assert evidence_key is not None
@@ -772,10 +796,14 @@ class D2LTranslationComponentRunner:
             projection_mode = self._term_projection_mode_by_evidence[
                 evidence_key
             ]
+            schema_version = self._term_schema_version_by_evidence[
+                evidence_key
+            ]
         completed = term_work_completed(
             stage.stage_id,
             entries,
             through_journal_seq=int(entry["journal_seq"]),
+            schema_version=schema_version,
         )
         batches = project_work_journal_term_batches(
             stage_id=stage.stage_id,
@@ -787,6 +815,7 @@ class D2LTranslationComponentRunner:
             completed=completed,
             total=stage.total,
             unit=stage.unit,
+            schema_version=schema_version,
         )
         self._emit_term_lifecycle_batches(
             stage=stage,
@@ -879,10 +908,14 @@ class D2LTranslationComponentRunner:
             return
         if existing_evidence is None:
             previous_rows = list(self._term_rows_by_id.values())
+            schema_version = TERM_LIFECYCLE_SCHEMA
         else:
             evidence_key = existing_evidence_key
             assert evidence_key is not None
             previous_rows = self._term_prior_rows_by_evidence[evidence_key]
+            schema_version = self._term_schema_version_by_evidence[
+                evidence_key
+            ]
         artifact_path = _relative_path(
             self.root,
             artifact["relative_path"],
@@ -901,6 +934,7 @@ class D2LTranslationComponentRunner:
             total=stage_row["progress"]["total"],
             unit=str(stage_row["progress"]["unit"]),
             through_work_id=stage.work_id,
+            schema_version=schema_version,
         )
         self._emit_term_lifecycle_batches(
             stage=stage,

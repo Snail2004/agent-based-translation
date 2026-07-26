@@ -28,7 +28,12 @@ CHECKPOINT_SCHEMA = "d2l_translation_checkpoint_v1"
 SCORING_FRAGMENT_SCHEMA = "scoring_handoff_fragment_v1"
 SOURCE_BINDING_SCHEMA = "canonical_source_binding_v1"
 USAGE_SNAPSHOT_SCHEMA = "d2l_component_usage_snapshot_v1"
-TERM_LIFECYCLE_SCHEMA = "d2l_term_lifecycle_batch_v1"
+TERM_LIFECYCLE_LEGACY_SCHEMA = "d2l_term_lifecycle_batch_v1"
+TERM_LIFECYCLE_SCHEMA = "d2l_term_lifecycle_batch_v2"
+TERM_LIFECYCLE_SCHEMAS = {
+    TERM_LIFECYCLE_LEGACY_SCHEMA,
+    TERM_LIFECYCLE_SCHEMA,
+}
 
 COMPONENT_ID = "translation"
 FLOW_KIND = "terminology_translation"
@@ -1538,7 +1543,7 @@ def validate_term_lifecycle_batch(
         },
         "term_lifecycle.payload",
     )
-    if row["schema_version"] != TERM_LIFECYCLE_SCHEMA:
+    if row["schema_version"] not in TERM_LIFECYCLE_SCHEMAS:
         raise D2LConsoleContractError("term_lifecycle schema is invalid")
     _require_id(row["batch_id"], "term_lifecycle.batch_id")
     row["batch_sha256"] = _require_sha(
@@ -1762,7 +1767,10 @@ def _build_term_batches(
     total: int | None,
     unit: str,
     through_work_id: str | None,
+    schema_version: str,
 ) -> list[dict[str, Any]]:
+    if schema_version not in TERM_LIFECYCLE_SCHEMAS:
+        raise D2LConsoleContractError("term_lifecycle schema is invalid")
     evidence_row = _validate_term_evidence(evidence, "term_lifecycle.evidence")
     ordered_rows = sorted((dict(row) for row in rows), key=lambda row: row["row_id"])
     if not ordered_rows:
@@ -1787,7 +1795,7 @@ def _build_term_batches(
         row_ids = [str(item["row_id"]) for item in batch_rows]
         origin_attempt, origin_seq = _term_origin(evidence_row)
         batch = {
-            "schema_version": TERM_LIFECYCLE_SCHEMA,
+            "schema_version": schema_version,
             "batch_id": _term_batch_id(
                 stage_id=stage_id,
                 evidence=evidence_row,
@@ -1916,13 +1924,21 @@ def term_work_completed(
     entries: Sequence[Mapping[str, Any]],
     *,
     through_journal_seq: int,
+    schema_version: str = TERM_LIFECYCLE_SCHEMA,
 ) -> int:
+    if schema_version not in TERM_LIFECYCLE_SCHEMAS:
+        raise D2LConsoleContractError("term_lifecycle schema is invalid")
     prefix = [
         entry
         for entry in entries
         if int(entry["journal_seq"]) <= through_journal_seq
     ]
     if stage_id in {"b1_candidate_discovery", "b2_admission_translation"}:
+        if schema_version == TERM_LIFECYCLE_SCHEMA:
+            return sum(
+                not re.search(r"(?:\.part_[0-9]{3})+$", str(entry["work_item_id"]))
+                for entry in prefix
+            )
         return len(prefix)
     if stage_id in {
         "auditor_morphology",
@@ -1947,6 +1963,7 @@ def project_work_journal_term_batches(
     completed: int,
     total: int | None,
     unit: str,
+    schema_version: str = TERM_LIFECYCLE_SCHEMA,
 ) -> list[dict[str, Any]]:
     if stage_id not in {
         "b1_candidate_discovery",
@@ -2253,6 +2270,7 @@ def project_work_journal_term_batches(
         total=total,
         unit=unit,
         through_work_id=str(entry["work_item_id"]),
+        schema_version=schema_version,
     )
 
 
@@ -2266,6 +2284,7 @@ def project_artifact_term_batches(
     total: int | None,
     unit: str,
     through_work_id: str,
+    schema_version: str = TERM_LIFECYCLE_SCHEMA,
 ) -> list[dict[str, Any]]:
     stage_id = str(artifact["producer_stage_id"])
     if stage_id not in {"candidate_index", "glossary_seal"}:
@@ -2415,6 +2434,7 @@ def project_artifact_term_batches(
         total=total,
         unit=unit,
         through_work_id=through_work_id,
+        schema_version=schema_version,
     )
 
 
@@ -3931,6 +3951,7 @@ def _validate_term_lifecycle_package_evidence(
                     stage_id,
                     entries,
                     through_journal_seq=journal_seq,
+                    schema_version=str(batch["schema_version"]),
                 )
                 expected = project_work_journal_term_batches(
                     stage_id=stage_id,
@@ -3942,6 +3963,7 @@ def _validate_term_lifecycle_package_evidence(
                     completed=completed,
                     total=stage["progress"]["total"],
                     unit=str(stage["progress"]["unit"]),
+                    schema_version=str(batch["schema_version"]),
                 )
             else:
                 artifact = artifacts_by_ref.get(str(evidence["artifact_ref"]))
@@ -4004,6 +4026,7 @@ def _validate_term_lifecycle_package_evidence(
                     total=stage["progress"]["total"],
                     unit=str(stage["progress"]["unit"]),
                     through_work_id=through_work_id,
+                    schema_version=str(batch["schema_version"]),
                 )
             if not expected:
                 raise D2LConsoleContractError(
@@ -4338,7 +4361,9 @@ __all__ = [
     "SCORING_FRAGMENT_SCHEMA",
     "SOURCE_BINDING_SCHEMA",
     "STAGE_IDS",
+    "TERM_LIFECYCLE_LEGACY_SCHEMA",
     "TERM_LIFECYCLE_SCHEMA",
+    "TERM_LIFECYCLE_SCHEMAS",
     "USAGE_SNAPSHOT_SCHEMA",
     "build_checkpoint",
     "build_component_usage_snapshot",

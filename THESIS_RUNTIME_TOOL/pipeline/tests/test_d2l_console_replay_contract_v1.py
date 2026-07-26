@@ -11,6 +11,8 @@ from pipeline.prepass.d2l_console_replay_contract_v1 import (
     D2LConsoleContractError,
     D2LTranslationComponentEventWriter,
     STAGE_IDS,
+    TERM_LIFECYCLE_LEGACY_SCHEMA,
+    TERM_LIFECYCLE_SCHEMA,
     build_checkpoint,
     build_component_manifest,
     build_component_usage_snapshot,
@@ -19,6 +21,7 @@ from pipeline.prepass.d2l_console_replay_contract_v1 import (
     file_sha256,
     project_work_journal_term_batches,
     scoring_fragment_sha256,
+    term_work_completed,
     validate_component_event,
     validate_component_event_stream,
     validate_component_manifest,
@@ -802,6 +805,72 @@ def _term_validation_event(
         "stage_id": "b1_candidate_discovery",
         "payload": {"subject_ref": work_item_id},
     }
+
+
+def test_term_lifecycle_v2_counts_stage_units_not_split_work_entries() -> None:
+    work_ids = [
+        "b1_window_0001",
+        "b1_window_0002.part_001",
+        "b1_window_0002.part_001.part_001",
+        "b1_window_0002.part_002",
+        "b1_window_0002",
+    ]
+    entries = [
+        _term_work_entry(
+            [],
+            journal_seq=index,
+            work_item_id=work_id,
+        )
+        for index, work_id in enumerate(work_ids, start=1)
+    ]
+
+    assert term_work_completed(
+        "b1_candidate_discovery",
+        entries,
+        through_journal_seq=4,
+        schema_version=TERM_LIFECYCLE_SCHEMA,
+    ) == 1
+    assert term_work_completed(
+        "b1_candidate_discovery",
+        entries,
+        through_journal_seq=5,
+        schema_version=TERM_LIFECYCLE_SCHEMA,
+    ) == 2
+    assert term_work_completed(
+        "b1_candidate_discovery",
+        entries,
+        through_journal_seq=5,
+        schema_version=TERM_LIFECYCLE_LEGACY_SCHEMA,
+    ) == 5
+
+
+def test_term_lifecycle_legacy_and_active_batches_validate_independently() -> None:
+    observations = [
+        {"source_surface": "gradient", "anchor_block_ids": ["block_1"]}
+    ]
+    entry = _term_work_entry(observations)
+    validation = _term_validation_event()
+    for schema_version in (
+        TERM_LIFECYCLE_LEGACY_SCHEMA,
+        TERM_LIFECYCLE_SCHEMA,
+    ):
+        batch = project_work_journal_term_batches(
+            stage_id="b1_candidate_discovery",
+            journal_ref="runtime/work_items/b1_candidate_discovery.jsonl",
+            entry=entry,
+            validation_event=validation,
+            previous_rows=[],
+            projection_mode="resume_backfill",
+            completed=1,
+            total=179,
+            unit="windows",
+            schema_version=schema_version,
+        )[0]
+        assert batch["schema_version"] == schema_version
+        validate_term_lifecycle_batch(
+            batch,
+            stage_id="b1_candidate_discovery",
+        )
 
 
 def _project_term_observations(
