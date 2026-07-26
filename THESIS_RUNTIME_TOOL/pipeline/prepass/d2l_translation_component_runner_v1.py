@@ -539,8 +539,8 @@ class D2LTranslationComponentRunner:
             for row_id, row in state["rows_by_id"].items()
         }
         self._term_batches_by_id = dict(state["batches_by_id"])
-        running_rows: dict[str, dict[str, Any]] = {}
         seen_batches: set[str] = set()
+        evidence_order: list[str] = []
         for event in events:
             if event["event"] != "term_lifecycle":
                 continue
@@ -553,10 +553,9 @@ class D2LTranslationComponentRunner:
                     "term lifecycle evidence identity drift"
                 )
             if evidence_key not in self._term_prior_rows_by_evidence:
-                self._term_prior_rows_by_evidence[evidence_key] = [
-                    dict(row) for row in running_rows.values()
-                ]
+                self._term_prior_rows_by_evidence[evidence_key] = []
                 self._term_batch_ids_by_evidence[evidence_key] = []
+                evidence_order.append(evidence_key)
             self._term_evidence_by_key[evidence_key] = evidence
             prior_mode = self._term_projection_mode_by_evidence.get(
                 evidence_key
@@ -595,14 +594,28 @@ class D2LTranslationComponentRunner:
                     "one term lifecycle evidence has multiple progress seals"
                 )
             self._term_progress_by_evidence[evidence_key] = current_progress
+            self._term_checked_evidence_keys.add(evidence_key)
             if batch["batch_id"] in seen_batches:
                 continue
             self._term_batch_ids_by_evidence[evidence_key].append(
                 str(batch["batch_id"])
             )
             seen_batches.add(str(batch["batch_id"]))
-            for row in batch["rows"]:
-                running_rows[str(row["row_id"])] = dict(row)
+        if evidence_order:
+            last_evidence_key = evidence_order[-1]
+            prior_rows: dict[str, dict[str, Any]] = {}
+            for event in events:
+                if event["event"] != "term_lifecycle":
+                    continue
+                batch = event["payload"]
+                if canonical_sha256(dict(batch["evidence"])) == last_evidence_key:
+                    break
+                for row in batch["rows"]:
+                    prior_rows[str(row["row_id"])] = dict(row)
+            self._term_prior_rows_by_evidence[last_evidence_key] = list(
+                prior_rows.values()
+            )
+            self._term_checked_evidence_keys.discard(last_evidence_key)
         self._term_state_initialized = True
 
     def _existing_term_evidence(
@@ -812,7 +825,7 @@ class D2LTranslationComponentRunner:
             existing_evidence_key is not None
             and existing_evidence_key in self._term_checked_evidence_keys
         ):
-            return
+            return True
         if existing_evidence is None:
             previous_rows = list(self._term_rows_by_id.values())
             schema_version = TERM_LIFECYCLE_SCHEMA
