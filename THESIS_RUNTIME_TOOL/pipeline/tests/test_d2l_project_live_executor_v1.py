@@ -1787,3 +1787,71 @@ def test_live_executor_b2_invalid_output_fails_closed_without_artifact(
             work_id="work_b2_admission_translation",
         )
     assert not (component_root / "artifacts/b2_admission_translation/decisions.json").exists()
+
+
+def test_live_executor_b2_uses_matching_v37_prompt_schema_and_validator(
+    tmp_path: Path,
+) -> None:
+    _job, campaign_root, campaign, project, rows, support = _prepared(tmp_path)
+    component_root = campaign_root / "component"
+    component_root.mkdir()
+    transport = support["transport"]
+
+    b1 = execute_live_stage(
+        campaign=campaign,
+        project=project,
+        rows=rows,
+        stage_id="b1_candidate_discovery",
+        component_root=component_root,
+        work_db=campaign_root / "state/work.sqlite3",
+        transport=transport,
+        component_attempt_id=1,
+        producer=_STAGE_PRODUCERS["b1_candidate_discovery"],
+        work_id="work_b1_candidate_discovery",
+    )
+    _write_json(
+        component_root / "artifacts/b1_candidate_discovery/candidates.json",
+        b1["art_b1_candidate_discovery"],
+    )
+    index = execute_live_stage(
+        campaign=campaign,
+        project=project,
+        rows=rows,
+        stage_id="candidate_index",
+        component_root=component_root,
+        work_db=campaign_root / "state/work.sqlite3",
+        transport=None,
+        component_attempt_id=1,
+        producer=_STAGE_PRODUCERS["candidate_index"],
+        work_id="work_candidate_index",
+    )
+    _write_json(
+        component_root / "artifacts/candidate_index/index.json",
+        index["art_candidate_index"],
+    )
+
+    execute_live_stage(
+        campaign=campaign,
+        project=project,
+        rows=rows,
+        stage_id="b2_admission_translation",
+        component_root=component_root,
+        work_db=campaign_root / "state/work.sqlite3",
+        transport=transport,
+        component_attempt_id=1,
+        producer=_STAGE_PRODUCERS["b2_admission_translation"],
+        work_id="work_b2_admission_translation",
+    )
+
+    b2_calls = [
+        row for row in transport.calls if row["role_id"] == "d2l.b2.admission"
+    ]
+    assert b2_calls
+    assert all(
+        row["messages"][0]["content"] == live_executor.b2_contract.SYSTEM_PROMPT
+        for row in b2_calls
+    )
+    assert all(
+        row["response_format"] == live_executor.b2_contract.RESPONSE_FORMAT
+        for row in b2_calls
+    )

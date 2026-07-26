@@ -1545,7 +1545,7 @@ def _b2_stage(
     for packet_index, packet_row in enumerate(packet_plan["packets"], start=1):
         packet_bundle = packets[str(packet_row["packet_id"])]
         packet = packet_bundle["packet"]
-        messages = packet_bundle["messages"]
+        messages = b2_contract.render_messages(packet)
         _, validation = _semantic_call(
             client=client,
             messages=messages,
