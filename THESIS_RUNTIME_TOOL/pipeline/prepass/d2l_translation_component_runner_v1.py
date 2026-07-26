@@ -1250,7 +1250,11 @@ class D2LTranslationComponentRunner:
     def _latest_indexed_repair_anchor(self) -> dict[str, Any] | None:
         if not self.manifest_path.is_file() or not self.index_path.is_file():
             return None
-        package_validation = self._validate_paused_resume_package()
+        package_validation = (
+            {"validation_mode": RESUME_CHECKPOINT_VALIDATION_MODE}
+            if self._fast_skip_term_lifecycle
+            else self._validate_paused_resume_package()
+        )
         manifest = validate_component_manifest(
             _load_json(self.manifest_path, "component manifest")
         )
@@ -1562,10 +1566,11 @@ class D2LTranslationComponentRunner:
             journal_entries = read_observation_journal(
                 self.observation_journal_path
             )
-        validate_translation_component_package(
-            self.root,
-            require_terminal=False,
-        )
+        if not self._fast_skip_term_lifecycle:
+            validate_translation_component_package(
+                self.root,
+                require_terminal=False,
+            )
         self._journal_cursor = len(journal_entries)
         self.writer = D2LTranslationComponentEventWriter(
             self.root / "events.jsonl",
