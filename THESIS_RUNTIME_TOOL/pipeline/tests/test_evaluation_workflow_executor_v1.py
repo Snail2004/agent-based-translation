@@ -135,7 +135,13 @@ def _selection(*, selection_sha256: str | None = None) -> dict[str, object]:
     }
 
 
-def _registration(root: Path, *, selection=None, materialized_settings=None):
+def _registration(
+    root: Path,
+    *,
+    selection=None,
+    materialized_settings=None,
+    producer_code_commit: str = COMMIT,
+):
     locked_selection = _selection() if selection is None else selection
     if materialized_settings is None:
         materialized_settings = materialize_registered_evaluation_settings_v1(
@@ -158,7 +164,7 @@ def _registration(root: Path, *, selection=None, materialized_settings=None):
         component_run_id="evalcomp_production_fixture_001",
         output_root=root,
         generated_at=NOW,
-        producer_code_commit=COMMIT,
+        producer_code_commit=producer_code_commit,
         evaluation_logical_run_id="evaluation_production_fixture",
         evaluation_attempt_run_id="evaluation_production_attempt_fixture",
         evaluation_profile_id="evaluation_fixture_v1",
@@ -292,6 +298,175 @@ def test_executor_halts_then_resumes_same_component_run(tmp_path: Path) -> None:
     assert completed["manifest"]["component_attempt_index"] == 2
     assert [predictor.calls for predictor in second[:4]] == [0, 0, 0, 0]
     assert second[-1].calls == 1
+
+
+def test_executor_selectively_repairs_exact_work_set_without_replaying_unaffected(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "evaluation"
+    initial_predictors = [_Predictor(0.5) for _ in range(4)] + [
+        _Predictor(0.5, fail=True)
+    ]
+    first_executor = RegisteredEvaluationWorkflowExecutorV1(
+        _registration(root),
+        _Provider(root, [initial_predictors]),
+    )
+    with pytest.raises(WorkflowComponentPausedV1):
+        first_executor.execute(_handoff(), lambda _path, _terminal: None)
+
+    partial = validate_evaluation_workflow_component_package_v1(
+        root, _handoff()
+    )
+    ledger_rows = {
+        row["stage_id"]: row
+        for row in partial["recovery"]["ledger"]["works"]
+    }
+    accepted_stage = "chapter_d2l_deep_learning_computation"
+    halted_stage = "chapter_d2l_convolutional_neural_networks"
+    affected_work_ids = [
+        ledger_rows[accepted_stage]["work_id"],
+        ledger_rows[halted_stage]["work_id"],
+    ]
+    old_artifact_ref = ledger_rows[accepted_stage]["accepted_artifact"][
+        "artifact_ref"
+    ]
+    old_artifact_bytes = (root / old_artifact_ref).read_bytes()
+
+    repaired_predictors = [
+        _Predictor(0.75, fail=True),
+        _Predictor(0.75, fail=True),
+        _Predictor(0.75, fail=True),
+        _Predictor(0.75),
+        _Predictor(0.75),
+    ]
+    repaired_executor = RegisteredEvaluationWorkflowExecutorV1(
+        _registration(root, producer_code_commit="e" * 40),
+        _Provider(root, [repaired_predictors]),
+    )
+    plan = repaired_executor.build_repair_plan(
+        _handoff(),
+        affected_work_ids=affected_work_ids,
+        reason_code="implementation_repair",
+        authorized_by="evaluation_server",
+        authorization_id="repair_authorization_fixture_001",
+        authorized_at=NOW,
+    )
+
+    assert plan["source_code_commit"] == COMMIT
+    assert plan["repair_code_commit"] == "e" * 40
+    assert plan["affected_work_ids"] == affected_work_ids
+    assert plan["supersede_work_ids"] == [affected_work_ids[0]]
+    assert repaired_executor.execute(
+        _handoff(),
+        lambda _path, _terminal: None,
+        repair_plan=plan,
+    ) == root.resolve()
+
+    assert [item.calls for item in repaired_predictors] == [0, 0, 0, 1, 1]
+    assert (root / old_artifact_ref).read_bytes() == old_artifact_bytes
+    completed = validate_evaluation_workflow_component_package_v1(
+        root, _handoff(), require_terminal=True
+    )
+    assert completed["manifest"]["component_attempt_index"] == 2
+    repairs = completed["recovery"]["repairs"]
+    assert len(repairs) == 1
+    receipt = repairs[0]["receipt"]
+    assert receipt is not None
+    assert receipt["rerun_work_ids"] == affected_work_ids
+    assert {
+        row["work_id"] for row in receipt["current_accepted_artifacts"]
+    } == {
+        row["work_id"] for row in plan["unaffected_accepted_artifacts"]
+    } | set(affected_work_ids)
+
+
+def test_executor_resumes_interrupted_repair_without_replaying_repaired_prefix(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "evaluation"
+    initial_predictors = [_Predictor(0.5) for _ in range(4)] + [
+        _Predictor(0.5, fail=True)
+    ]
+    first_executor = RegisteredEvaluationWorkflowExecutorV1(
+        _registration(root),
+        _Provider(root, [initial_predictors]),
+    )
+    with pytest.raises(WorkflowComponentPausedV1):
+        first_executor.execute(_handoff(), lambda _path, _terminal: None)
+
+    partial = validate_evaluation_workflow_component_package_v1(
+        root, _handoff()
+    )
+    ledger_rows = {
+        row["stage_id"]: row for row in partial["recovery"]["ledger"]["works"]
+    }
+    affected_work_ids = [
+        ledger_rows["chapter_d2l_deep_learning_computation"]["work_id"],
+        ledger_rows["chapter_d2l_convolutional_neural_networks"]["work_id"],
+    ]
+    old_artifact_ref = ledger_rows[
+        "chapter_d2l_deep_learning_computation"
+    ]["accepted_artifact"]["artifact_ref"]
+    old_artifact_bytes = (root / old_artifact_ref).read_bytes()
+
+    repair_attempt_two = [
+        _Predictor(0.75, fail=True),
+        _Predictor(0.75, fail=True),
+        _Predictor(0.75, fail=True),
+        _Predictor(0.75),
+        _Predictor(0.75, fail=True),
+    ]
+    repair_attempt_three = [
+        _Predictor(0.8, fail=True),
+        _Predictor(0.8, fail=True),
+        _Predictor(0.8, fail=True),
+        _Predictor(0.8, fail=True),
+        _Predictor(0.8),
+    ]
+    repaired_executor = RegisteredEvaluationWorkflowExecutorV1(
+        _registration(root, producer_code_commit="e" * 40),
+        _Provider(root, [repair_attempt_two, repair_attempt_three]),
+    )
+    plan = repaired_executor.build_repair_plan(
+        _handoff(),
+        affected_work_ids=affected_work_ids,
+        reason_code="implementation_repair",
+        authorized_by="evaluation_server",
+        authorization_id="repair_authorization_fixture_002",
+        authorized_at=NOW,
+    )
+
+    with pytest.raises(WorkflowComponentPausedV1):
+        repaired_executor.execute(
+            _handoff(),
+            lambda _path, _terminal: None,
+            repair_plan=plan,
+        )
+    repair_halted = validate_evaluation_workflow_component_package_v1(
+        root, _handoff()
+    )
+    assert repair_halted["manifest"]["component_attempt_index"] == 2
+    assert repair_halted["events"][-1]["event"] == "component_halted"
+    assert [item.calls for item in repair_attempt_two] == [0, 0, 0, 1, 1]
+
+    assert repaired_executor.execute(
+        _handoff(),
+        lambda _path, _terminal: None,
+        repair_plan=plan,
+    ) == root.resolve()
+    assert [item.calls for item in repair_attempt_three] == [0, 0, 0, 0, 1]
+    assert (root / old_artifact_ref).read_bytes() == old_artifact_bytes
+
+    completed = validate_evaluation_workflow_component_package_v1(
+        root, _handoff(), require_terminal=True
+    )
+    assert completed["manifest"]["component_attempt_index"] == 3
+    receipt = completed["recovery"]["repairs"][0]["receipt"]
+    assert receipt is not None
+    assert receipt["component_attempt_index"] == 3
+    assert receipt["rerun_work_ids"] == affected_work_ids
+    accepted = completed["recovery"]["ledger"]["accepted_work_ids"]
+    assert len(accepted) == len(set(accepted))
 
 
 def test_executor_rejects_foreign_workflow_before_provider(tmp_path: Path) -> None:

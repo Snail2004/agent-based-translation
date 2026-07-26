@@ -55,6 +55,12 @@ from pipeline.eval.workflow_recovery_v1 import (
     build_evaluation_work_descriptor_v1,
     validate_evaluation_recovery_package_v1,
 )
+from pipeline.eval.workflow_repair_v1 import (
+    build_evaluation_repair_plan_v1,
+    load_evaluation_repair_plan_v1,
+    validate_evaluation_repair_plan_v1,
+    write_evaluation_repair_plan_v1,
+)
 from pipeline.llm_backend import (
     SharedLlmAttemptLedger,
     validate_llm_run_records,
@@ -258,6 +264,7 @@ class EvaluationWorkflowComponentWriterV1:
         )
         self.recovery: EvaluationWorkflowRecoveryStoreV1 | None = None
         self._recovery_work_ids: dict[str, str] = {}
+        self._repair_plan: dict[str, Any] | None = None
         self.created_new = False
         self.recovered_resume = False
 
@@ -416,6 +423,183 @@ class EvaluationWorkflowComponentWriterV1:
             )
         return True
 
+    @property
+    def repair_plan(self) -> dict[str, Any] | None:
+        return None if self._repair_plan is None else copy.deepcopy(self._repair_plan)
+
+    def build_repair_plan(
+        self,
+        *,
+        affected_work_ids: Sequence[str],
+        reason_code: str,
+        authorized_by: str,
+        authorization_id: str,
+        authorized_at: str,
+    ) -> dict[str, Any]:
+        """Seal a server-authorized repair against the current halted bytes."""
+
+        if self.recovery is None:
+            raise ContractValidationError(
+                "repair_recovery_missing",
+                str(self.root),
+                "selective repair requires the Phase A recovery store",
+            )
+        if not self.is_halted or self.terminal_event is not None:
+            raise ContractValidationError(
+                "repair_state",
+                str(self.events_path),
+                "a repair plan can only be built for a halted component",
+            )
+        checkpoint = self.recovery.latest_checkpoint
+        return build_evaluation_repair_plan_v1(
+            assignment=self.recovery.assignment,
+            ledger=self.recovery.ledger,
+            source_component_attempt_id=self.component_attempt_id,
+            source_component_attempt_index=self.component_attempt_index,
+            assignment_sha256=self.recovery.assignment["integrity"][
+                "assignment_sha256"
+            ],
+            pre_repair_checkpoint_sha256=(
+                None
+                if checkpoint is None
+                else checkpoint["integrity"]["checkpoint_sha256"]
+            ),
+            reason_code=reason_code,
+            authorized_by=authorized_by,
+            authorization_id=authorization_id,
+            authorized_at=authorized_at,
+            source_code_commit=self.manifest["producer"]["code_commit"],
+            repair_code_commit=self.producer_code_commit,
+            affected_work_ids=affected_work_ids,
+        )
+
+    def prepare_repair(self, plan: Mapping[str, Any]) -> dict[str, Any]:
+        """Authorize one exact selective repair before Resume.
+
+        The component must already be halted.  This method only appends
+        supersede markers and writes the immutable plan; it never runs a
+        scorer or changes sealed semantic settings.
+        """
+
+        if self.terminal_event is not None:
+            raise ContractValidationError(
+                "repair_terminal",
+                str(self.root),
+                "a terminal component cannot be selectively repaired",
+            )
+        if not self.is_halted:
+            raise ContractValidationError(
+                "repair_state",
+                str(self.events_path),
+                "selective repair requires a halted component",
+            )
+        if self.recovery is None:
+            raise ContractValidationError(
+                "repair_recovery_missing",
+                str(self.root),
+                "selective repair requires the Phase A recovery store",
+            )
+        accepted = validate_evaluation_repair_plan_v1(
+            copy.deepcopy(plan), assignment=self.recovery.assignment
+        )
+        if (
+            accepted["source_component_attempt_index"]
+            != self.component_attempt_index
+            or accepted["source_component_attempt_id"] != self.component_attempt_id
+        ):
+            raise ContractValidationError(
+                "repair_attempt_binding",
+                "$.repair_plan.source_component_attempt_id",
+                "repair plan does not target the current halted attempt",
+            )
+        previous_code_commit = self.manifest["producer"]["code_commit"]
+        if accepted["source_code_commit"] != previous_code_commit:
+            raise ContractValidationError(
+                "repair_code_lineage",
+                "$.repair_plan.source_code_commit",
+                "repair plan does not identify the halted producer revision",
+            )
+        if accepted["repair_code_commit"] != self.producer_code_commit:
+            raise ContractValidationError(
+                "repair_code_lineage",
+                "$.repair_plan.repair_code_commit",
+                "running producer revision differs from the sealed repair revision",
+            )
+        if self._repair_plan is not None and self._repair_plan != accepted:
+            raise ContractValidationError(
+                "repair_plan_conflict",
+                "$.repair_plan",
+                "a different repair plan is already bound to this component",
+            )
+        plan_path = write_evaluation_repair_plan_v1(self.root, accepted)
+        plan_binding = {
+            "repair_id": accepted["repair_id"],
+            "repair_plan_ref": str(plan_path.relative_to(self.root)).replace("\\", "/"),
+            "repair_plan_sha256": accepted["integrity"]["plan_sha256"],
+            "repair_code_commit": accepted["repair_code_commit"],
+        }
+        for work_id in accepted["supersede_work_ids"]:
+            state = self.recovery.work_state(work_id)
+            if state == "accepted":
+                previous = self.recovery.work_artifact(work_id)
+                assert previous is not None
+                self.recovery.supersede_work(
+                    work_id=work_id,
+                    component_attempt_id=self.component_attempt_id,
+                    component_attempt_index=self.component_attempt_index,
+                    repair_id=plan_binding["repair_id"],
+                    repair_plan_ref=plan_binding["repair_plan_ref"],
+                    repair_plan_sha256=plan_binding["repair_plan_sha256"],
+                    repair_code_commit=plan_binding["repair_code_commit"],
+                    previous_artifact=previous,
+                )
+            elif state != "superseded":
+                raise ContractValidationError(
+                    "repair_work_state",
+                    work_id,
+                    "sealed supersede work is no longer accepted or superseded",
+                )
+        self._repair_plan = accepted
+        return copy.deepcopy(accepted)
+
+    def load_repair(self, repair_id: str) -> dict[str, Any]:
+        """Load one explicitly named repair plan; no repair-directory scan."""
+
+        if self.recovery is None:
+            raise ContractValidationError(
+                "repair_recovery_missing", str(self.root), "recovery store is unavailable"
+            )
+        plan = load_evaluation_repair_plan_v1(
+            self.root, repair_id, assignment=self.recovery.assignment
+        )
+        if plan["repair_code_commit"] != self.producer_code_commit:
+            raise ContractValidationError(
+                "repair_code_lineage",
+                "$.repair_plan.repair_code_commit",
+                "loaded repair plan does not match this producer revision",
+            )
+        if self.component_attempt_index < plan["source_component_attempt_index"]:
+            raise ContractValidationError(
+                "repair_attempt_binding",
+                "$.repair_plan.source_component_attempt_index",
+                "component attempt predates the repair plan",
+            )
+        self._repair_plan = plan
+        return copy.deepcopy(plan)
+
+    def stage_work_id(self, stage_id: str) -> str | None:
+        """Return the stable recovery work identity for one declared stage."""
+
+        return self._recovery_stage_work_id(stage_id)
+
+    def stage_is_repair(self, stage_id: str) -> bool:
+        work_id = self._recovery_stage_work_id(stage_id)
+        if work_id is None or self.recovery is None:
+            return False
+        if self._repair_plan is not None and work_id in self._repair_plan["rerun_work_ids"]:
+            return True
+        return self.recovery.work_state(work_id) == "superseded"
+
     def _recover_resume_intent(self) -> bool:
         if not self.resume_intent_path.exists():
             return False
@@ -526,6 +710,12 @@ class EvaluationWorkflowComponentWriterV1:
     def start_stage(self, stage_id: str, *, work_total: int, work_unit: str) -> None:
         state = self.stage_state(stage_id)
         if state == "succeeded":
+            # The public component event contract does not permit a second
+            # stage_start after a succeeded stage.  A Phase B repair reruns
+            # the exact work internally and records its lineage in recovery;
+            # the original stage history remains immutable.
+            if self.stage_is_repair(stage_id):
+                return
             return
         if state not in {"pending", "halted"}:
             raise ContractValidationError(
@@ -584,17 +774,37 @@ class EvaluationWorkflowComponentWriterV1:
             payload={"validator_id": validator_id, "reason_code": reason_code},
         )
 
-    def complete_stage(self, stage_id: str, *, outcome: str = "succeeded") -> None:
+    def complete_stage(
+        self,
+        stage_id: str,
+        *,
+        outcome: str = "succeeded",
+        recovery_artifact_binding: Mapping[str, Any] | None = None,
+    ) -> None:
+        repaired_succeeded_stage = (
+            outcome in {"succeeded", "skipped"}
+            and self.stage_state(stage_id) == "succeeded"
+            and self.stage_is_repair(stage_id)
+        )
         if outcome in {"succeeded", "skipped"} and self.recovery is not None:
             work_id = self._recovery_stage_work_id(stage_id)
             if work_id is not None:
-                artifact_binding = self._latest_stage_artifact_binding(stage_id)
+                artifact_binding = (
+                    self._latest_stage_artifact_binding(stage_id)
+                    if recovery_artifact_binding is None
+                    else validate_typed_artifact_binding_v1(
+                        recovery_artifact_binding,
+                        path="$.recovery_artifact_binding",
+                    )
+                )
                 self.recovery.accept_work(
                     work_id=work_id,
                     component_attempt_id=self.component_attempt_id,
                     component_attempt_index=self.component_attempt_index,
                     artifact_binding=artifact_binding,
                 )
+        if repaired_succeeded_stage:
+            return
         self.append_event(
             "stage_done",
             stage_id=stage_id,

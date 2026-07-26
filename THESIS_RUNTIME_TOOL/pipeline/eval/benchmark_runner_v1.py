@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import ctypes
+import hashlib
 import json
 import os
 from contextlib import contextmanager
@@ -67,6 +68,13 @@ from pipeline.eval.workflow_component_writer_v1 import (
     benchmark_workflow_stages_v1,
 )
 from pipeline.eval.workflow_recovery_v1 import classify_evaluation_failure_v1
+from pipeline.eval.workflow_repair_v1 import (
+    build_evaluation_repair_receipt_v1,
+    load_evaluation_repair_receipt_v1,
+    repair_receipt_path_v1,
+    validate_evaluation_repair_plan_v1,
+    write_evaluation_repair_receipt_v1,
+)
 from pipeline.llm_backend import SharedLlmAttemptLedger
 from pipeline.llm_backend import canonical_sha256 as shared_canonical_sha256
 
@@ -221,6 +229,7 @@ def run_benchmark_end_to_end_v1(
     candidate_arm_id: str | None = None,
     chapter_runner: ChapterRunnerV1 = run_evaluation_end_to_end_v1,
     workflow_context: EvaluationWorkflowRunContextV1 | None = None,
+    repair_plan: Mapping[str, Any] | None = None,
 ) -> BenchmarkEndToEndResultV1:
     manifest = validate_benchmark_manifest_v1(benchmark_manifest)
     preflight = validate_benchmark_preflight_v1(benchmark_preflight)
@@ -267,6 +276,11 @@ def run_benchmark_end_to_end_v1(
             )
     timestamp = require_rfc3339(generated_at, path="$.generated_at")
     commit = require_commit(producer_code_commit, path="$.producer_code_commit")
+    accepted_repair = (
+        None
+        if repair_plan is None
+        else validate_evaluation_repair_plan_v1(copy.deepcopy(repair_plan))
+    )
     logical_run_id = require_string(
         evaluation_logical_run_id, path="$.evaluation_logical_run_id"
     )
@@ -301,7 +315,11 @@ def run_benchmark_end_to_end_v1(
                 "workstream": "evaluation",
                 "component": "benchmark_runner_v1",
                 "component_version": SCHEMA_VERSION,
-                "code_commit": commit,
+                "code_commit": (
+                    commit
+                    if accepted_repair is None
+                    else accepted_repair["source_code_commit"]
+                ),
             },
             "identity": {
                 "benchmark_id": manifest["benchmark_id"],
@@ -343,16 +361,59 @@ def run_benchmark_end_to_end_v1(
                     and not report_path.exists()
                 ),
             )
+            if accepted_repair is not None:
+                if accepted_repair["repair_code_commit"] != commit:
+                    raise ContractValidationError(
+                        "repair_code_lineage",
+                        "$.repair_plan.repair_code_commit",
+                        "runner code revision differs from the sealed repair revision",
+                    )
+                if workflow.is_halted and (
+                    workflow.component_attempt_index
+                    == accepted_repair["source_component_attempt_index"]
+                ):
+                    workflow.prepare_repair(accepted_repair)
+                else:
+                    loaded_repair = workflow.load_repair(
+                        accepted_repair["repair_id"]
+                    )
+                    if loaded_repair != accepted_repair:
+                        raise ContractValidationError(
+                            "repair_plan_binding",
+                            "$.repair_plan",
+                            "supplied repair plan differs from persisted bytes",
+                        )
             if not workflow.created_new:
                 if workflow.is_halted:
                     workflow.start_or_resume()
+                    if accepted_repair is not None:
+                        workflow.load_repair(accepted_repair["repair_id"])
                 elif workflow.recovered_resume:
                     pass
                 elif workflow.terminal_event is None:
+                    if accepted_repair is None or (
+                        workflow.component_attempt_index
+                        < accepted_repair["target_component_attempt_index"]
+                    ):
+                        raise ContractValidationError(
+                            "component_attempt_open",
+                            str(root / "events.jsonl"),
+                            "an unclosed Evaluation attempt cannot be resumed implicitly",
+                        )
+            if accepted_repair is not None:
+                if workflow.repair_plan != accepted_repair:
                     raise ContractValidationError(
-                        "component_attempt_open",
-                        str(root / "events.jsonl"),
-                        "an unclosed Evaluation attempt cannot be resumed implicitly",
+                        "repair_plan_binding",
+                        "$.repair_plan",
+                        "workflow writer did not retain the exact repair plan",
+                    )
+                if workflow.component_attempt_index < accepted_repair[
+                    "target_component_attempt_index"
+                ]:
+                    raise ContractValidationError(
+                        "repair_attempt_binding",
+                        "$.repair_plan.target_component_attempt_index",
+                        "repair work cannot run before its sealed initial attempt",
                     )
 
         if workflow is not None and workflow.terminal_event == "component_failed":
@@ -372,6 +433,45 @@ def run_benchmark_end_to_end_v1(
                 str(root / "events.jsonl"),
                 "failed workflow component requires a new component run",
             )
+        if accepted_repair is not None and workflow is None:
+            raise ContractValidationError(
+                "repair_workflow_missing",
+                "$.repair_plan",
+                "selective repair requires a workflow component package",
+            )
+        repair_stage_by_work: dict[str, str] = {}
+        persisted_repair_receipt: dict[str, Any] | None = None
+        if accepted_repair is not None:
+            assert workflow is not None and workflow.recovery is not None
+            ledger_rows = {
+                row["work_id"]: row
+                for row in workflow.recovery.ledger["works"]
+            }
+            for work_id in accepted_repair["rerun_work_ids"]:
+                ledger_row = ledger_rows.get(work_id)
+                if ledger_row is None:
+                    raise ContractValidationError(
+                        "repair_work_missing",
+                        "$.repair_plan.rerun_work_ids",
+                        "repair plan names work absent from the component ledger",
+                    )
+                stage_id = ledger_row["stage_id"]
+                if not stage_id.startswith("chapter_"):
+                    raise ContractValidationError(
+                        "repair_stage_scope",
+                        "$.repair_plan.rerun_work_ids",
+                        "Phase B repairs chapter scorer work only",
+                    )
+                repair_stage_by_work[work_id] = stage_id
+            receipt_path = repair_receipt_path_v1(
+                root, accepted_repair["repair_id"]
+            )
+            if receipt_path.is_file():
+                persisted_repair_receipt = load_evaluation_repair_receipt_v1(
+                    root,
+                    accepted_repair["repair_id"],
+                    plan=accepted_repair,
+                )
 
         if workflow is not None and workflow.stage_state("preflight") != "succeeded":
             workflow.start_stage("preflight", work_total=1, work_unit="gate")
@@ -406,6 +506,12 @@ def run_benchmark_end_to_end_v1(
                 workflow.failed(reason_code="benchmark_preflight_blocked")
 
         if report_path.is_file():
+            if accepted_repair is not None and persisted_repair_receipt is None:
+                raise ContractValidationError(
+                    "repair_receipt_missing",
+                    str(report_path),
+                    "completed report cannot bypass the sealed repair receipt",
+                )
             report = validate_benchmark_run_report_v1(_load_json(report_path))
             _require_completed_report_binding(report, state.manifest)
             persisted_report_path = persist_benchmark_run_report_v1(root, report)
@@ -502,12 +608,144 @@ def run_benchmark_end_to_end_v1(
         state.append_event("benchmark_started")
         chapter_outputs: list[EndToEndEvaluationResultV1] = []
         aggregate_inputs: list[dict[str, Any]] = []
+        repair_results_by_work: dict[str, dict[str, Any]] = {}
+        if persisted_repair_receipt is not None:
+            repair_results_by_work = {
+                row["work_id"]: copy.deepcopy(row)
+                for row in persisted_repair_receipt["repaired_results"]
+            }
+        repair_prior_by_work = (
+            {}
+            if accepted_repair is None
+            else {
+                row["work_id"]: row["artifact"]
+                for row in accepted_repair["prior_accepted_artifacts"]
+            }
+        )
         workflow_active_stage: str | None = None
         try:
             for ordinal, chapter_id in enumerate(selected_chapter_ids):
                 runtime = runtimes[chapter_id]
-                child_root = root / "chapters" / f"{ordinal:02d}_{chapter_id}"
                 workflow_active_stage = f"chapter_{chapter_id}"
+                stage_state_before = (
+                    None
+                    if workflow is None
+                    else workflow.stage_state(workflow_active_stage)
+                )
+                recovery_work_id = (
+                    None
+                    if workflow is None
+                    else workflow.stage_work_id(workflow_active_stage)
+                )
+                repair_this_stage = (
+                    accepted_repair is not None
+                    and recovery_work_id in accepted_repair["rerun_work_ids"]
+                )
+                existing_checkpoint = state.chapter_checkpoint(chapter_id)
+                child_root = (
+                    root
+                    / "chapters"
+                    / f"{ordinal:02d}_{chapter_id}"
+                    / "repairs"
+                    / accepted_repair["repair_id"]
+                    if repair_this_stage
+                    else root / "chapters" / f"{ordinal:02d}_{chapter_id}"
+                )
+                if (
+                    repair_this_stage
+                    and recovery_work_id not in repair_results_by_work
+                    and workflow is not None
+                    and workflow.recovery is not None
+                    and workflow.recovery.work_state(recovery_work_id) == "accepted"
+                ):
+                    repair_results_by_work[recovery_work_id] = (
+                        _recover_repaired_result_from_accepted_work_v1(
+                            root=root,
+                            child_root=child_root,
+                            workflow=workflow,
+                            work_id=recovery_work_id,
+                            previous_artifact=repair_prior_by_work.get(
+                                recovery_work_id
+                            ),
+                        )
+                    )
+                if (
+                    stage_state_before == "succeeded"
+                    and not repair_this_stage
+                ):
+                    if existing_checkpoint is None:
+                        raise ContractValidationError(
+                            "checkpoint_missing",
+                            chapter_id,
+                            "accepted unaffected chapter has no checkpoint",
+                        )
+                    state.append_event("chapter_started", chapter_id=chapter_id)
+                    result = _load_chapter_result_from_paths(
+                        root,
+                        report_relative_path=existing_checkpoint[
+                            "report_relative_path"
+                        ],
+                        report_sha256=existing_checkpoint["report_sha256"],
+                        execution_relative_path=existing_checkpoint[
+                            "execution_relative_path"
+                        ],
+                        execution_sha256=existing_checkpoint["execution_sha256"],
+                    )
+                    state.append_event("chapter_reused", chapter_id=chapter_id)
+                    chapter_outputs.append(result)
+                    aggregate_inputs.append(
+                        {
+                            "chapter_id": chapter_id,
+                            "report_relative_path": existing_checkpoint[
+                                "report_relative_path"
+                            ],
+                            "execution_relative_path": existing_checkpoint[
+                                "execution_relative_path"
+                            ],
+                            "report": result.report,
+                            "execution": result.execution,
+                            "reused_complete_run": True,
+                        }
+                    )
+                    workflow_active_stage = None
+                    continue
+                if (
+                    repair_this_stage
+                    and recovery_work_id in repair_results_by_work
+                ):
+                    repaired_row = repair_results_by_work[recovery_work_id]
+                    state.append_event("chapter_started", chapter_id=chapter_id)
+                    result = _load_chapter_result_from_artifact_bindings(
+                        root,
+                        report_binding=repaired_row["report_artifact"],
+                        execution_binding=repaired_row["execution_artifact"],
+                    )
+                    state.append_event("chapter_reused", chapter_id=chapter_id)
+                    chapter_outputs.append(result)
+                    aggregate_inputs.append(
+                        {
+                            "chapter_id": chapter_id,
+                            "report_relative_path": repaired_row[
+                                "report_artifact"
+                            ]["artifact_ref"],
+                            "execution_relative_path": repaired_row[
+                                "execution_artifact"
+                            ]["artifact_ref"],
+                            "report": result.report,
+                            "execution": result.execution,
+                            "reused_complete_run": True,
+                        }
+                    )
+                    workflow_active_stage = None
+                    continue
+                if repair_this_stage:
+                    _materialize_repair_runtime_inputs_v1(
+                        source_root=root
+                        / "chapters"
+                        / f"{ordinal:02d}_{chapter_id}",
+                        target_root=child_root,
+                        runtime=runtime,
+                    )
                 if workflow is not None:
                     workflow.start_stage(
                         workflow_active_stage, work_total=1, work_unit="chapter"
@@ -559,19 +797,30 @@ def run_benchmark_end_to_end_v1(
                         current_work_id=chapter_id,
                         execution_binding=runtime.llm_roles.execution_binding,
                     )
-                checkpoint = state.persist_chapter_checkpoint(
-                    chapter_id=chapter_id,
-                    ordinal=ordinal,
-                    report_relative_path=_relative(root, result.report_path),
-                    report=result.report,
-                    execution_relative_path=_relative(root, result.execution_path),
-                    execution=result.execution,
-                )
+                report_ref = _relative(root, result.report_path)
+                execution_ref = _relative(root, result.execution_path)
+                if repair_this_stage and existing_checkpoint is not None:
+                    checkpoint = {
+                        "report_relative_path": report_ref,
+                        "execution_relative_path": execution_ref,
+                    }
+                else:
+                    checkpoint = state.persist_chapter_checkpoint(
+                        chapter_id=chapter_id,
+                        ordinal=ordinal,
+                        report_relative_path=report_ref,
+                        report=result.report,
+                        execution_relative_path=execution_ref,
+                        execution=result.execution,
+                    )
                 state.append_event(
                     "chapter_reused" if result.reused_complete_run else "chapter_completed",
                     chapter_id=chapter_id,
                 )
-                if workflow is not None and workflow.stage_state(workflow_active_stage) != "succeeded":
+                if (
+                    workflow is not None
+                    and workflow.stage_state(workflow_active_stage) != "succeeded"
+                ):
                     workflow.progress(
                         workflow_active_stage,
                         completed=1,
@@ -592,8 +841,6 @@ def run_benchmark_end_to_end_v1(
                         workflow_active_stage,
                         validator_id="evaluation_chapter_result_v1",
                     )
-                    report_ref = _relative(root, result.report_path)
-                    execution_ref = _relative(root, result.execution_path)
                     workflow.add_artifact(
                         report_ref,
                         artifact_kind="full_run_report_v1",
@@ -610,24 +857,65 @@ def run_benchmark_end_to_end_v1(
                         created_by_event_id=accepted["event_id"],
                         parent_artifact_refs=("scoring_receipt.json",),
                     )
-                    benchmark_checkpoint_ref = (
-                        f"benchmark_state/chapters/{ordinal:02d}_{chapter_id}.json"
-                    )
-                    workflow.add_artifact(
-                        benchmark_checkpoint_ref,
-                        artifact_kind="benchmark_chapter_checkpoint_v1",
-                        schema_version=SCHEMA_VERSION,
-                        stage_id=workflow_active_stage,
-                        created_by_event_id=accepted["event_id"],
-                        parent_artifact_refs=(report_ref, execution_ref),
-                    )
+                    benchmark_checkpoint_ref = None
+                    if not (
+                        repair_this_stage and existing_checkpoint is not None
+                    ):
+                        benchmark_checkpoint_ref = (
+                            f"benchmark_state/chapters/{ordinal:02d}_{chapter_id}.json"
+                        )
+                        workflow.add_artifact(
+                            benchmark_checkpoint_ref,
+                            artifact_kind="benchmark_chapter_checkpoint_v1",
+                            schema_version=SCHEMA_VERSION,
+                            stage_id=workflow_active_stage,
+                            created_by_event_id=accepted["event_id"],
+                            parent_artifact_refs=(report_ref, execution_ref),
+                        )
                     workflow.persist_checkpoint(
                         stage_id=workflow_active_stage,
                         work_id=chapter_id,
                         benchmark_status=state.status(),
                         chapter_checkpoint_ref=benchmark_checkpoint_ref,
                     )
-                    workflow.complete_stage(workflow_active_stage)
+                    workflow.complete_stage(
+                        workflow_active_stage,
+                        recovery_artifact_binding=workflow.file_binding(
+                            report_ref,
+                            artifact_kind="full_run_report_v1",
+                            schema_version=result.report["schema_version"],
+                        ),
+                    )
+                elif workflow is not None and repair_this_stage:
+                    workflow.complete_stage(
+                        workflow_active_stage,
+                        recovery_artifact_binding=workflow.file_binding(
+                            report_ref,
+                            artifact_kind="full_run_report_v1",
+                            schema_version=result.report["schema_version"],
+                        ),
+                    )
+                if repair_this_stage:
+                    assert recovery_work_id is not None
+                    report_binding = workflow.file_binding(
+                        report_ref,
+                        artifact_kind="full_run_report_v1",
+                        schema_version=result.report["schema_version"],
+                    )
+                    execution_binding = workflow.file_binding(
+                        execution_ref,
+                        artifact_kind="evaluation_execution_artifact_v1",
+                        schema_version=result.execution["schema_version"],
+                    )
+                    repair_results_by_work[recovery_work_id] = {
+                        "work_id": recovery_work_id,
+                        "previous_artifact": repair_prior_by_work.get(
+                            recovery_work_id
+                        ),
+                        "result_artifact": report_binding,
+                        "report_artifact": report_binding,
+                        "execution_artifact": execution_binding,
+                    }
                 chapter_outputs.append(result)
                 aggregate_inputs.append(
                     {
@@ -640,6 +928,61 @@ def run_benchmark_end_to_end_v1(
                     }
                 )
                 workflow_active_stage = None
+            if accepted_repair is not None:
+                assert workflow is not None and workflow.recovery is not None
+                if set(repair_results_by_work) != set(
+                    accepted_repair["rerun_work_ids"]
+                ):
+                    raise ContractValidationError(
+                        "repair_result_cover",
+                        "$.repair_plan.rerun_work_ids",
+                        "runner did not produce the exact sealed repair result set",
+                    )
+                current_artifacts = copy.deepcopy(
+                    accepted_repair["unaffected_accepted_artifacts"]
+                )
+                for work_id in accepted_repair["rerun_work_ids"]:
+                    artifact = workflow.recovery.work_artifact(work_id)
+                    expected = repair_results_by_work[work_id][
+                        "result_artifact"
+                    ]
+                    if artifact != expected:
+                        raise ContractValidationError(
+                            "repair_current_binding",
+                            work_id,
+                            "recovery ledger differs from repaired result",
+                        )
+                    current_artifacts.append(
+                        {"work_id": work_id, "artifact": artifact}
+                    )
+                receipt = build_evaluation_repair_receipt_v1(
+                    plan=accepted_repair,
+                    component_attempt_id=workflow.component_attempt_id,
+                    component_attempt_index=workflow.component_attempt_index,
+                    repaired_results=[
+                        repair_results_by_work[work_id]
+                        for work_id in accepted_repair["rerun_work_ids"]
+                    ],
+                    current_accepted_artifacts=current_artifacts,
+                    completed_at=timestamp,
+                )
+                if (
+                    persisted_repair_receipt is not None
+                    and persisted_repair_receipt != receipt
+                ):
+                    raise ContractValidationError(
+                        "repair_receipt_conflict",
+                        str(
+                            repair_receipt_path_v1(
+                                root, accepted_repair["repair_id"]
+                            )
+                        ),
+                        "persisted repair receipt differs from rederived bytes",
+                    )
+                write_evaluation_repair_receipt_v1(
+                    root, receipt, plan=accepted_repair
+                )
+                workflow.validate_package()
             state.append_event("aggregation_started")
             workflow_active_stage = "aggregation"
             if workflow is not None:
@@ -914,6 +1257,14 @@ class _BenchmarkRunStateV1:
 
     def status(self) -> dict[str, Any]:
         return validate_benchmark_run_status_v1(_load_json(self.status_path))
+
+    def chapter_checkpoint(
+        self, chapter_id: str
+    ) -> dict[str, Any] | None:
+        for checkpoint in self._checkpoints:
+            if checkpoint["chapter_id"] == chapter_id:
+                return copy.deepcopy(checkpoint)
+        return None
 
     def persist_chapter_checkpoint(
         self,
@@ -1606,6 +1957,282 @@ def _validate_selected_ids(
 
 def _settings_arm_id(arm_id: str) -> str:
     return arm_id.lower() if arm_id in {"S0", "S1"} else arm_id
+
+
+def _load_chapter_result_from_paths(
+    root: Path,
+    *,
+    report_relative_path: str,
+    report_sha256: str,
+    execution_relative_path: str,
+    execution_sha256: str,
+) -> EndToEndEvaluationResultV1:
+    resolved_root = root.resolve()
+    report_path = (resolved_root / require_relative_path(
+        report_relative_path, path="$.report_relative_path"
+    )).resolve()
+    execution_path = (resolved_root / require_relative_path(
+        execution_relative_path, path="$.execution_relative_path"
+    )).resolve()
+    if (
+        not report_path.is_relative_to(resolved_root)
+        or not execution_path.is_relative_to(resolved_root)
+        or not report_path.is_file()
+        or not execution_path.is_file()
+        or report_path.is_symlink()
+        or execution_path.is_symlink()
+    ):
+        raise ContractValidationError(
+            "repair_artifact_binding",
+            str(resolved_root),
+            "chapter result path is missing or escapes the component root",
+        )
+    report = validate_full_run_report(_load_json(report_path))
+    execution = validate_evaluation_execution_artifact(_load_json(execution_path))
+    if (
+        report["integrity"]["report_sha256"]
+        != require_sha256(report_sha256, path="$.report_sha256")
+        or execution["integrity"]["artifact_sha256"]
+        != require_sha256(execution_sha256, path="$.execution_sha256")
+    ):
+        raise ContractValidationError(
+            "repair_artifact_binding",
+            str(resolved_root),
+            "chapter result hash differs from its accepted binding",
+        )
+    return EndToEndEvaluationResultV1(
+        output_root=report_path.parent.parent,
+        report_path=report_path,
+        report=report,
+        execution_path=execution_path,
+        execution=execution,
+        usage_path=None,
+        local_sf_qe_path=None,
+        reused_complete_run=True,
+    )
+
+
+def _load_chapter_result_from_artifact_bindings(
+    root: Path,
+    *,
+    report_binding: Mapping[str, Any],
+    execution_binding: Mapping[str, Any],
+) -> EndToEndEvaluationResultV1:
+    resolved_root = root.resolve()
+
+    def load(binding: Mapping[str, Any], *, path: str) -> tuple[Path, dict[str, Any]]:
+        row = require_mapping(binding, path=path)
+        require_exact_keys(
+            row,
+            required={
+                "artifact_ref",
+                "artifact_kind",
+                "schema_version",
+                "sha256",
+                "sha256_kind",
+            },
+            path=path,
+        )
+        if require_string(row["sha256_kind"], path=f"{path}.sha256_kind") != "physical":
+            raise ContractValidationError(
+                "repair_artifact_authority",
+                f"{path}.sha256_kind",
+                "repair receipt must bind physical output bytes",
+            )
+        artifact_path = (
+            resolved_root
+            / require_relative_path(row["artifact_ref"], path=f"{path}.artifact_ref")
+        ).resolve()
+        if (
+            not artifact_path.is_relative_to(resolved_root)
+            or not artifact_path.is_file()
+            or artifact_path.is_symlink()
+            or hashlib.sha256(artifact_path.read_bytes()).hexdigest()
+            != require_sha256(row["sha256"], path=f"{path}.sha256")
+        ):
+            raise ContractValidationError(
+                "repair_artifact_binding",
+                str(artifact_path),
+                "repair receipt differs from output bytes",
+            )
+        return artifact_path, _load_json(artifact_path)
+
+    report_path, report_payload = load(report_binding, path="$.report_artifact")
+    execution_path, execution_payload = load(
+        execution_binding, path="$.execution_artifact"
+    )
+    report = validate_full_run_report(report_payload)
+    execution = validate_evaluation_execution_artifact(execution_payload)
+    return EndToEndEvaluationResultV1(
+        output_root=report_path.parent.parent,
+        report_path=report_path,
+        report=report,
+        execution_path=execution_path,
+        execution=execution,
+        usage_path=None,
+        local_sf_qe_path=None,
+        reused_complete_run=True,
+    )
+
+
+def _recover_repaired_result_from_accepted_work_v1(
+    *,
+    root: Path,
+    child_root: Path,
+    workflow: EvaluationWorkflowComponentWriterV1,
+    work_id: str,
+    previous_artifact: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    if workflow.recovery is None:
+        raise ContractValidationError(
+            "repair_recovery_missing",
+            work_id,
+            "accepted repaired work has no recovery ledger",
+        )
+    report_binding = workflow.recovery.work_artifact(work_id)
+    if (
+        report_binding is None
+        or report_binding.get("artifact_kind") != "full_run_report_v1"
+        or report_binding.get("sha256_kind") != "physical"
+    ):
+        raise ContractValidationError(
+            "repair_partial_binding",
+            work_id,
+            "accepted repaired work does not bind a physical chapter report",
+        )
+    expected_report_ref = _relative(
+        root, child_root / "reports" / "full_run_report_v1.json"
+    )
+    if report_binding["artifact_ref"] != expected_report_ref:
+        raise ContractValidationError(
+            "repair_partial_binding",
+            work_id,
+            "accepted repaired report is outside its sealed repair root",
+        )
+    verified_report_binding = workflow.file_binding(
+        expected_report_ref,
+        artifact_kind="full_run_report_v1",
+        schema_version=report_binding["schema_version"],
+    )
+    if verified_report_binding != report_binding:
+        raise ContractValidationError(
+            "repair_partial_binding",
+            work_id,
+            "accepted repaired report bytes drifted",
+        )
+    report = validate_full_run_report(
+        _load_json(child_root / "reports" / "full_run_report_v1.json")
+    )
+    execution_rows = [
+        row
+        for row in report["artifacts"]
+        if row["status"] == "present"
+        and row["kind"] == "metric_report"
+        and row["producer_method_id"] == "evaluation_execution"
+    ]
+    if len(execution_rows) != 1:
+        raise ContractValidationError(
+            "repair_partial_binding",
+            work_id,
+            "accepted repaired report must bind exactly one execution artifact",
+        )
+    execution_relative = require_relative_path(
+        execution_rows[0]["relative_path"],
+        path="$.repair_report.artifacts.execution.relative_path",
+    )
+    execution_path = (child_root / execution_relative).resolve()
+    if (
+        not execution_path.is_relative_to(child_root.resolve())
+        or not execution_path.is_file()
+        or execution_path.is_symlink()
+    ):
+        raise ContractValidationError(
+            "repair_partial_binding",
+            str(execution_path),
+            "accepted repaired execution is missing or escapes its repair root",
+        )
+    execution = validate_evaluation_execution_artifact(
+        _load_json(execution_path)
+    )
+    if (
+        execution["integrity"]["artifact_sha256"]
+        != execution_rows[0]["sha256"]
+    ):
+        raise ContractValidationError(
+            "repair_partial_binding",
+            str(execution_path),
+            "accepted repaired execution canonical hash drifted",
+        )
+    execution_binding = workflow.file_binding(
+        _relative(root, execution_path),
+        artifact_kind="evaluation_execution_artifact_v1",
+        schema_version=execution["schema_version"],
+    )
+    return {
+        "work_id": work_id,
+        "previous_artifact": (
+            None if previous_artifact is None else copy.deepcopy(previous_artifact)
+        ),
+        "result_artifact": copy.deepcopy(report_binding),
+        "report_artifact": copy.deepcopy(report_binding),
+        "execution_artifact": execution_binding,
+    }
+
+
+def _materialize_repair_runtime_inputs_v1(
+    *,
+    source_root: Path,
+    target_root: Path,
+    runtime: BenchmarkChapterRuntimeV1,
+) -> None:
+    """Copy only explicitly bound immutable runtime inputs into a repair root."""
+
+    refs = [
+        require_relative_path(
+            runtime.input_artifact["relative_path"],
+            path="$.runtime.input_artifact.relative_path",
+        ),
+        *[
+            require_relative_path(
+                row["relative_path"],
+                path="$.runtime.arm_presentations[*].relative_path",
+            )
+            for row in runtime.arm_presentations
+        ],
+    ]
+    if len(refs) != len(set(refs)):
+        raise ContractValidationError(
+            "repair_runtime_binding",
+            "$.runtime",
+            "repair runtime input references are duplicated",
+        )
+    source_base = source_root.resolve()
+    target_base = target_root.resolve()
+    for relative in refs:
+        source = (source_base / relative).resolve()
+        target = (target_base / relative).resolve()
+        if (
+            not source.is_relative_to(source_base)
+            or not target.is_relative_to(target_base)
+            or not source.is_file()
+            or source.is_symlink()
+        ):
+            raise ContractValidationError(
+                "repair_runtime_binding",
+                relative,
+                "sealed repair runtime input is missing or escapes its chapter root",
+            )
+        payload = source.read_bytes()
+        if target.exists():
+            if target.is_symlink() or not target.is_file() or target.read_bytes() != payload:
+                raise ContractValidationError(
+                    "repair_runtime_binding",
+                    str(target),
+                    "repair runtime input bytes changed",
+                )
+            continue
+        target.parent.mkdir(parents=True, exist_ok=True)
+        _write_bytes_atomic(target, payload)
 
 
 def _relative(root: Path, path: Path) -> str:

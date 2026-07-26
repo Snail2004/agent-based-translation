@@ -21,6 +21,7 @@ from pipeline.eval.contracts_v1 import (
     CanonicalPolicy,
     ContractValidationError,
     canonical_sha256,
+    require_commit,
     require_enum,
     require_exact_keys,
     require_int,
@@ -225,6 +226,41 @@ def _normalize_hash_map(value: Mapping[str, Any], *, path: str) -> dict[str, str
     return {
         key: _hash_binding(row[key], path=f"{path}.{key}")
         for key in _SEMANTIC_BINDING_KEYS
+    }
+
+
+def _validate_recovery_artifact_binding(
+    value: Any, *, path: str
+) -> dict[str, str]:
+    row = require_mapping(value, path=path)
+    legacy_keys = {"artifact_ref", "sha256"}
+    typed_keys = {
+        "artifact_ref",
+        "artifact_kind",
+        "schema_version",
+        "sha256",
+        "sha256_kind",
+    }
+    if set(row) == legacy_keys:
+        return {
+            "artifact_ref": require_string(
+                row["artifact_ref"], path=f"{path}.artifact_ref"
+            ),
+            "sha256": require_sha256(row["sha256"], path=f"{path}.sha256"),
+        }
+    require_exact_keys(row, required=typed_keys, path=path)
+    return {
+        "artifact_ref": require_string(row["artifact_ref"], path=f"{path}.artifact_ref"),
+        "artifact_kind": require_string(
+            row["artifact_kind"], path=f"{path}.artifact_kind"
+        ),
+        "schema_version": require_string(
+            row["schema_version"], path=f"{path}.schema_version"
+        ),
+        "sha256": require_sha256(row["sha256"], path=f"{path}.sha256"),
+        "sha256_kind": require_string(
+            row["sha256_kind"], path=f"{path}.sha256_kind"
+        ),
     }
 
 
@@ -505,12 +541,22 @@ def _safe_message(error: BaseException) -> str:
     return raw[:240]
 
 
-def _incident_id(*, category: str, reason_code: str, work_id: str | None, message_hash: str) -> str:
+def _incident_id(
+    *,
+    category: str,
+    reason_code: str,
+    work_id: str | None,
+    message_hash: str,
+    component_attempt_id: str,
+    component_attempt_index: int,
+) -> str:
     material = {
         "category": category,
         "reason_code": reason_code,
         "work_id": work_id,
         "message_hash": message_hash,
+        "component_attempt_id": component_attempt_id,
+        "component_attempt_index": component_attempt_index,
     }
     return "inc_" + canonical_sha256(material, policy=_POLICY)[:24]
 
@@ -724,6 +770,8 @@ def _validate_journal_bindings_v1(
     attempt_ids: dict[int, str] = {}
     attempt_indexes: dict[str, int] = {}
     works: dict[str, str] = {}
+    work_states: dict[str, str] = {}
+    work_artifacts: dict[str, dict[str, str] | None] = {}
     physical_attempts: dict[str, str] = {}
     previous_attempt_index: int | None = None
     for record in records:
@@ -779,6 +827,8 @@ def _validate_journal_bindings_v1(
                     "work record differs from its descriptor",
                 )
             works[work_id] = descriptor["logical_request_id"]
+            work_states[work_id] = "in_progress"
+            work_artifacts[work_id] = None
         elif work_id is not None:
             if work_id not in works:
                 raise ContractValidationError(
@@ -792,6 +842,83 @@ def _validate_journal_bindings_v1(
                     "$.journal.logical_request_id",
                     "logical request differs from work descriptor",
                 )
+
+        if work_id is not None:
+            event_name = record["event"]
+            if event_name == "artifact_recorded":
+                artifact = record["payload"].get("artifact")
+                if artifact is not None:
+                    work_artifacts[work_id] = _validate_recovery_artifact_binding(
+                        artifact, path="$.journal.payload.artifact"
+                    )
+            elif event_name == "work_accepted":
+                if work_states[work_id] not in {
+                    "in_progress",
+                    "pending",
+                    "halted",
+                    "retryable_rejected",
+                    "superseded",
+                }:
+                    raise ContractValidationError(
+                        "recovery_work_transition",
+                        "$.journal.event",
+                        "work cannot be accepted from its current state",
+                    )
+                artifact = _validate_recovery_artifact_binding(
+                    record["payload"].get("artifact"),
+                    path="$.journal.payload.artifact",
+                )
+                work_artifacts[work_id] = artifact
+                work_states[work_id] = "accepted"
+            elif event_name == "work_halted":
+                work_states[work_id] = "halted"
+            elif event_name == "work_retryable_rejected":
+                work_states[work_id] = "retryable_rejected"
+            elif event_name == "work_superseded":
+                payload = require_mapping(
+                    record["payload"], path="$.journal.payload"
+                )
+                require_exact_keys(
+                    payload,
+                    required={
+                        "repair_id",
+                        "repair_plan_ref",
+                        "repair_plan_sha256",
+                        "repair_code_commit",
+                        "previous_artifact",
+                    },
+                    path="$.journal.payload",
+                )
+                if work_states[work_id] != "accepted":
+                    raise ContractValidationError(
+                        "recovery_work_transition",
+                        "$.journal.event",
+                        "only an accepted work can be superseded",
+                    )
+                previous_artifact = _validate_recovery_artifact_binding(
+                    payload["previous_artifact"],
+                    path="$.journal.payload.previous_artifact",
+                )
+                if work_artifacts[work_id] != previous_artifact:
+                    raise ContractValidationError(
+                        "recovery_work_binding",
+                        "$.journal.payload.previous_artifact",
+                        "supersede record does not name the current accepted artifact",
+                    )
+                require_string(payload["repair_id"], path="$.journal.payload.repair_id")
+                require_string(
+                    payload["repair_plan_ref"],
+                    path="$.journal.payload.repair_plan_ref",
+                )
+                require_sha256(
+                    payload["repair_plan_sha256"],
+                    path="$.journal.payload.repair_plan_sha256",
+                )
+                require_commit(
+                    payload["repair_code_commit"],
+                    path="$.journal.payload.repair_code_commit",
+                )
+                work_states[work_id] = "superseded"
 
         physical_attempt_id = record["physical_attempt_id"]
         if record["event"] == "physical_attempt_sealed":
@@ -1083,11 +1210,98 @@ def validate_evaluation_recovery_package_v1(
     )
     if require_checkpoint and not checkpoints:
         raise ContractValidationError("recovery_checkpoint_missing", str(recovery_root), "resume requires a checkpoint")
+    repair_rows: list[dict[str, Any]] = []
+    repairs_root = recovery_root / "repairs"
+    if repairs_root.exists():
+        from pipeline.eval.workflow_repair_v1 import (
+            validate_evaluation_repair_plan_v1,
+            validate_evaluation_repair_receipt_v1,
+        )
+
+        for repair_dir in sorted(path for path in repairs_root.iterdir() if path.is_dir()):
+            plan_path = repair_dir / "plan.json"
+            plan = validate_evaluation_repair_plan_v1(
+                _load_json(plan_path), assignment=accepted_assignment
+            )
+            expected_dir = repairs_root / plan["repair_id"]
+            if repair_dir != expected_dir:
+                raise ContractValidationError(
+                    "repair_path",
+                    str(repair_dir),
+                    "repair directory does not match its sealed repair ID",
+                )
+            receipt_path = repair_dir / "receipt.json"
+            receipt = None
+            if receipt_path.is_file():
+                receipt = validate_evaluation_repair_receipt_v1(
+                    _load_json(receipt_path), plan=plan
+                )
+            repair_rows.append(
+                {
+                    "plan": copy.deepcopy(plan),
+                    "receipt": None if receipt is None else copy.deepcopy(receipt),
+                }
+            )
+    plans_by_id = {row["plan"]["repair_id"]: row["plan"] for row in repair_rows}
+    for record in records:
+        if record["event"] != "work_superseded":
+            continue
+        payload = record["payload"]
+        plan = plans_by_id.get(payload["repair_id"])
+        if plan is None:
+            raise ContractValidationError(
+                "repair_plan_missing",
+                "$.journal.payload.repair_id",
+                "supersede marker has no component-local repair plan",
+            )
+        expected_ref = (
+            f"recovery/repairs/{plan['repair_id']}/plan.json"
+        )
+        if (
+            payload["repair_plan_ref"] != expected_ref
+            or payload["repair_plan_sha256"]
+            != plan["integrity"]["plan_sha256"]
+            or payload["repair_code_commit"] != plan["repair_code_commit"]
+            or record["work_id"] not in plan["supersede_work_ids"]
+        ):
+            raise ContractValidationError(
+                "repair_plan_binding",
+                "$.journal.payload",
+                "supersede marker differs from its sealed repair plan",
+            )
+    component_root = recovery_root.parent
+    for row in repair_rows:
+        receipt = row["receipt"]
+        if receipt is None:
+            continue
+        for result in receipt["repaired_results"]:
+            for name in ("result_artifact", "report_artifact", "execution_artifact"):
+                binding = result[name]
+                if binding["sha256_kind"] != "physical":
+                    raise ContractValidationError(
+                        "repair_artifact_authority",
+                        f"$.repair_receipt.{name}.sha256_kind",
+                        "repaired output must use a physical file hash",
+                    )
+                artifact_path = _relative_file(
+                    component_root, binding["artifact_ref"]
+                )
+                if (
+                    not artifact_path.is_file()
+                    or artifact_path.is_symlink()
+                    or _file_sha256(artifact_path) != binding["sha256"]
+                ):
+                    raise ContractValidationError(
+                        "repair_artifact_binding",
+                        str(artifact_path),
+                        "repaired output bytes differ from the receipt",
+                    )
     return {
         "assignment": accepted_assignment,
         "journal": tuple(copy.deepcopy(records)),
         "ledger": None if ledger is None else copy.deepcopy(ledger),
         "checkpoints": tuple(copy.deepcopy(checkpoints)),
+        "repairs": tuple(repair_rows),
     }
 
 
@@ -1254,6 +1468,71 @@ class EvaluationWorkflowRecoveryStoreV1:
             boundary="accepted",
         )
 
+    def supersede_work(
+        self,
+        *,
+        work_id: str,
+        component_attempt_id: str,
+        component_attempt_index: int,
+        repair_id: str,
+        repair_plan_ref: str,
+        repair_plan_sha256: str,
+        repair_code_commit: str,
+        previous_artifact: Mapping[str, Any],
+    ) -> None:
+        """Append one immutable replacement marker for an accepted work.
+
+        The marker never deletes or edits the old artifact.  A later
+        ``accept_work`` for the same semantic work ID becomes its sole current
+        contribution in the derived ledger.
+        """
+
+        work = self._require_work(work_id)
+        if work["state"] != "accepted":
+            raise ContractValidationError(
+                "recovery_work_transition",
+                work_id,
+                "only an accepted work can be superseded",
+            )
+        prior = _validate_recovery_artifact_binding(
+            previous_artifact, path="$.previous_artifact"
+        )
+        if work["accepted_artifact"] != prior:
+            raise ContractValidationError(
+                "recovery_work_binding",
+                work_id,
+                "supersede artifact differs from the current accepted artifact",
+            )
+        payload = {
+            "repair_id": require_string(repair_id, path="$.repair_id"),
+            "repair_plan_ref": require_string(
+                repair_plan_ref, path="$.repair_plan_ref"
+            ),
+            "repair_plan_sha256": require_sha256(
+                repair_plan_sha256, path="$.repair_plan_sha256"
+            ),
+            "repair_code_commit": require_commit(
+                repair_code_commit, path="$.repair_code_commit"
+            ),
+            "previous_artifact": prior,
+        }
+        self._append(
+            "work_superseded",
+            component_attempt_id=component_attempt_id,
+            component_attempt_index=component_attempt_index,
+            work_id=work_id,
+            logical_request_id=work["logical_request_id"],
+            payload=payload,
+            boundary="accepted",
+        )
+
+    def work_state(self, work_id: str) -> str:
+        return require_string(self._require_work(work_id)["state"], path="$.work.state")
+
+    def work_artifact(self, work_id: str) -> dict[str, Any] | None:
+        artifact = self._require_work(work_id)["accepted_artifact"]
+        return None if artifact is None else copy.deepcopy(dict(artifact))
+
     def mark_halted(
         self,
         *,
@@ -1296,6 +1575,8 @@ class EvaluationWorkflowRecoveryStoreV1:
             reason_code=reason_code,
             work_id=work_id,
             message_hash=message_hash,
+            component_attempt_id=component_attempt_id,
+            component_attempt_index=component_attempt_index,
         )
         incident = {
             "schema_id": INCIDENT_SCHEMA_ID,

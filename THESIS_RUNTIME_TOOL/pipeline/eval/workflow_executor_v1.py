@@ -28,7 +28,9 @@ from pipeline.eval.evaluation_workflow_settings_v1 import (
 )
 from pipeline.eval.workflow_component_v1 import validate_scoring_handoff_v1
 from pipeline.eval.workflow_component_writer_v1 import (
+    EvaluationWorkflowComponentWriterV1,
     EvaluationWorkflowRunContextV1,
+    benchmark_workflow_stages_v1,
     validate_evaluation_workflow_component_package_v1,
 )
 from pipeline.workflow_replay.contracts_v1 import canonical_sha256
@@ -214,10 +216,69 @@ class RegisteredEvaluationWorkflowExecutorV1:
             shared_selection_ref=self._registration.shared_selection_ref,
         )
 
+    def build_repair_plan(
+        self,
+        scoring_handoff: Mapping[str, Any],
+        *,
+        affected_work_ids: Sequence[str],
+        reason_code: str,
+        authorized_by: str,
+        authorization_id: str,
+        authorized_at: str,
+    ) -> dict[str, Any]:
+        """Build, but do not execute, one exact server-authorized repair."""
+
+        handoff = validate_scoring_handoff_v1(copy.deepcopy(scoring_handoff))
+        if handoff["workflow_run_id"] != self._workflow_run_id:
+            raise ContractValidationError(
+                "workflow_binding",
+                "$.scoring_handoff.workflow_run_id",
+                "registered Evaluation executor belongs to another workflow",
+            )
+        settings = validate_evaluation_workflow_settings_v1(
+            copy.deepcopy(self._materialized_workflow_settings),
+            authority=self._registration.settings_authority,
+            scoring_handoff=handoff,
+        )
+        if settings != self.materialize_settings(handoff):
+            raise ContractValidationError(
+                "settings_materialization",
+                "$.registration.materialized_workflow_settings",
+                "registered settings differ from the deterministic locked selection",
+            )
+        context = EvaluationWorkflowRunContextV1(
+            workflow_run_id=self._workflow_run_id,
+            component_run_id=self._component_run_id,
+            scoring_handoff=handoff,
+            scoring_handoff_artifact_ref=_SCORING_HANDOFF_REF,
+            evaluation_profile=settings["evaluation_profile_ref"],
+            workflow_settings=settings,
+            workflow_settings_authority=self._registration.settings_authority,
+        )
+        writer = EvaluationWorkflowComponentWriterV1(
+            self._output_root,
+            context,
+            generated_at=self._generated_at,
+            producer_code_commit=self._producer_code_commit,
+            stages=benchmark_workflow_stages_v1(
+                tuple(settings["selected_chapter_ids"])
+            ),
+            allow_create=False,
+        )
+        return writer.build_repair_plan(
+            affected_work_ids=affected_work_ids,
+            reason_code=reason_code,
+            authorized_by=authorized_by,
+            authorization_id=authorization_id,
+            authorized_at=authorized_at,
+        )
+
     def execute(
         self,
         scoring_handoff: Mapping[str, Any],
         observer: SnapshotObserverV1,
+        *,
+        repair_plan: Mapping[str, Any] | None = None,
     ) -> Path:
         handoff = validate_scoring_handoff_v1(copy.deepcopy(scoring_handoff))
         if handoff["workflow_run_id"] != self._workflow_run_id:
@@ -295,6 +356,11 @@ class RegisteredEvaluationWorkflowExecutorV1:
                 baseline_arm_id=baseline_arm_id,
                 candidate_arm_id=candidate_arm_id,
                 workflow_context=context,
+                repair_plan=(
+                    None
+                    if repair_plan is None
+                    else copy.deepcopy(repair_plan)
+                ),
             )
         except Exception:
             self._publish_non_success_snapshot(observer, handoff)
