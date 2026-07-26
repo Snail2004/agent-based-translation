@@ -460,6 +460,7 @@ class D2LTranslationComponentRunner:
         self._term_batch_ids_by_evidence: dict[str, list[str]] = {}
         self._term_projection_mode_by_evidence: dict[str, str] = {}
         self._term_schema_version_by_evidence: dict[str, str] = {}
+        self._term_progress_by_evidence: dict[str, tuple[int, str]] = {}
         self._term_checked_evidence_keys: set[str] = set()
 
     @property
@@ -579,6 +580,21 @@ class D2LTranslationComponentRunner:
             self._term_schema_version_by_evidence[evidence_key] = (
                 current_schema
             )
+            current_progress = (
+                int(batch["summary"]["total"]),
+                str(batch["summary"]["unit"]),
+            )
+            prior_progress = self._term_progress_by_evidence.get(
+                evidence_key
+            )
+            if (
+                prior_progress is not None
+                and prior_progress != current_progress
+            ):
+                raise ComponentRunnerError(
+                    "one term lifecycle evidence has multiple progress seals"
+                )
+            self._term_progress_by_evidence[evidence_key] = current_progress
             if batch["batch_id"] in seen_batches:
                 continue
             self._term_batch_ids_by_evidence[evidence_key].append(
@@ -800,6 +816,9 @@ class D2LTranslationComponentRunner:
         if existing_evidence is None:
             previous_rows = list(self._term_rows_by_id.values())
             schema_version = TERM_LIFECYCLE_SCHEMA
+            stage_progress = self._stage_row(stage.stage_id)["progress"]
+            projection_total = int(stage_progress["total"])
+            projection_unit = str(stage_progress["unit"])
         else:
             evidence_key = existing_evidence_key
             assert evidence_key is not None
@@ -810,13 +829,15 @@ class D2LTranslationComponentRunner:
             schema_version = self._term_schema_version_by_evidence[
                 evidence_key
             ]
+            projection_total, projection_unit = (
+                self._term_progress_by_evidence[evidence_key]
+            )
         completed = term_work_completed(
             stage.stage_id,
             entries,
             through_journal_seq=int(entry["journal_seq"]),
             schema_version=schema_version,
         )
-        stage_progress = self._stage_row(stage.stage_id)["progress"]
         batches = project_work_journal_term_batches(
             stage_id=stage.stage_id,
             journal_ref=journal_ref,
@@ -825,8 +846,8 @@ class D2LTranslationComponentRunner:
             previous_rows=previous_rows,
             projection_mode=projection_mode,
             completed=completed,
-            total=int(stage_progress["total"]),
-            unit=str(stage_progress["unit"]),
+            total=projection_total,
+            unit=projection_unit,
             schema_version=schema_version,
         )
         self._emit_term_lifecycle_batches(

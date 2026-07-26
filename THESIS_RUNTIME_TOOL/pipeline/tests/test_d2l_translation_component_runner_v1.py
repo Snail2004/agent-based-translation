@@ -16,6 +16,7 @@ from pathlib import Path
 
 import pytest
 
+import pipeline.prepass.d2l_translation_component_runner_v1 as runner_module
 from pipeline.prepass.d2l_console_replay_contract_v1 import (
     D2LTranslationComponentEventWriter,
     STAGE_IDS,
@@ -44,6 +45,7 @@ from pipeline.prepass.d2l_translation_component_runner_v1 import (
     ComponentRunnerError,
     D2LTranslationComponentRunner,
     RUNNER_SCHEMA,
+    StagePlan,
     preflight_resume_runtime_revision_from_plan_file,
 )
 
@@ -2258,6 +2260,100 @@ def test_term_lifecycle_repair_resume_backfills_attempt_two_without_b1_replay(
     validated = validate_translation_component_package(root)
     assert validated["term_lifecycle_row_count"] == 2
     assert validated["term_lifecycle_batch_count"] == 1
+
+
+def test_term_lifecycle_reprojection_reuses_historical_progress_seal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runner = object.__new__(D2LTranslationComponentRunner)
+    evidence = {
+        "evidence_kind": "work_journal",
+        "journal_ref": "runtime/work_items/b2_admission_translation.jsonl",
+        "journal_seq": 1,
+        "entry_sha256": "A" * 64,
+        "producer_component_attempt_id": 14,
+        "validation_component_attempt_id": 14,
+        "validation_component_seq": 100,
+        "validation_event_id": "evt_validation",
+    }
+    evidence_key = canonical_sha256(evidence)
+    runner._term_checked_evidence_keys = set()
+    runner._term_prior_rows_by_evidence = {evidence_key: []}
+    runner._term_projection_mode_by_evidence = {evidence_key: "live"}
+    runner._term_schema_version_by_evidence = {
+        evidence_key: "d2l_term_lifecycle_batch_v2"
+    }
+    runner._term_progress_by_evidence = {
+        evidence_key: (1034, "packets")
+    }
+
+    monkeypatch.setattr(
+        runner,
+        "_validation_event_for_work_entry",
+        lambda **_kwargs: {"event_id": "evt_validation"},
+    )
+    monkeypatch.setattr(
+        runner,
+        "_existing_term_evidence",
+        lambda **_kwargs: dict(evidence),
+    )
+    monkeypatch.setattr(
+        runner,
+        "_stage_row",
+        lambda _stage_id: {
+            "progress": {"completed": 138, "total": 430, "unit": "packets"}
+        },
+    )
+    monkeypatch.setattr(
+        runner,
+        "_emit_term_lifecycle_batches",
+        lambda **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        runner_module,
+        "term_work_completed",
+        lambda *_args, **_kwargs: 1,
+    )
+    observed: dict[str, object] = {}
+
+    def project_batches(**kwargs):
+        observed.update(kwargs)
+        return []
+
+    monkeypatch.setattr(
+        runner_module,
+        "project_work_journal_term_batches",
+        project_batches,
+    )
+    stage = StagePlan(
+        stage_id="b2_admission_translation",
+        producer="d2l_candidate_builder",
+        command=None,
+        cwd=None,
+        artifact_specs=(),
+        total=430,
+        unit="packets",
+        work_id="work_b2_admission_translation",
+        mode="execute",
+        timeout_seconds=None,
+        receipt_ref=None,
+    )
+    entry = {
+        "journal_seq": 1,
+        "entry_sha256": "A" * 64,
+    }
+
+    assert runner._project_term_work_entry(
+        stage=stage,
+        journal_ref=evidence["journal_ref"],
+        entries=[entry],
+        entry=entry,
+        projection_mode="resume_backfill",
+        events_by_id={},
+        validation_events_by_subject={},
+    )
+    assert observed["total"] == 1034
+    assert observed["unit"] == "packets"
 
 
 def test_term_lifecycle_partial_backfill_crash_resumes_without_duplicates(
