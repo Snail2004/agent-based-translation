@@ -1065,6 +1065,22 @@ def _term_string(
     return text
 
 
+def _term_source_surface(value: Any, label: str, *, maximum: int) -> str:
+    text = _require_string(value, label)
+    if len(text) > maximum:
+        raise D2LConsoleContractError(f"{label} exceeds {maximum} characters")
+    if any(
+        (ord(character) < 32 and character not in "\t\n\r\f\v")
+        or ord(character) == 127
+        for character in text
+    ):
+        raise D2LConsoleContractError(f"{label} contains a control character")
+    normalized = re.sub(r"[ \t\n\r\f\v]+", " ", text).strip()
+    if not normalized:
+        raise D2LConsoleContractError(f"{label} cannot be blank")
+    return normalized
+
+
 def _term_string_list(
     value: Any,
     label: str,
@@ -1956,12 +1972,10 @@ def project_work_journal_term_batches(
             observation = dict(
                 _require_mapping(raw, f"candidate_observations[{index}]")
             )
-            surface = str(
-                _term_string(
-                    observation.get("source_surface"),
-                    f"candidate_observations[{index}].source_surface",
-                    maximum=256,
-                )
+            surface = _term_source_surface(
+                observation.get("source_surface"),
+                f"candidate_observations[{index}].source_surface",
+                maximum=256,
             )
             blocks = list(observation.get("anchor_block_ids") or [])
             proposal_id = "proposal_" + canonical_sha256(

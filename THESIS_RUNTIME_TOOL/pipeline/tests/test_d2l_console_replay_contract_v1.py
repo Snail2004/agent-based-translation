@@ -893,6 +893,33 @@ def test_term_lifecycle_live_batch_is_deterministic_and_provisional() -> None:
     )["rows_by_id"]
 
 
+def test_term_lifecycle_normalizes_line_wrapped_surface_but_rejects_unsafe_control() -> None:
+    batch = _project_term_observations(
+        [
+            {
+                "source_surface": "left-hand-side\nderivative",
+                "anchor_block_ids": ["block_1"],
+            }
+        ]
+    )[0]
+
+    assert batch["rows"][0]["surfaces"] == ["left-hand-side derivative"]
+    validate_term_lifecycle_batch(
+        batch,
+        stage_id="b1_candidate_discovery",
+    )
+
+    with pytest.raises(D2LConsoleContractError, match="control character"):
+        _project_term_observations(
+            [
+                {
+                    "source_surface": "unsafe\u001bterm",
+                    "anchor_block_ids": ["block_1"],
+                }
+            ]
+        )
+
+
 def test_term_lifecycle_over_cap_splits_with_exact_stable_cover() -> None:
     observations = [
         {
