@@ -816,6 +816,7 @@ class D2LTranslationComponentRunner:
             through_journal_seq=int(entry["journal_seq"]),
             schema_version=schema_version,
         )
+        stage_progress = self._stage_row(stage.stage_id)["progress"]
         batches = project_work_journal_term_batches(
             stage_id=stage.stage_id,
             journal_ref=journal_ref,
@@ -824,8 +825,8 @@ class D2LTranslationComponentRunner:
             previous_rows=previous_rows,
             projection_mode=projection_mode,
             completed=completed,
-            total=stage.total,
-            unit=stage.unit,
+            total=int(stage_progress["total"]),
+            unit=str(stage_progress["unit"]),
             schema_version=schema_version,
         )
         self._emit_term_lifecycle_batches(

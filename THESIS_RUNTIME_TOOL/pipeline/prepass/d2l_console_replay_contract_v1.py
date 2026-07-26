@@ -3930,6 +3930,31 @@ def _require_binding_matches_index(
         raise D2LConsoleContractError(f"{label} producer attempt disagrees with the artifact index")
 
 
+def _term_lifecycle_progress_was_recorded(
+    events: Sequence[Mapping[str, Any]],
+    *,
+    stage_id: str,
+    before_component_seq: int,
+    total: int,
+    unit: str,
+) -> bool:
+    for event in events:
+        if (
+            event["stage_id"] != stage_id
+            or int(event["component_seq"]) >= before_component_seq
+        ):
+            continue
+        payload = event.get("payload")
+        if not isinstance(payload, Mapping):
+            continue
+        progress = payload.get("progress")
+        if not isinstance(progress, Mapping):
+            continue
+        if progress.get("total") == total and progress.get("unit") == unit:
+            return True
+    return False
+
+
 def _validate_term_lifecycle_package_evidence(
     *,
     package_root: Path,
@@ -4022,6 +4047,20 @@ def _validate_term_lifecycle_package_evidence(
                     through_journal_seq=journal_seq,
                     schema_version=str(batch["schema_version"]),
                 )
+                historical_total = int(batch["summary"]["total"])
+                historical_unit = str(batch["summary"]["unit"])
+                if not _term_lifecycle_progress_was_recorded(
+                    events,
+                    stage_id=stage_id,
+                    before_component_seq=int(
+                        lifecycle_event["component_seq"]
+                    ),
+                    total=historical_total,
+                    unit=historical_unit,
+                ):
+                    raise D2LConsoleContractError(
+                        "term lifecycle progress authority is absent"
+                    )
                 expected = project_work_journal_term_batches(
                     stage_id=stage_id,
                     journal_ref=str(evidence["journal_ref"]),
@@ -4030,8 +4069,8 @@ def _validate_term_lifecycle_package_evidence(
                     previous_rows=prior_rows,
                     projection_mode=str(batch["projection_mode"]),
                     completed=completed,
-                    total=stage["progress"]["total"],
-                    unit=str(stage["progress"]["unit"]),
+                    total=historical_total,
+                    unit=historical_unit,
                     schema_version=str(batch["schema_version"]),
                 )
             else:
