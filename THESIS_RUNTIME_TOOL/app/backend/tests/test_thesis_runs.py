@@ -5,6 +5,7 @@ These tests stay 0-API.  They do launch one real frozen pipeline script
 """
 from __future__ import annotations
 
+import copy
 import importlib
 import json
 import os
@@ -4022,6 +4023,85 @@ def _register_parent_workflow_fixture(tmp_path, registry):
     return root
 
 
+def _register_parent_evaluation_console_fixture(tmp_path, registry):
+    from pipeline.eval.workflow_component_writer_v1 import (
+        EvaluationWorkflowComponentWriterV1,
+        benchmark_workflow_stages_v1,
+    )
+    from pipeline.tests.test_evaluation_workflow_component_writer_v1 import (
+        _context,
+    )
+    from pipeline.tests.test_workflow_replay_relay_v1 import (
+        COMMIT,
+        CREATED_AT,
+        Clock,
+        _source_bindings,
+    )
+    from pipeline.workflow_replay.adapters_v1 import (
+        EvaluationComponentAdapterV1,
+    )
+    from pipeline.workflow_replay.relay_v1 import (
+        StageDefinitionV1,
+        WorkflowRelayV1,
+    )
+    from services.workflow_replay import workflow_replay_root
+
+    context = _context(selected_chapter_ids=("d2l_preliminaries",))
+    job_id = "job_evaluation_console_fixture"
+    root = workflow_replay_root(
+        jobs_root=tmp_path,
+        job_id=job_id,
+        workflow_run_id=context.workflow_run_id,
+    )
+    component_root = tmp_path / "evaluation_console_component"
+    writer = EvaluationWorkflowComponentWriterV1(
+        component_root,
+        context,
+        generated_at="2026-07-26T00:00:00Z",
+        producer_code_commit="c" * 40,
+        stages=benchmark_workflow_stages_v1(("d2l_preliminaries",)),
+        allow_create=True,
+    )
+    writer.start_stage("preflight", work_total=1, work_unit="gate")
+    writer.complete_stage("preflight")
+    stages = tuple(
+        StageDefinitionV1(
+            f"evaluation.{stage['stage_id']}",
+            "evaluation",
+            stage["stage_id"],
+            index,
+            stage["stage_id"],
+            stage["agent"],
+        )
+        for index, stage in enumerate(writer.manifest["stages"], start=1)
+    )
+    relay = WorkflowRelayV1(
+        root,
+        workflow_run_id=context.workflow_run_id,
+        job_id=job_id,
+        source_package_bindings=_source_bindings(),
+        stages=stages,
+        code_commit=COMMIT,
+        created_at=CREATED_AT,
+        clock=Clock(),
+    )
+    relay.ingest_component(
+        component_root,
+        adapter=EvaluationComponentAdapterV1(context.scoring_handoff),
+    )
+    registry.create_run(
+        script="run_d2l_project_campaign",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="run_evaluation_console_fixture",
+        job_id=job_id,
+        workflow_run_id=context.workflow_run_id,
+        component_id="evaluation",
+        component_run_id=context.component_run_id,
+        component_attempt_id=1,
+    )
+    return root
+
+
 def test_route_workflow_replay_reads_validated_parent_cursor_and_artifact(
     tmp_path,
     monkeypatch,
@@ -4077,6 +4157,153 @@ def test_route_workflow_replay_reads_validated_parent_cursor_and_artifact(
         "artifact_ref=components%2Ftranslation%2Ftranslation_fixture_v1"
         "%2Fartifacts%2Ftranslation_output"
     )
+
+
+def test_route_workflow_replay_projects_validated_evaluation_console(
+    tmp_path,
+    monkeypatch,
+):
+    client, _routes, registry = _prepare_full_report_route(
+        tmp_path, monkeypatch
+    )
+    _register_parent_evaluation_console_fixture(tmp_path, registry)
+
+    response = client.get(
+        "/api/thesis/runs/run_evaluation_console_fixture/workflow-replay",
+        query_string={"after_seq": 0, "wait_ms": 0},
+    )
+    assert response.status_code == 200
+    data = response.get_json()["data"]
+    console = data["evaluation_console"]
+    assert console["schema_id"] == "EvaluationConsoleReadV1"
+    assert console["schema_version"] == "1.0.0"
+    assert console["component_id"] == "evaluation"
+    assert console["projection_count"] == 3
+    assert console["through_parent_seq"] == 3
+    assert console["through_component_seq"] == 3
+    assert [row["event"] for row in console["rows"]] == [
+        "component_started",
+        "stage_start",
+        "stage_done",
+    ]
+    assert console["cumulative"]["row_count"] == 3
+    assert console["validation"] == {
+        "valid": True,
+        "authority": (
+            "evaluation_console_projection_v1_and_neutral_relay"
+        ),
+        "artifact_index_sha256": data["artifact_index"]["integrity"][
+            "artifact_index_sha256"
+        ],
+        "parent_event_sha256": data["events"][-1]["integrity"][
+            "event_sha256"
+        ],
+    }
+    projection_rows = [
+        row
+        for row in data["typed_artifacts"]
+        if row["binding"]["artifact_kind"]
+        == "evaluation_console_projection_v1"
+    ]
+    assert len(projection_rows) == 3
+
+    tail = client.get(
+        "/api/thesis/runs/run_evaluation_console_fixture/workflow-replay",
+        query_string={"after_seq": 3, "wait_ms": 0},
+    )
+    assert tail.status_code == 200
+    assert tail.get_json()["data"]["events"] == []
+    assert (
+        tail.get_json()["data"]["evaluation_console"]
+        == console
+    )
+
+
+def test_evaluation_console_read_model_fails_closed_on_chain_drift(
+    tmp_path,
+    monkeypatch,
+):
+    _client, _routes, registry = _prepare_full_report_route(
+        tmp_path, monkeypatch
+    )
+    root = _register_parent_evaluation_console_fixture(tmp_path, registry)
+    from services.workflow_replay import (
+        WorkflowReplayError,
+        _evaluation_console_read_model,
+        _load_validated_parent,
+        _typed_artifacts,
+    )
+
+    package = _load_validated_parent(
+        root,
+        entry={
+            "workflow_run_id": "workflow_fixture_001",
+            "job_id": "job_evaluation_console_fixture",
+        },
+    )
+    typed = _typed_artifacts(root, package["artifact_index"])
+
+    zero_index = copy.deepcopy(package["artifact_index"])
+    zero_index["artifacts"] = [
+        row
+        for row in zero_index["artifacts"]
+        if row["binding"]["artifact_kind"]
+        != "evaluation_console_projection_v1"
+    ]
+    zero_typed = [
+        row
+        for row in typed
+        if row["binding"]["artifact_kind"]
+        != "evaluation_console_projection_v1"
+    ]
+    assert (
+        _evaluation_console_read_model(
+            manifest=package["manifest"],
+            events=package["events"],
+            artifact_index=zero_index,
+            typed_artifacts=zero_typed,
+        )
+        is None
+    )
+
+    non_prefix_index = copy.deepcopy(package["artifact_index"])
+    projection_rows = [
+        row
+        for row in non_prefix_index["artifacts"]
+        if row["binding"]["artifact_kind"]
+        == "evaluation_console_projection_v1"
+    ]
+    projection_rows[1]["parent_artifact_refs"] = []
+    with pytest.raises(
+        WorkflowReplayError,
+        match="validated parent binding",
+    ):
+        _evaluation_console_read_model(
+            manifest=package["manifest"],
+            events=package["events"],
+            artifact_index=non_prefix_index,
+            typed_artifacts=typed,
+        )
+
+    tampered_typed = copy.deepcopy(typed)
+    projection_body = next(
+        row["body"]
+        for row in tampered_typed
+        if row["binding"]["artifact_kind"]
+        == "evaluation_console_projection_v1"
+        and row["body"]["projection_index"] == 2
+    )
+    projection_body["rows"][0]["label_key"] = "evaluation.tampered"
+    with pytest.raises(
+        WorkflowReplayError,
+        match="failed validation",
+    ):
+        _evaluation_console_read_model(
+            manifest=package["manifest"],
+            events=package["events"],
+            artifact_index=package["artifact_index"],
+            typed_artifacts=tampered_typed,
+        )
 
 
 def test_route_workflow_score_reports_parent_readiness_blockers(

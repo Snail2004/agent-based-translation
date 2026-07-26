@@ -1723,6 +1723,12 @@ def _read_envelope(
         entry,
         typed_artifacts=typed_artifacts,
     )
+    evaluation_console = _evaluation_console_read_model(
+        manifest=manifest,
+        events=package["events"],
+        artifact_index=package["artifact_index"],
+        typed_artifacts=typed_artifacts,
+    )
     returned_through = events[-1]["seq"] if events else after_seq
     if after_seq > latest_seq:
         raise WorkflowReplayError(
@@ -1755,6 +1761,7 @@ def _read_envelope(
             workflow_run_id=manifest["workflow_run_id"],
         ),
         "evaluation_scope": evaluation_scope,
+        "evaluation_console": evaluation_console,
         "source_mode": source_mode,
         "cursor": {
             "after_seq": after_seq,
@@ -1809,6 +1816,7 @@ def _typed_artifacts(
         "d2l_component_usage_snapshot_v1",
         "evaluation_component_usage_snapshot_v1",
         "evaluation_workflow_settings_v1",
+        "evaluation_console_projection_v1",
     }
     result: list[dict[str, Any]] = []
     for artifact in artifact_index["artifacts"]:
@@ -1840,6 +1848,285 @@ def _typed_artifacts(
             ) from exc
         result.append({"binding": binding, "body": body})
     return result
+
+
+def _evaluation_console_read_model(
+    *,
+    manifest: Mapping[str, Any],
+    events: list[dict[str, Any]],
+    artifact_index: Mapping[str, Any],
+    typed_artifacts: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    from pipeline.eval.contracts_v1 import ContractValidationError
+    from pipeline.eval.workflow_console_projection_v1 import (
+        CONSOLE_PROJECTION_ARTIFACT_KIND,
+        CONSOLE_PROJECTION_SCHEMA_VERSION,
+        console_projection_artifact_ref_v1,
+        validate_evaluation_console_projection_v1,
+    )
+
+    indexed = [
+        row
+        for row in artifact_index["artifacts"]
+        if row["binding"]["artifact_kind"] == CONSOLE_PROJECTION_ARTIFACT_KIND
+    ]
+    if not indexed:
+        return None
+
+    typed_by_ref = {
+        row["binding"]["artifact_ref"]: row
+        for row in typed_artifacts
+        if row["binding"]["artifact_kind"] == CONSOLE_PROJECTION_ARTIFACT_KIND
+    }
+    if len(typed_by_ref) != len(indexed):
+        raise WorkflowReplayError(
+            "workflow_evaluation_console_exact_cover",
+            "Evaluation Console projection artifacts are not exact-covered by the parent read model.",
+            409,
+        )
+
+    component_rows = [
+        row
+        for row in manifest["components"]
+        if row["component_id"] == "evaluation"
+    ]
+    evaluation_events = [
+        event
+        for event in events
+        if event["component"]["component_id"] == "evaluation"
+    ]
+    if len(component_rows) != 1 or not evaluation_events:
+        raise WorkflowReplayError(
+            "workflow_evaluation_console_component_binding",
+            "Evaluation Console projections require one accepted Evaluation component event stream.",
+            409,
+        )
+    component = component_rows[0]
+    if len(indexed) != len(evaluation_events):
+        raise WorkflowReplayError(
+            "workflow_evaluation_console_exact_cover",
+            "Evaluation Console projections must exact-cover the accepted Evaluation component events.",
+            409,
+        )
+
+    event_by_component_seq = {
+        event["component"]["component_seq"]: event
+        for event in evaluation_events
+    }
+    if len(event_by_component_seq) != len(evaluation_events):
+        raise WorkflowReplayError(
+            "workflow_evaluation_console_sequence",
+            "Evaluation component sequence is not unique.",
+            409,
+        )
+
+    accepted: list[tuple[dict[str, Any], Mapping[str, Any]]] = []
+    for artifact in indexed:
+        ref = artifact["binding"]["artifact_ref"]
+        typed = typed_by_ref.get(ref)
+        if typed is None:
+            raise WorkflowReplayError(
+                "workflow_evaluation_console_exact_cover",
+                "Evaluation Console projection body is missing.",
+                409,
+            )
+        try:
+            projection = validate_evaluation_console_projection_v1(
+                typed["body"]
+            )
+        except ContractValidationError as exc:
+            raise WorkflowReplayError(
+                "workflow_evaluation_console_invalid",
+                f"Evaluation Console projection failed validation: {exc}",
+                409,
+            ) from exc
+        accepted.append((projection, artifact))
+    accepted.sort(key=lambda pair: pair[0]["projection_index"])
+
+    previous_projection_sha256 = None
+    previous_parent_ref = None
+    previous_prefixes: Mapping[str, Any] | None = None
+    row_count = 0
+    row_chain_sha256 = "0" * 64
+    seen_row_ids: set[str] = set()
+    cumulative_rows: list[dict[str, Any]] = []
+    for expected_index, (projection, artifact) in enumerate(
+        accepted,
+        start=1,
+    ):
+        if projection["projection_index"] != expected_index:
+            raise WorkflowReplayError(
+                "workflow_evaluation_console_sequence",
+                "Evaluation Console projection sequence is not contiguous.",
+                409,
+            )
+        event = event_by_component_seq.get(expected_index)
+        if event is None:
+            raise WorkflowReplayError(
+                "workflow_evaluation_console_exact_cover",
+                "Evaluation Console projection references a missing parent event.",
+                409,
+            )
+        source = event["component"]
+        binding = artifact["binding"]
+        expected_component_ref = console_projection_artifact_ref_v1(
+            projection
+        )
+        expected_parent_ref = (
+            f"components/evaluation/{projection['component_run_id']}/artifacts/"
+            f"{expected_component_ref}"
+        )
+        expected_parent_refs = (
+            [] if previous_parent_ref is None else [previous_parent_ref]
+        )
+        if (
+            projection["workflow_run_id"] != manifest["workflow_run_id"]
+            or projection["component_run_id"] != component["component_run_id"]
+            or projection["component_run_id"] != source["component_run_id"]
+            or projection["through_component_seq"] != source["component_seq"]
+            or projection["through_component_event_id"]
+            != source["source_event_id"]
+            or projection["component_attempt_id"]
+            != source["component_attempt_id"]
+            or projection["component_attempt_index"]
+            != source["component_attempt_index"]
+            or artifact["component_artifact_ref"] != expected_component_ref
+            or binding["artifact_ref"] != expected_parent_ref
+            or binding["schema_version"]
+            != CONSOLE_PROJECTION_SCHEMA_VERSION
+            or binding["sha256_kind"] != "physical"
+            or binding["sha256"] != artifact["imported_physical_sha256"]
+            or artifact["created_event_id"] != event["event_id"]
+            or artifact["parent_artifact_refs"] != expected_parent_refs
+            or artifact["producer"]["component_id"] != "evaluation"
+            or artifact["producer"]["component_run_id"]
+            != source["component_run_id"]
+            or artifact["producer"]["component_attempt_id"]
+            != source["component_attempt_id"]
+            or artifact["producer"]["component_attempt_index"]
+            != source["component_attempt_index"]
+            or projection["previous_projection_sha256"]
+            != previous_projection_sha256
+        ):
+            raise WorkflowReplayError(
+                "workflow_evaluation_console_binding_drift",
+                "Evaluation Console projection differs from its validated parent binding.",
+                409,
+            )
+
+        prefixes = projection["prefixes"]
+        if previous_prefixes is not None:
+            for prefix_name in ("recovery_journal", "diagnostics"):
+                previous_prefix = previous_prefixes[prefix_name]
+                current_prefix = prefixes[prefix_name]
+                if (
+                    current_prefix["record_count"]
+                    < previous_prefix["record_count"]
+                    or (
+                        current_prefix["record_count"]
+                        == previous_prefix["record_count"]
+                        and current_prefix["prefix_sha256"]
+                        != previous_prefix["prefix_sha256"]
+                    )
+                ):
+                    raise WorkflowReplayError(
+                        "workflow_evaluation_console_prefix_drift",
+                        "Evaluation Console recovery or diagnostic prefix is not monotonic.",
+                        409,
+                    )
+        for row in projection["rows"]:
+            if row["row_id"] in seen_row_ids:
+                raise WorkflowReplayError(
+                    "workflow_evaluation_console_row_duplicate",
+                    "Evaluation Console projection repeats a producer row.",
+                    409,
+                )
+            if row["source_component_seq_end"] > expected_index:
+                raise WorkflowReplayError(
+                    "workflow_evaluation_console_future_prefix",
+                    "Evaluation Console row references a future component event.",
+                    409,
+                )
+            seen_row_ids.add(row["row_id"])
+            row_chain_sha256 = canonical_sha256(
+                {
+                    "previous_row_chain_sha256": row_chain_sha256,
+                    "row_sha256": row["integrity"]["row_sha256"],
+                }
+            )
+            row_count += 1
+            cumulative_rows.append(row)
+        if (
+            projection["cumulative"]["row_count"] != row_count
+            or projection["cumulative"]["row_chain_sha256"]
+            != row_chain_sha256
+        ):
+            raise WorkflowReplayError(
+                "workflow_evaluation_console_row_chain_drift",
+                "Evaluation Console cumulative row chain has drifted.",
+                409,
+            )
+
+        previous_projection_sha256 = projection["integrity"][
+            "projection_sha256"
+        ]
+        previous_parent_ref = binding["artifact_ref"]
+        previous_prefixes = prefixes
+
+    latest_projection, latest_artifact = accepted[-1]
+    latest_event = event_by_component_seq[
+        latest_projection["through_component_seq"]
+    ]
+    if (
+        component["last_component_seq"]
+        != latest_projection["through_component_seq"]
+    ):
+        raise WorkflowReplayError(
+            "workflow_evaluation_console_component_cursor_drift",
+            "Evaluation Console cursor differs from the parent component cursor.",
+            409,
+        )
+    read_model = {
+        "schema_id": "EvaluationConsoleReadV1",
+        "schema_version": "1.0.0",
+        "workflow_run_id": manifest["workflow_run_id"],
+        "component_id": "evaluation",
+        "component_run_id": latest_projection["component_run_id"],
+        "projection_count": len(accepted),
+        "through_parent_seq": latest_event["seq"],
+        "through_parent_event_id": latest_event["event_id"],
+        "through_component_seq": latest_projection[
+            "through_component_seq"
+        ],
+        "through_component_event_id": latest_projection[
+            "through_component_event_id"
+        ],
+        "projection_ref": latest_artifact["binding"]["artifact_ref"],
+        "projection_sha256": latest_projection["integrity"][
+            "projection_sha256"
+        ],
+        "rows": cumulative_rows,
+        "state": latest_projection["state"],
+        "cumulative": latest_projection["cumulative"],
+        "validation": {
+            "valid": True,
+            "authority": (
+                "evaluation_console_projection_v1_and_neutral_relay"
+            ),
+            "artifact_index_sha256": artifact_index["integrity"][
+                "artifact_index_sha256"
+            ],
+            "parent_event_sha256": latest_event["integrity"][
+                "event_sha256"
+            ],
+        },
+    }
+    return {
+        **read_model,
+        "integrity": {
+            "read_sha256": canonical_sha256(read_model),
+        },
+    }
 
 
 def _evaluation_scope_read_model(

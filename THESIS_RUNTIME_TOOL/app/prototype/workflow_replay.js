@@ -107,6 +107,40 @@
   ]);
   const TERM_MAX_PAYLOAD_BYTES = 60000;
   const TERM_MAX_ROWS_PER_BATCH = 128;
+  const EVALUATION_CONSOLE_READ_SCHEMA = "EvaluationConsoleReadV1";
+  const EVALUATION_CONSOLE_READ_VERSION = "1.0.0";
+  const EVALUATION_CONSOLE_AUTHORITY = "evaluation_console_projection_v1_and_neutral_relay";
+  const EVALUATION_CONSOLE_EVENTS = new Set([
+    "component_started",
+    "component_resumed",
+    "stage_start",
+    "progress",
+    "validation_passed",
+    "validation_failed",
+    "retry_summary",
+    "checkpoint",
+    "usage_snapshot",
+    "stage_done",
+    "stage_paused",
+    "component_done",
+    "component_failed",
+  ]);
+  const EVALUATION_CONSOLE_SEVERITIES = new Set(["info", "warning", "error"]);
+  const EVALUATION_CONSOLE_LABEL_KEYS = Object.freeze({
+    component_started: "evaluation.component_started",
+    component_resumed: "evaluation.component_resumed",
+    stage_start: "evaluation.stage_started",
+    progress: "evaluation.progress",
+    validation_passed: "evaluation.validation_passed",
+    validation_failed: "evaluation.validation_failed",
+    retry_summary: "evaluation.retry_summary",
+    checkpoint: "evaluation.checkpoint",
+    usage_snapshot: "evaluation.usage_snapshot",
+    stage_done: "evaluation.stage_done",
+    stage_paused: "evaluation.stage_paused",
+    component_done: "evaluation.component_done",
+    component_failed: "evaluation.component_failed",
+  });
 
   function isObject(value) {
     return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -966,6 +1000,387 @@
       originComponentAttemptId: latestBatch.payload.origin_component_attempt_id,
       originComponentSeq: latestBatch.payload.origin_component_seq,
       evidence: deepClone(latestBatch.payload.evidence),
+    });
+  }
+
+  function evaluationConsoleOptionalError(code, path, message) {
+    return { code, path, message };
+  }
+
+  function evaluationConsoleInteger(value, minimum = 0) {
+    return Number.isInteger(value) && value >= minimum;
+  }
+
+  function evaluationConsoleDetail(value, path, errors) {
+    const keys = [
+      "progress",
+      "validator",
+      "retry",
+      "checkpoint",
+      "usage_snapshot",
+      "resume",
+      "reason",
+      "outcome",
+    ];
+    exactKeys(value, keys, path, errors);
+    if (!isObject(value)) return;
+    inspectPrivatePayload(value, path, errors);
+    if (value.progress !== null) {
+      exactKeys(value.progress, ["completed", "total", "unit", "current_work_id"], `${path}.progress`, errors);
+      if (
+        !evaluationConsoleInteger(value.progress?.completed)
+        || !evaluationConsoleInteger(value.progress?.total)
+        || value.progress.completed > value.progress.total
+        || typeof value.progress.unit !== "string"
+        || (value.progress.current_work_id !== null && typeof value.progress.current_work_id !== "string")
+      ) {
+        addError(errors, "evaluation_console_progress", `${path}.progress`, "invalid producer progress facts");
+      }
+    }
+    if (value.validator !== null) {
+      exactKeys(value.validator, ["validator_id", "status", "reason_code"], `${path}.validator`, errors);
+      if (
+        typeof value.validator?.validator_id !== "string"
+        || !new Set(["passed", "failed"]).has(value.validator?.status)
+        || (value.validator?.reason_code !== null && typeof value.validator?.reason_code !== "string")
+      ) {
+        addError(errors, "evaluation_console_validator", `${path}.validator`, "invalid producer validator facts");
+      }
+    }
+    if (value.retry !== null) {
+      exactKeys(value.retry, [
+        "retry_kind",
+        "logical_request_id",
+        "retry_count",
+        "physical_attempt_indexes",
+        "reason_codes",
+        "outcome",
+      ], `${path}.retry`, errors);
+      if (
+        !new Set(["transport", "semantic"]).has(value.retry?.retry_kind)
+        || typeof value.retry?.logical_request_id !== "string"
+        || !evaluationConsoleInteger(value.retry?.retry_count, 1)
+        || !Array.isArray(value.retry?.physical_attempt_indexes)
+        || !Array.isArray(value.retry?.reason_codes)
+        || typeof value.retry?.outcome !== "string"
+      ) {
+        addError(errors, "evaluation_console_retry", `${path}.retry`, "invalid producer retry summary");
+      }
+    }
+    if (value.outcome !== null && typeof value.outcome !== "string") {
+      addError(errors, "evaluation_console_outcome", `${path}.outcome`, "expected string or null");
+    }
+  }
+
+  async function validateEvaluationConsoleReadModel(
+    value,
+    manifest,
+    parentEvents,
+    artifactRows,
+    artifactIndex,
+  ) {
+    if (value === null || value === undefined) {
+      return Object.freeze({
+        present: false,
+        valid: true,
+        errors: [],
+        rows: [],
+        read: null,
+      });
+    }
+    const errors = [];
+    const path = "$evaluation_console";
+    exactKeys(value, [
+      "schema_id",
+      "schema_version",
+      "workflow_run_id",
+      "component_id",
+      "component_run_id",
+      "projection_count",
+      "through_parent_seq",
+      "through_parent_event_id",
+      "through_component_seq",
+      "through_component_event_id",
+      "projection_ref",
+      "projection_sha256",
+      "rows",
+      "state",
+      "cumulative",
+      "validation",
+      "integrity",
+    ], path, errors);
+    if (!isObject(value)) {
+      return Object.freeze({ present: true, valid: false, errors, rows: [], read: null });
+    }
+    if (
+      value.schema_id !== EVALUATION_CONSOLE_READ_SCHEMA
+      || value.schema_version !== EVALUATION_CONSOLE_READ_VERSION
+    ) {
+      addError(errors, "evaluation_console_schema", path, "expected EvaluationConsoleReadV1@1.0.0");
+    }
+    if (
+      value.workflow_run_id !== manifest?.workflow_run_id
+      || value.component_id !== "evaluation"
+      || typeof value.component_run_id !== "string"
+    ) {
+      addError(errors, "evaluation_console_identity", path, "Evaluation Console identity differs from the parent workflow");
+    }
+    [
+      ["projection_count", 1],
+      ["through_parent_seq", 1],
+      ["through_component_seq", 1],
+    ].forEach(([key, minimum]) => {
+      if (!evaluationConsoleInteger(value[key], minimum)) {
+        addError(errors, "evaluation_console_sequence", `${path}.${key}`, "expected a positive integer");
+      }
+    });
+    [
+      "through_parent_event_id",
+      "through_component_event_id",
+      "projection_ref",
+    ].forEach(key => {
+      if (typeof value[key] !== "string" || !value[key]) {
+        addError(errors, "evaluation_console_identity", `${path}.${key}`, "expected a non-empty string");
+      }
+    });
+    ["projection_sha256"].forEach(key => {
+      if (!SHA256_RE.test(String(value[key] || ""))) {
+        addError(errors, "evaluation_console_sha256", `${path}.${key}`, "expected lowercase SHA-256");
+      }
+    });
+    exactKeys(value.validation, [
+      "valid",
+      "authority",
+      "artifact_index_sha256",
+      "parent_event_sha256",
+    ], `${path}.validation`, errors);
+    if (
+      value.validation?.valid !== true
+      || value.validation?.authority !== EVALUATION_CONSOLE_AUTHORITY
+      || value.validation?.artifact_index_sha256 !== artifactIndex?.integrity?.artifact_index_sha256
+      || !SHA256_RE.test(String(value.validation?.parent_event_sha256 || ""))
+    ) {
+      addError(errors, "evaluation_console_authority", `${path}.validation`, "backend validation authority or parent binding drift");
+    }
+    exactKeys(value.integrity, ["read_sha256"], `${path}.integrity`, errors);
+    if (SHA256_RE.test(String(value.integrity?.read_sha256 || ""))) {
+      try {
+        const readMaterial = deepClone(value);
+        delete readMaterial.integrity;
+        const observed = await canonicalSha256(readMaterial);
+        if (observed !== value.integrity.read_sha256) {
+          addError(
+            errors,
+            "evaluation_console_read_hash",
+            `${path}.integrity.read_sha256`,
+            `expected ${value.integrity.read_sha256}; observed ${observed}`,
+          );
+        }
+      } catch (error) {
+        addError(
+          errors,
+          "hash_unavailable",
+          `${path}.integrity.read_sha256`,
+          String(error?.message || error),
+        );
+      }
+    }
+
+    const evaluationEvents = (Array.isArray(parentEvents) ? parentEvents : []).filter(
+      event => event?.component?.component_id === "evaluation",
+    );
+    const evaluationComponent = (Array.isArray(manifest?.components) ? manifest.components : []).filter(
+      component => component?.component_id === "evaluation",
+    );
+    const latestEvent = evaluationEvents.at(-1);
+    if (
+      evaluationComponent.length !== 1
+      || value.projection_count !== evaluationEvents.length
+      || !latestEvent
+      || value.component_run_id !== latestEvent?.component?.component_run_id
+      || value.component_run_id !== evaluationComponent[0]?.component_run_id
+      || value.through_parent_seq !== latestEvent?.seq
+      || value.through_parent_event_id !== latestEvent?.event_id
+      || value.through_component_seq !== latestEvent?.component?.component_seq
+      || value.through_component_event_id !== latestEvent?.component?.source_event_id
+      || value.validation?.parent_event_sha256 !== latestEvent?.integrity?.event_sha256
+    ) {
+      addError(errors, "evaluation_console_parent_cursor", path, "Evaluation Console cursor does not exact-cover the parent Evaluation stream");
+    }
+    const projectionArtifact = (Array.isArray(artifactRows) ? artifactRows : []).find(
+      row => row?.binding?.artifact_ref === value.projection_ref,
+    );
+    if (
+      projectionArtifact?.binding?.artifact_kind !== "evaluation_console_projection_v1"
+      || projectionArtifact?.binding?.schema_version !== "1.0.0"
+    ) {
+      addError(errors, "evaluation_console_artifact", `${path}.projection_ref`, "latest projection artifact is not indexed");
+    }
+
+    const eventByComponentSeq = new Map(
+      evaluationEvents.map(event => [event?.component?.component_seq, event]),
+    );
+    const sourceEventById = new Map(
+      evaluationEvents.map(event => [event?.component?.source_event_id, event]),
+    );
+    const localStages = new Map(
+      (Array.isArray(manifest?.stages) ? manifest.stages : [])
+        .filter(stage => stage?.component_id === "evaluation")
+        .map(stage => [stage.local_stage_id, stage]),
+    );
+    const rowIds = new Set();
+    const normalizedRows = [];
+    if (!Array.isArray(value.rows)) {
+      addError(errors, "evaluation_console_rows", `${path}.rows`, "expected an array");
+    } else {
+      value.rows.forEach((row, index) => {
+        const rowPath = `${path}.rows[${index}]`;
+        exactKeys(row, [
+          "row_id",
+          "event",
+          "severity",
+          "label_key",
+          "source_event_ids",
+          "source_component_seq_start",
+          "source_component_seq_end",
+          "component_attempt_id",
+          "component_attempt_index",
+          "ts",
+          "stage_id",
+          "agent",
+          "detail",
+          "integrity",
+        ], rowPath, errors);
+        if (!isObject(row)) return;
+        if (!/^evalconsole_row_[0-9a-f]{32}$/.test(String(row.row_id || "")) || rowIds.has(row.row_id)) {
+          addError(errors, "evaluation_console_row_id", `${rowPath}.row_id`, "invalid or duplicate producer row ID");
+        }
+        rowIds.add(row.row_id);
+        if (
+          !EVALUATION_CONSOLE_EVENTS.has(row.event)
+          || !EVALUATION_CONSOLE_SEVERITIES.has(row.severity)
+          || row.label_key !== EVALUATION_CONSOLE_LABEL_KEYS[row.event]
+        ) {
+          addError(errors, "evaluation_console_row_kind", rowPath, "unsupported producer event, severity or label");
+        }
+        if (
+          !evaluationConsoleInteger(row.source_component_seq_start, 1)
+          || !evaluationConsoleInteger(row.source_component_seq_end, 1)
+          || row.source_component_seq_end < row.source_component_seq_start
+          || row.source_component_seq_end > value.through_component_seq
+          || !evaluationConsoleInteger(row.component_attempt_index, 1)
+          || typeof row.component_attempt_id !== "string"
+          || typeof row.ts !== "string"
+          || typeof row.agent !== "string"
+          || (row.stage_id !== "__component__" && !localStages.has(row.stage_id))
+        ) {
+          addError(errors, "evaluation_console_row_binding", rowPath, "producer row has invalid source, attempt or stage binding");
+        }
+        if (!Array.isArray(row.source_event_ids) || !row.source_event_ids.length || new Set(row.source_event_ids).size !== row.source_event_ids.length) {
+          addError(errors, "evaluation_console_source_events", `${rowPath}.source_event_ids`, "expected unique source event IDs");
+        } else {
+          const sourceEvents = row.source_event_ids.map(eventId => sourceEventById.get(eventId));
+          if (sourceEvents.some(event => !event)) {
+            addError(errors, "evaluation_console_source_events", `${rowPath}.source_event_ids`, "row references a foreign Evaluation event");
+          } else {
+            const sourceSequences = sourceEvents.map(event => event.component.component_seq);
+            const minimum = Math.min(...sourceSequences);
+            const maximum = Math.max(...sourceSequences);
+            const anchor = eventByComponentSeq.get(row.source_component_seq_end);
+            if (
+              minimum !== row.source_component_seq_start
+              || maximum !== row.source_component_seq_end
+              || anchor?.component?.component_attempt_id !== row.component_attempt_id
+              || anchor?.component?.component_attempt_index !== row.component_attempt_index
+            ) {
+              addError(errors, "evaluation_console_source_range", rowPath, "row source range or attempt differs from the parent Evaluation stream");
+            }
+          }
+        }
+        exactKeys(row.integrity, ["row_sha256"], `${rowPath}.integrity`, errors);
+        if (!SHA256_RE.test(String(row.integrity?.row_sha256 || ""))) {
+          addError(errors, "evaluation_console_row_hash", `${rowPath}.integrity.row_sha256`, "expected lowercase SHA-256");
+        }
+        evaluationConsoleDetail(row.detail, `${rowPath}.detail`, errors);
+        normalizedRows.push(deepClone(row));
+      });
+    }
+    exactKeys(value.cumulative, ["row_count", "row_chain_sha256"], `${path}.cumulative`, errors);
+    if (
+      value.cumulative?.row_count !== normalizedRows.length
+      || !SHA256_RE.test(String(value.cumulative?.row_chain_sha256 || ""))
+    ) {
+      addError(errors, "evaluation_console_cumulative", `${path}.cumulative`, "cumulative row count or chain hash is invalid");
+    }
+    if (!isObject(value.state)) {
+      addError(errors, "evaluation_console_state", `${path}.state`, "expected producer state object");
+    }
+    return Object.freeze({
+      present: true,
+      valid: errors.length === 0,
+      errors,
+      rows: errors.length ? [] : normalizedRows,
+      read: errors.length ? null : deepClone(value),
+    });
+  }
+
+  function foldEvaluationConsoleCursor(
+    evaluationConsole,
+    parentEvents,
+    manifest,
+    throughParentSeq = Number.MAX_SAFE_INTEGER,
+  ) {
+    if (!evaluationConsole?.present || evaluationConsole.valid !== true) return null;
+    const cursor = Number.isInteger(throughParentSeq) && throughParentSeq >= 0
+      ? throughParentSeq
+      : Number.MAX_SAFE_INTEGER;
+    const evaluationEvents = (Array.isArray(parentEvents) ? parentEvents : [])
+      .filter(event => (
+        event?.component?.component_id === "evaluation"
+        && Number(event?.seq) <= cursor
+      ));
+    const latestEvent = evaluationEvents.at(-1);
+    if (!latestEvent) {
+      return Object.freeze({
+        present: true,
+        valid: true,
+        throughParentSeq: cursor,
+        throughComponentSeq: 0,
+        rows: [],
+      });
+    }
+    const throughComponentSeq = latestEvent.component.component_seq;
+    const parentByComponentSeq = new Map(
+      evaluationEvents.map(event => [event.component.component_seq, event]),
+    );
+    const stageByLocalId = new Map(
+      (Array.isArray(manifest?.stages) ? manifest.stages : [])
+        .filter(stage => stage?.component_id === "evaluation")
+        .map(stage => [stage.local_stage_id, stage]),
+    );
+    const rows = evaluationConsole.rows
+      .filter(row => row.source_component_seq_end <= throughComponentSeq)
+      .map(row => {
+        const parentEvent = parentByComponentSeq.get(row.source_component_seq_end);
+        const stage = stageByLocalId.get(row.stage_id) || null;
+        return {
+          ...deepClone(row),
+          parentSeq: parentEvent?.seq ?? null,
+          parentEventId: parentEvent?.event_id ?? null,
+          parentEventSha256: parentEvent?.integrity?.event_sha256 ?? null,
+          globalStageId: stage?.stage_id ?? "",
+          stageLabel: stage?.label ?? row.stage_id,
+          componentRunId: latestEvent.component.component_run_id,
+        };
+      });
+    return Object.freeze({
+      present: true,
+      valid: true,
+      throughParentSeq: latestEvent.seq,
+      throughComponentSeq,
+      rows,
+      state: deepClone(evaluationConsole.read?.state || null),
+      cumulative: deepClone(evaluationConsole.read?.cumulative || null),
     });
   }
 
@@ -2131,6 +2546,13 @@
       await verifyNestedHash(artifactIndex, ["integrity", "artifact_index_sha256"], artifactIndex?.integrity?.artifact_index_sha256, "artifact_index_hash", "$artifact_index.integrity.artifact_index_sha256", errors);
       if (manifest?.artifact_index_sha256 !== artifactIndex?.integrity?.artifact_index_sha256) addError(errors, "artifact_index_binding", "$manifest.artifact_index_sha256", "manifest and artifact index hash differ");
     }
+    const evaluationConsole = await validateEvaluationConsoleReadModel(
+      deepClone(input?.evaluationConsole),
+      manifest,
+      parentEvents,
+      artifactRows,
+      artifactIndex,
+    );
     const scoring = isObject(manifest)
       ? await validateScoringArtifacts(artifactRows, artifactBodies, validatedArtifacts, manifest, errors)
       : { handoff: null, receipt: null, receiptStatus: null, inputSetSha256: null, arms: [], reports: [] };
@@ -2183,6 +2605,7 @@
       scoreReadiness,
       usage: valid ? usage : { present: usage.present, calls: [], stageTotals: [], componentTotals: [], workflowTotal: null },
       termLifecycle,
+      evaluationConsole,
       operationalFacts: valid ? operationalFacts : [],
       latestCheckpoint: valid && checkpoints.length ? checkpoints[checkpoints.length - 1] : null,
       cursor: valid ? cursor : null,
@@ -2202,6 +2625,7 @@
       cursor: deepClone(envelope?.cursor || null),
       actions: deepClone(envelope?.actions || {}),
       evaluationScope: deepClone(envelope?.evaluation_scope || envelope?.evaluationScope || null),
+      evaluationConsole: deepClone(envelope?.evaluation_console || envelope?.evaluationConsole || null),
       artifactLinks: deepClone(envelope?.artifact_links || envelope?.artifactLinks || {}),
       sourceMode: envelope?.source_mode === "replay" ? "replay" : "live",
     };
@@ -2242,6 +2666,7 @@
       cursor: incoming.cursor || previous?.cursor || null,
       actions: incoming.actions || previous?.actions || {},
       evaluationScope: incoming.evaluationScope || previous?.evaluationScope || null,
+      evaluationConsole: incoming.evaluationConsole,
       artifactLinks: { ...(previous?.artifactLinks || {}), ...(incoming.artifactLinks || {}) },
       sourceMode: incoming.sourceMode || previous?.sourceMode || "live",
     };
@@ -2276,6 +2701,8 @@
     validatePackage,
     validateTermLifecycleEvents,
     foldTermLifecycleCursor,
+    validateEvaluationConsoleReadModel,
+    foldEvaluationConsoleCursor,
     mergeReplayEnvelope,
     isActiveRegistryRun,
     newestActiveRegistryRun,

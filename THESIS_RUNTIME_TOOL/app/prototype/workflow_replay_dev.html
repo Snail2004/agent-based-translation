@@ -46,6 +46,8 @@
     <a href="?scenario=usage-component-multi-live">live multiple components</a>
     <a href="?scenario=term-lifecycle">term lifecycle</a>
     <a href="?scenario=term-lifecycle-invalid">term lifecycle invalid</a>
+    <a href="?scenario=evaluation-console">Evaluation Console</a>
+    <a href="?scenario=evaluation-console-invalid">Evaluation Console invalid</a>
     <a href="?scenario=optional-details">typed details</a>
     <a href="?scenario=score-pending">score pending</a>
     <a href="?scenario=score-materialized">score ready</a>
@@ -79,6 +81,7 @@ function scenarioName() {
     "usage-valid", "usage-null", "usage-unknown-zero",
     "usage-component-live", "usage-component-replay", "usage-component-multi-live",
     "term-lifecycle", "term-lifecycle-invalid",
+    "evaluation-console", "evaluation-console-invalid",
     "optional-details", "cursor-drift",
     "score-pending", "score-materialized", "stale-live-replay",
     "resume-valid", "resume-sequence-gap", "resume-attempt-regression",
@@ -827,6 +830,143 @@ async function addTypedDetails(adapter, manifest, events) {
   manifest.integrity.manifest_sha256 = await adapter.canonicalSha256(manifest);
 }
 
+async function addEvaluationConsoleDemo(adapter, manifest, events, artifactIndex, invalid) {
+  await addTypedDetails(adapter, manifest, events);
+  const evaluationEvent = events.at(-1);
+  const evaluationComponent = manifest.components.find(
+    component => component.component_id === "evaluation",
+  );
+  const componentAttemptId = "evalcomp_attempt_0001";
+  evaluationEvent.component.component_attempt_id = componentAttemptId;
+  evaluationComponent.component_attempt_id = componentAttemptId;
+  await resealParentEvents(adapter, events);
+
+  const detail = {
+    progress: {
+      completed: 2,
+      total: 5,
+      unit: "arms",
+      current_work_id: "evaluation_packet_1",
+    },
+    validator: null,
+    retry: null,
+    checkpoint: null,
+    usage_snapshot: null,
+    resume: null,
+    reason: null,
+    outcome: null,
+  };
+  const rowMaterial = {
+    event: "component_started",
+    severity: "info",
+    label_key: "evaluation.component_started",
+    source_event_ids: [evaluationEvent.component.source_event_id],
+    source_component_seq_start: 1,
+    source_component_seq_end: 1,
+    component_attempt_id: componentAttemptId,
+    component_attempt_index: 1,
+    ts: evaluationEvent.accepted_at,
+    stage_id: "__component__",
+    agent: "evaluation_runner",
+    detail,
+  };
+  const rowIdSeed = await adapter.canonicalSha256(rowMaterial);
+  const rowWithId = {
+    row_id: `evalconsole_row_${rowIdSeed.slice(0, 32)}`,
+    ...rowMaterial,
+  };
+  const row = {
+    ...rowWithId,
+    integrity: {
+      row_sha256: await adapter.canonicalSha256(rowWithId),
+    },
+  };
+  const projectionMaterial = {
+    schema_id: "EvaluationConsoleProjectionV1",
+    schema_version: "1.0.0",
+    workflow_run_id: manifest.workflow_run_id,
+    component_id: "evaluation",
+    component_run_id: "evaluation_run_1",
+    projection_index: 1,
+    through_component_seq: 1,
+    through_component_event_id: evaluationEvent.component.source_event_id,
+    parent_projection_ref: null,
+    rows: [row],
+    state: {
+      open_retry_groups: [],
+      paused_incident_ids: [],
+    },
+    cumulative: {
+      row_count: 1,
+      row_chain_sha256: row.integrity.row_sha256,
+    },
+  };
+  const projectionSha256 = await adapter.canonicalSha256(projectionMaterial);
+  const componentProjectionRef = `console_projections/00000001_${projectionSha256}.json`;
+  const projectionRef = `components/evaluation/evaluation_run_1/artifacts/${componentProjectionRef}`;
+  const physicalSha256 = await adapter.canonicalSha256({
+    ...projectionMaterial,
+    projection_sha256: projectionSha256,
+  });
+  artifactIndex.artifacts.push({
+    binding: {
+      artifact_kind: "evaluation_console_projection_v1",
+      artifact_ref: projectionRef,
+      schema_version: "1.0.0",
+      sha256: physicalSha256,
+      sha256_kind: "physical",
+    },
+    component_artifact_ref: componentProjectionRef,
+    created_event_id: evaluationEvent.event_id,
+    imported_physical_sha256: physicalSha256,
+    parent_artifact_refs: [],
+    producer: {
+      component_attempt_id: componentAttemptId,
+      component_attempt_index: 1,
+      component_id: "evaluation",
+      component_run_id: "evaluation_run_1",
+      stage_id: "evaluation.score",
+    },
+  });
+  delete artifactIndex.integrity.artifact_index_sha256;
+  artifactIndex.integrity.artifact_index_sha256 = await adapter.canonicalSha256(artifactIndex);
+  manifest.artifact_index_sha256 = artifactIndex.integrity.artifact_index_sha256;
+  delete manifest.integrity.manifest_sha256;
+  manifest.integrity.manifest_sha256 = await adapter.canonicalSha256(manifest);
+
+  const readMaterial = {
+    schema_id: "EvaluationConsoleReadV1",
+    schema_version: "1.0.0",
+    workflow_run_id: manifest.workflow_run_id,
+    component_id: "evaluation",
+    component_run_id: "evaluation_run_1",
+    projection_count: 1,
+    through_parent_seq: evaluationEvent.seq,
+    through_parent_event_id: evaluationEvent.event_id,
+    through_component_seq: 1,
+    through_component_event_id: evaluationEvent.component.source_event_id,
+    projection_ref: projectionRef,
+    projection_sha256: projectionSha256,
+    rows: [row],
+    state: projectionMaterial.state,
+    cumulative: projectionMaterial.cumulative,
+    validation: {
+      valid: true,
+      authority: "evaluation_console_projection_v1_and_neutral_relay",
+      artifact_index_sha256: artifactIndex.integrity.artifact_index_sha256,
+      parent_event_sha256: evaluationEvent.integrity.event_sha256,
+    },
+  };
+  const readModel = {
+    ...readMaterial,
+    integrity: {
+      read_sha256: await adapter.canonicalSha256(readMaterial),
+    },
+  };
+  if (invalid) readModel.rows[0].severity = "error";
+  return readModel;
+}
+
 async function loadAcceptedWorkflowPackage() {
   const adapter = window.WorkflowReplayAdapter;
   const scenario = scenarioName();
@@ -870,6 +1010,15 @@ async function loadAcceptedWorkflowPackage() {
   if (scenario === "term-lifecycle" || scenario === "term-lifecycle-invalid") {
     await addTermLifecycleDemo(adapter, manifest, events, scenario === "term-lifecycle-invalid");
   }
+  const evaluationConsole = scenario === "evaluation-console" || scenario === "evaluation-console-invalid"
+    ? await addEvaluationConsoleDemo(
+      adapter,
+      manifest,
+      events,
+      artifactIndex,
+      scenario === "evaluation-console-invalid",
+    )
+    : null;
   if (scenario === "optional-details") await addTypedDetails(adapter, manifest, events);
   if (scenario === "stale-live-replay") {
     manifest.status = "succeeded";
@@ -920,6 +1069,7 @@ async function loadAcceptedWorkflowPackage() {
       }
       : { pause_allowed: false, resume_allowed: false, cancel_allowed: false },
     evaluationScope: scope,
+    evaluationConsole,
     artifactLinks: {},
     sourceMode: scoreScenario || scenario === "usage-component-live" || scenario === "usage-component-multi-live"
       ? "live"

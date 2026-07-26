@@ -1480,6 +1480,170 @@ function consoleMessageFor(row, ctx) {
   }
 }
 
+const CONSOLE_EVALUATION_PROJECTION_LABELS = Object.freeze({
+  "evaluation.component_started": {
+    vi: "Chấm điểm bắt đầu",
+    en: "Evaluation started",
+  },
+  "evaluation.component_resumed": {
+    vi: "Chấm điểm tiếp tục",
+    en: "Evaluation resumed",
+  },
+  "evaluation.stage_started": {
+    vi: "Tầng chấm điểm bắt đầu",
+    en: "Evaluation stage started",
+  },
+  "evaluation.progress": {
+    vi: "Tiến độ chấm điểm",
+    en: "Evaluation progress",
+  },
+  "evaluation.validation_passed": {
+    vi: "Kiểm tra chấm điểm đạt",
+    en: "Evaluation validation passed",
+  },
+  "evaluation.validation_failed": {
+    vi: "Kiểm tra chấm điểm không đạt",
+    en: "Evaluation validation failed",
+  },
+  "evaluation.retry_summary": {
+    vi: "Tóm tắt retry chấm điểm",
+    en: "Evaluation retry summary",
+  },
+  "evaluation.checkpoint": {
+    vi: "Checkpoint chấm điểm",
+    en: "Evaluation checkpoint",
+  },
+  "evaluation.usage_snapshot": {
+    vi: "Usage chấm điểm đã đóng dấu",
+    en: "Evaluation usage sealed",
+  },
+  "evaluation.stage_done": {
+    vi: "Tầng chấm điểm hoàn tất",
+    en: "Evaluation stage completed",
+  },
+  "evaluation.stage_paused": {
+    vi: "Tầng chấm điểm tạm dừng",
+    en: "Evaluation stage paused",
+  },
+  "evaluation.component_done": {
+    vi: "Chấm điểm hoàn tất",
+    en: "Evaluation completed",
+  },
+  "evaluation.component_failed": {
+    vi: "Chấm điểm thất bại",
+    en: "Evaluation failed",
+  },
+});
+
+function consoleEvaluationProjectionMessage(row, locale) {
+  const detail = row?.detail || {};
+  const label = CONSOLE_EVALUATION_PROJECTION_LABELS[row?.label_key];
+  const facts = [];
+  if (detail.progress) {
+    const progress = consoleWorkflowProgress(detail.progress);
+    if (progress) facts.push(progress);
+  }
+  if (detail.validator) {
+    facts.push(`${detail.validator.validator_id} · ${detail.validator.status}`);
+    if (detail.validator.reason_code) facts.push(detail.validator.reason_code);
+  }
+  if (detail.retry) {
+    facts.push(`${detail.retry.retry_count} retry`);
+    facts.push(detail.retry.outcome);
+  }
+  if (detail.checkpoint?.work_id) facts.push(detail.checkpoint.work_id);
+  if (detail.resume?.resumed_from_attempt_id) {
+    facts.push(`from ${detail.resume.resumed_from_attempt_id}`);
+  }
+  if (detail.reason?.reason_code) facts.push(detail.reason.reason_code);
+  if (detail.outcome) facts.push(detail.outcome);
+  const headline = label?.[locale] || label?.en || row?.label_key || row?.event || "Evaluation";
+  return facts.length ? `${headline} · ${facts.join(" · ")}` : headline;
+}
+
+function consoleEvaluationProjectionRows(view, locale) {
+  if (!view?.valid || !Array.isArray(view.rows)) return [];
+  return view.rows.map((row, index) => {
+    const detail = row.detail || {};
+    const progress = detail.progress || null;
+    const artifactPath = detail.checkpoint?.binding?.artifact_ref
+      || detail.usage_snapshot?.artifact_ref
+      || detail.resume?.checkpoint?.artifact_ref
+      || "";
+    return {
+      key: `evaluation-console:${row.row_id}`,
+      ts: row.ts || "",
+      stage: row.globalStageId || "",
+      stageLabel: row.stageLabel || row.stage_id || "",
+      agent: row.agent || "",
+      componentId: "evaluation",
+      componentRunId: row.componentRunId || "",
+      componentAttemptId: row.component_attempt_id,
+      componentSeq: row.source_component_seq_end,
+      event: row.event,
+      severity: row.severity,
+      seq: row.parentSeq,
+      attempt: row.component_attempt_id,
+      attemptIndex: row.component_attempt_index,
+      lineNo: row.parentSeq,
+      glyph: CONSOLE_SEVERITY_GLYPH[row.severity] || "├",
+      isCost: false,
+      isContext: false,
+      dur: null,
+      message: consoleEvaluationProjectionMessage(row, locale),
+      heartbeatPid: null,
+      heartbeatBaseMessage: "",
+      skipReason: "",
+      blockId: "",
+      artifactPath,
+      progress,
+      logicalRequestId: detail.retry?.logical_request_id || "",
+      workId: progress?.current_work_id || detail.checkpoint?.work_id || "",
+      optionalDetails: [],
+      payload: {
+        row_id: row.row_id,
+        label_key: row.label_key,
+        source_event_ids: row.source_event_ids,
+        source_component_seq_start: row.source_component_seq_start,
+        source_component_seq_end: row.source_component_seq_end,
+        detail,
+        row_sha256: row.integrity?.row_sha256 || null,
+      },
+      memoryDeltaId: "",
+      rawEventCount: Math.max(1, row.source_event_ids?.length || 0),
+      evaluationConsoleProjection: true,
+      evaluationProjectionOrdinal: index,
+    };
+  });
+}
+
+/* Important consumes the producer-sealed Evaluation projection. Raw parent
+   Evaluation events remain byte-for-byte visible in All and event details. */
+function consoleEvaluationPresentationRows(
+  rows,
+  projectionRows,
+  eventPreset,
+  projectionAvailable,
+) {
+  if (eventPreset !== "important" || projectionAvailable !== true) return rows;
+  const projectedByParentSeq = new Map();
+  (Array.isArray(projectionRows) ? projectionRows : []).forEach(row => {
+    const key = Number(row.parentSeq ?? row.seq);
+    if (!projectedByParentSeq.has(key)) projectedByParentSeq.set(key, []);
+    projectedByParentSeq.get(key).push(row);
+  });
+  const result = [];
+  (Array.isArray(rows) ? rows : []).forEach(row => {
+    if (row?.componentId !== "evaluation") {
+      result.push(row);
+      return;
+    }
+    const projected = projectedByParentSeq.get(Number(row.seq));
+    if (projected) result.push(...projected);
+  });
+  return result;
+}
+
 /* Pure: turn a raw merged event array into everything the console renders. */
 function consoleDeclaredStageStatus(status) {
   if (status === "succeeded") return "done";
@@ -3987,6 +4151,20 @@ function AgentConsoleView(props) {
       Number.isInteger(shownEventSeq) ? shownEventSeq : 0,
     );
   }, [workflowReplay, shownEventSeq]);
+  const evaluationConsoleView = React.useMemo(() => {
+    if (
+      !workflowReplay?.valid
+      || workflowReplay.evaluationConsole?.valid !== true
+      || typeof window === "undefined"
+      || typeof window.WorkflowReplayAdapter?.foldEvaluationConsoleCursor !== "function"
+    ) return null;
+    return window.WorkflowReplayAdapter.foldEvaluationConsoleCursor(
+      workflowReplay.evaluationConsole,
+      events,
+      workflowManifest,
+      Number.isInteger(shownEventSeq) ? shownEventSeq : 0,
+    );
+  }, [events, workflowManifest, workflowReplay, shownEventSeq]);
   const workflowReadOnly = Boolean(
     workflowReplay
     && (workflowInvalid || workflowReplay.sourceMode === "replay" || replayActive),
@@ -4070,6 +4248,10 @@ function AgentConsoleView(props) {
   const displayRows = React.useMemo(() => consoleHeartbeatRows(st.normalized, heartbeatMode), [st.normalized, heartbeatMode]);
   const agents = uniqueConsole(st.normalized.map(r => r.agent).filter(Boolean));
   const severities = uniqueConsole(st.normalized.map(r => r.severity).filter(Boolean));
+  const evaluationProjectionRows = React.useMemo(
+    () => consoleEvaluationProjectionRows(evaluationConsoleView, uiLocale),
+    [evaluationConsoleView, uiLocale],
+  );
   const resumePresentationRows = React.useMemo(
     () => consoleResumeProgressPresentationRows(displayRows),
     [displayRows],
@@ -4086,7 +4268,20 @@ function AgentConsoleView(props) {
     () => consoleLatestWorkProgressRows(retryPresentationRows, eventPreset),
     [retryPresentationRows, eventPreset],
   );
-  const presetRows = progressPresentationRows.filter(r => eventPreset === "all" || consoleIsImportantEvent(r));
+  const evaluationPresentationRows = React.useMemo(
+    () => consoleEvaluationPresentationRows(
+      progressPresentationRows,
+      evaluationProjectionRows,
+      eventPreset,
+      evaluationConsoleView?.valid === true,
+    ),
+    [progressPresentationRows, evaluationConsoleView, evaluationProjectionRows, eventPreset],
+  );
+  const presetRows = evaluationPresentationRows.filter(r =>
+    eventPreset === "all"
+    || r?.evaluationConsoleProjection === true
+    || consoleIsImportantEvent(r)
+  );
   const filtered = presetRows.filter(r =>
     (!stageFilter || r.stage === stageFilter)
     && (!agentFilter || r.agent === agentFilter)
