@@ -1974,6 +1974,79 @@ def test_b2_normalizer_repairs_exact_misplaced_review_directive() -> None:
     assert reason_codes == ("fixed_only_review_directive_misplacement",)
 
 
+def test_b2_normalizer_restores_exact_candidate_number_surface() -> None:
+    packet = {
+        "candidates": [
+            {
+                "candidate_id": "cand_gradient",
+                "normalized_surface": "gradient",
+                "surfaces": ["Gradient", "gradient"],
+                "evidence_block_ids": ["block_1"],
+            }
+        ]
+    }
+    parsed = {
+        "decisions": [
+            {
+                "candidate_id": "cand_gradient",
+                "decision": "admit",
+                "canonical_source": "Gradients",
+                "directive": "translate",
+                "primary_target_vi": "gradient",
+                "primary_use": None,
+                "alternates": [],
+                "evidence_block_ids": ["block_1"],
+                "rationale": "The source teaches this optimization concept.",
+            }
+        ]
+    }
+
+    normalized, reason_codes = live_executor._normalize_b2_candidate_evidence(
+        parsed,
+        packet=packet,
+    )
+
+    assert normalized["decisions"][0]["canonical_source"] == "Gradient"
+    assert normalized["decisions"][0]["primary_target_vi"] == "gradient"
+    assert reason_codes == ("fixed_only_candidate_number_surface",)
+
+
+def test_b2_normalizer_does_not_rewrite_unrelated_candidate_surface() -> None:
+    packet = {
+        "candidates": [
+            {
+                "candidate_id": "cand_gradient",
+                "normalized_surface": "gradient",
+                "surfaces": ["Gradient", "gradient"],
+                "evidence_block_ids": ["block_1"],
+            }
+        ]
+    }
+    parsed = {
+        "decisions": [
+            {
+                "candidate_id": "cand_gradient",
+                "decision": "admit",
+                "canonical_source": "gradient method",
+                "directive": "translate",
+                "primary_target_vi": "phuong phap gradient",
+                "primary_use": None,
+                "alternates": [],
+                "evidence_block_ids": ["block_1"],
+                "rationale": "This is not an exact candidate number variant.",
+            }
+        ]
+    }
+
+    normalized, reason_codes = live_executor._normalize_b2_candidate_evidence(
+        parsed,
+        packet=packet,
+    )
+
+    assert normalized == parsed
+    assert reason_codes == ()
+
+
 def test_b2_normalizer_does_not_rewrite_nonexact_review_shapes() -> None:
     packet = {
         "candidates": [

@@ -80,6 +80,7 @@ from pipeline.prepass.d2l_console_replay_contract_v1 import (
     validate_component_manifest,
     validate_scoring_handoff_fragment,
 )
+from pipeline.prepass.concept_key import concept_key
 from pipeline.prepass.d2l_stage_work_journal_v1 import D2LStageWorkJournal
 from pipeline.prepass.d2l_repair_resume_v1 import (
     is_chain_repair_schema_version,
@@ -994,22 +995,28 @@ def _semantic_call(
 def _normalize_b2_candidate_evidence(
     parsed: dict[str, Any], *, packet: Mapping[str, Any]
 ) -> tuple[dict[str, Any], tuple[str, ...]]:
-    """Repair source-owned citations and one exact misplaced review directive.
+    """Repair source-owned fields and one exact misplaced review directive.
 
     The model still owns the substantive decision, target, and rationale.
     Evidence IDs are source-owned packet facts.  A response that explicitly
     requests review but encodes it as an admit with no target is also
-    mechanically equivalent to the contract's review decision.
+    mechanically equivalent to the contract's review decision. A synthesized
+    number variant is restored only when its concept key exactly matches the
+    candidate's source-owned normalized surface.
     """
     repaired = deepcopy(parsed)
+    candidate_by_id = {
+        str(row["candidate_id"]): row for row in packet["candidates"]
+    }
     allowed_by_candidate = {
-        str(row["candidate_id"]): [
+        candidate_id: [
             str(value) for value in row["evidence_block_ids"]
         ]
-        for row in packet["candidates"]
+        for candidate_id, row in candidate_by_id.items()
     }
     evidence_changed = False
     review_changed = False
+    canonical_surface_changed = False
 
     def repair_ids(value: Any, allowed: list[str]) -> Any:
         nonlocal evidence_changed
@@ -1044,7 +1051,35 @@ def _normalize_b2_candidate_evidence(
                 decision["canonical_source"] = None
                 decision["directive"] = None
                 review_changed = True
-            allowed = allowed_by_candidate.get(str(decision.get("candidate_id")))
+            candidate_id = str(decision.get("candidate_id"))
+            candidate = candidate_by_id.get(candidate_id)
+            if (
+                decision.get("decision") == "admit"
+                and candidate is not None
+                and isinstance(decision.get("canonical_source"), str)
+            ):
+                canonical = str(decision["canonical_source"])
+                surfaces = [
+                    str(value)
+                    for value in candidate.get("surfaces") or ()
+                    if isinstance(value, str) and value
+                ]
+                normalized_surface = candidate.get("normalized_surface")
+                if (
+                    canonical not in surfaces
+                    and surfaces
+                    and isinstance(normalized_surface, str)
+                    and concept_key(canonical) == normalized_surface
+                ):
+                    restored = surfaces[0]
+                    if (
+                        decision.get("directive") == "preserve"
+                        and decision.get("primary_target_vi") == canonical
+                    ):
+                        decision["primary_target_vi"] = restored
+                    decision["canonical_source"] = restored
+                    canonical_surface_changed = True
+            allowed = allowed_by_candidate.get(candidate_id)
             if not allowed:
                 continue
             decision["evidence_block_ids"] = repair_ids(
@@ -1062,6 +1097,8 @@ def _normalize_b2_candidate_evidence(
         reason_codes.append("fixed_only_candidate_evidence_allowlist")
     if review_changed:
         reason_codes.append("fixed_only_review_directive_misplacement")
+    if canonical_surface_changed:
+        reason_codes.append("fixed_only_candidate_number_surface")
     return repaired, tuple(reason_codes)
 
 
