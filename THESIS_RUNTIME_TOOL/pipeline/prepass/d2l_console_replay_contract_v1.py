@@ -933,12 +933,10 @@ def validate_component_usage_snapshot_sequence(
     seen_cache_ids: set[str] = set()
     previous_sha: str | None = None
     previous_attempt: int | None = None
-    final_seen = False
+    final_attempt: int | None = None
     latest: dict[str, Any] | None = None
     for index, value in enumerate(values, start=1):
         row = validate_component_usage_snapshot(value)
-        if final_seen:
-            raise D2LConsoleContractError("usage snapshot appears after component_final")
         if row["snapshot_seq"] != index:
             raise D2LConsoleContractError("usage snapshot sequence is not contiguous")
         if row["previous_snapshot_sha256"] != previous_sha:
@@ -946,6 +944,10 @@ def validate_component_usage_snapshot_sequence(
         attempt = int(row["component_attempt_id"])
         if previous_attempt is not None and attempt < previous_attempt:
             raise D2LConsoleContractError("usage snapshot attempt progression is invalid")
+        if final_attempt is not None and attempt <= final_attempt:
+            raise D2LConsoleContractError(
+                "usage snapshot appears after component_final in the same attempt"
+            )
         previous_attempt = attempt
         accepted = row["accepted_usage"]
         if accepted is not None:
@@ -975,7 +977,7 @@ def validate_component_usage_snapshot_sequence(
             if row["stage_cumulative"] != expected_stage:
                 raise D2LConsoleContractError("usage snapshot stage totals drift")
         else:
-            final_seen = True
+            final_attempt = attempt
         expected_component = _usage_totals_from_records(accepted_records)
         if row["component_cumulative"] != expected_component:
             raise D2LConsoleContractError("usage snapshot component totals drift")

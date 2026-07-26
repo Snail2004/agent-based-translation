@@ -296,6 +296,105 @@ def test_usage_snapshot_allows_attempt_gap_without_accepted_usage() -> None:
     assert validate_component_usage_snapshot_sequence([first, resumed]) == resumed
 
 
+def test_usage_snapshot_allows_resumed_attempt_after_prior_component_final() -> None:
+    first = build_component_usage_snapshot(
+        previous_snapshots=[],
+        workflow_run_id=WORKFLOW_RUN_ID,
+        component_run_id=COMPONENT_RUN_ID,
+        component_attempt_id=1,
+        stage_id="b1_candidate_discovery",
+        work_id="window_1",
+        accepted_usage=_accepted_provider(
+            "request_1",
+            attempt_usage_id="attempt_1",
+        ),
+    )
+    first_final = build_component_usage_snapshot(
+        previous_snapshots=[first],
+        workflow_run_id=WORKFLOW_RUN_ID,
+        component_run_id=COMPONENT_RUN_ID,
+        component_attempt_id=1,
+        stage_id=None,
+        work_id=None,
+        accepted_usage=None,
+        component_final=True,
+    )
+    resumed = build_component_usage_snapshot(
+        previous_snapshots=[first, first_final],
+        workflow_run_id=WORKFLOW_RUN_ID,
+        component_run_id=COMPONENT_RUN_ID,
+        component_attempt_id=2,
+        stage_id="b2_admission_translation",
+        work_id="packet_1",
+        accepted_usage=_accepted_provider(
+            "request_2",
+            attempt_usage_id="attempt_2",
+        ),
+    )
+    resumed_final = build_component_usage_snapshot(
+        previous_snapshots=[first, first_final, resumed],
+        workflow_run_id=WORKFLOW_RUN_ID,
+        component_run_id=COMPONENT_RUN_ID,
+        component_attempt_id=2,
+        stage_id=None,
+        work_id=None,
+        accepted_usage=None,
+        component_final=True,
+    )
+
+    assert resumed["snapshot_seq"] == 3
+    assert resumed["component_cumulative"]["accepted_result_count"] == 2
+    assert resumed_final["snapshot_seq"] == 4
+    assert (
+        validate_component_usage_snapshot_sequence(
+            [first, first_final, resumed, resumed_final]
+        )
+        == resumed_final
+    )
+
+
+def test_usage_snapshot_rejects_rows_after_final_in_same_attempt() -> None:
+    first = build_component_usage_snapshot(
+        previous_snapshots=[],
+        workflow_run_id=WORKFLOW_RUN_ID,
+        component_run_id=COMPONENT_RUN_ID,
+        component_attempt_id=1,
+        stage_id="b1_candidate_discovery",
+        work_id="window_1",
+        accepted_usage=_accepted_provider(
+            "request_1",
+            attempt_usage_id="attempt_1",
+        ),
+    )
+    final = build_component_usage_snapshot(
+        previous_snapshots=[first],
+        workflow_run_id=WORKFLOW_RUN_ID,
+        component_run_id=COMPONENT_RUN_ID,
+        component_attempt_id=1,
+        stage_id=None,
+        work_id=None,
+        accepted_usage=None,
+        component_final=True,
+    )
+
+    with pytest.raises(
+        D2LConsoleContractError,
+        match="component_final in the same attempt",
+    ):
+        build_component_usage_snapshot(
+            previous_snapshots=[first, final],
+            workflow_run_id=WORKFLOW_RUN_ID,
+            component_run_id=COMPONENT_RUN_ID,
+            component_attempt_id=1,
+            stage_id="b2_admission_translation",
+            work_id="packet_1",
+            accepted_usage=_accepted_provider(
+                "request_2",
+                attempt_usage_id="attempt_2",
+            ),
+        )
+
+
 def test_usage_snapshot_preserves_unreported_provider_cache_as_unknown() -> None:
     first = build_component_usage_snapshot(
         previous_snapshots=[],
