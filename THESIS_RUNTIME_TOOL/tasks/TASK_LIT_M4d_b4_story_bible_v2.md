@@ -544,7 +544,7 @@ State rows carry `valid_until_block` CORRECTLY (e.g. joseph–lockwood strained 
 ## AMENDMENT #9 (2026-07-11, Claude gate) — ch4 identity halt: out-of-shard membership is VOID by contract (strip, counted); out-of-enum referent_kind quarantines the group (keep item); both responses cached → replay $0
 
 **Verified on real artifacts:**
-- `groups[17] duplicate atom_m_wh_ch04_b044_01`: surface = "Hindley" @b044 ("Hindley put out his tongue"). Shard 2 (which OWNS the atom — scaffold shard files verified: shard_01 does NOT contain it, shard_02 does) assigned it to ent_hindley: CORRECT. Shard 1's young-Heathcliff group (grp3, 14 members, evidence = the colt-exchange speech) listed it as a MEMBER despite it never being in shard 1's input — the model fabricated a plausible atom id from quote-context (the inverse face of the redundant-ID pathology). 
+- `groups[17] duplicate atom_m_wh_ch04_b044_01`: surface = "Hindley" @b044 ("Hindley put out his tongue"). Shard 2 (which OWNS the atom — scaffold shard files verified: shard_01 does NOT contain it, shard_02 does) assigned it to ent_hindley: CORRECT. Shard 1's young-Heathcliff group (grp3, 14 members, evidence = the colt-exchange speech) listed it as a MEMBER despite it never being in shard 1's input — the model fabricated a plausible atom id from quote-context (the inverse face of the redundant-ID pathology).
 - `groups[9] referent_kind invalid:family`: 2-atom group (b019/b023), status already uncertain — semantically a household/group reference, labeled outside the enum.
 
 **Rules (validator/apply-side only; prompt LOCKED; both ch4 identity responses cached → resume replays at $0):**
