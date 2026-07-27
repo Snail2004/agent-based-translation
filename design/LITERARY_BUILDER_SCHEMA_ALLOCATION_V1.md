@@ -36,7 +36,7 @@ Legend: `KEEP`/`DROP-IDENTITY`/`ADD`/`RESTORE`/`RETIRE`/`CODE`/`MIGRATE` as rev2
 
 Fields as rev2 §2.1 (cast_claims surface×scene, setting, scenes_party_size, neutral_premise; registry DROP-IDENTITY), with round-2 changes:
 - `scenes_party_size[].block_range` — **exact-cover non-overlapping** (validator ADD); `co_present_count` tagged **untrusted claim** `[cp]`, not a B2 hard rule.
-- `cast_claims` carry `evidence_max_order` (code) distinct from the call's `input_max_order`; scene ranges from the exact-cover partition.
+- `cast_claims` carry `evidence_max_order` (code) distinct from the call's `input_max_order`. **D0 real-run amendment:** the model does not emit `scene_range`; code derives it from the uniquely located evidence block and the exact-cover scene partition, then forwards the derived range to B2/B4. This removes a redundant cross-field join from the LLM contract while preserving scene-scoped consumption.
 
 ### 2.2 B1 — lexicon
 
@@ -48,13 +48,14 @@ Fields as rev2 §2.2 (keep `source_term`; RESTORE proposed_target_vi `[rt]`/cate
 Endpoint object — round-2 F4 splits the two axes cleanly:
 - **`reference_scope` = individual | group | narrator | reader | unknown** (REPLACES rev2's `reference_kind=person|group|narrator|reader`). The discourse/scope axis: is this ONE addressable individual, a group, the narrator's voice, the reader, or unknown. A dog is `reference_scope=individual` + `referent_kind_claim=animal`.
 - **`referent_kind_claim` = person | animal | nonhuman_character | place | group_reference | object | unknown** (ontology). **Runtime entity-eligibility reads ontology/checker (is it a person?), NEVER the scope axis.** A locked valid-combination table governs (e.g. narrator/reader scope ⇒ not an entity).
+- The two axes never borrow enum values. If a response exactly echoes an ontology-only value into `reference_scope`, code mechanically de-authorizes that scope to `unknown`, records `reference_scope_axis_echo_normalized`, and routes it fail-closed; any other foreign scope remains fatal. `mention_ref` is retained only when its B1 anchor is the exact same textual occurrence as the endpoint anchor. A mismatch is cleared to null because the endpoint keeps its own evidence witness.
 - `mention_ref`, `attribution_method` KEEP; `confidence` **RETIRED** (LOCK-3). Endpoint carries its OWN `endpoint_block_id` + `source_position` + `resolution_span` (F3/round-1) — a pronoun or an off-utterance "said X" tag needs its own evidence, not the shared turn quote.
-- `endpoint_id`, `resolution_evidence` = CODE.
+- `endpoint_id`, `resolution_evidence` = CODE. **D0 real-run amendment:** endpoint `surface` is also code-filled from the uniquely located `anchor_text`; the model emits the referring expression once instead of duplicating a resolved surface and an occurrence anchor. A model-supplied surface is audit-only and ignored.
 
 Turn/event:
 - `turn_id`/`event_id` = **CODE-MINT from `position_key=(block_order, within_block_order)`** — the model schema must expose within-block source position so this is deterministic. Validator (currently :3922 presence-only) gains format/unique/order + position_key checks.
 - `addressee` nullable (F8a); `utterance_quote` KEEP; `address_terms[]` turn-embedded list w/ code id + disposition (C); `register_cue` RESTORE `[rt]`; `utterance_gist` **RETIRE** (0 consumer).
-- `event_type` RESTORE lower_snake_case discipline + `#phase_leak` gate (F8b).
+- `event_type` keeps semantic ownership in the model, while code normalizes formatting to lower_snake_case before applying the `#phase_leak` gate (F8b).
 - `actor/target` **ALLOW non-person + route-out** (F8) — capture the animal-acts scene with referent_kind_claim, code routes it out of the human relation-phase layer; never silent-drop.
 
 ### 2.4 B3 — digest — **OCCURRENCE-GROUNDED, no identity (round-2 F2, the deepest change)**
@@ -132,6 +133,7 @@ Sol round-3 verdict: NO-GO with exactly five BLOCKER-to-implement decisions an i
 - **B0 is ALWAYS a single whole-chapter call.** It is NOT made scene-local. The as_of problem is resolved not by changing B0's topology but by its **consumption**: B0 cast_claims are `whole_book_frozen`-only. **In `as_of_experiment` mode B0 output is NOT consumed at all** — the canary identity call relies on scene text + as-of-filtered retrieval, and B0 claims are already barred from witness authority (Canonical §4), so excluding them costs nothing and removes the chapter-end `input_max_order` leak by construction. This dissolves the chicken-and-egg (no pre-B0 scene segmenter needed).
 - **Coverage universe for exact-cover = non-heading blocks only** (`block_type ∈ {paragraph, dialogue}`; `heading`/structural excluded). Verified: `block_type` already tags heading/dialogue/paragraph (builder_pilot.py:4284/4313) and frame coverage already filters heading (:4063). Scenes and frame leaves exact-cover this universe.
 - `co_present_count` stays an **untrusted claim** (never a hard B2 rule).
+- **D0 real-run amendment:** `CastClaim.scene_range` is a normalized code-filled field, not model output. The model emits one contiguous evidence quote plus its source block; code locates the anchor, derives the unique containing scene, and normalizes provenance to that evidence block. A missing/ambiguous containing scene fails closed; an invalid individual claim is dropped with a counter, while all-claims-dropped is fatal.
 
 ### LOCK-2 — one shared `SourceAnchor` (kills the coordinate divergence)
 Every source coordinate in the Builder uses ONE type:
@@ -169,3 +171,27 @@ B3 emits observations that reference B2 occurrences; **no `pair`, no identity ca
 - **This amends Canonical §7** (which had only `story_time_label`). The §7 text is updated in the same commit so Canonical and this doc do not drift.
 
 **Post-§8 verdict:** the five invent-decisions are closed; per Sol, no other dependency-order blocker. **Phase 1 steps 1–2 (typed schemas + validators + code-mint/remap) are GO.** rev4 status = LOCK-eligible pending a Sol GO-confirm read (mechanical, not a new round).
+
+## 2026-07-13 D0 amendment: active Builder starts at B1
+
+Real-run evidence supersedes LOCK-1 and every B0 producer/consumer edge above.
+B0 remains historical but is not executed or injected in Builder-v3.
+
+```text
+B1(active window + K tail)
+  -> B2(active window + K tail + B1 mentions)
+  -> M1 occurrence state
+  -> B3(chapter blocks + occurrence roster + B2 events + K summaries)
+  -> M2 digest state
+  -> B4 sealed bundle
+```
+
+- B2 no longer consumes `b0_scene_projection`.
+- B3 no longer consumes `b0_typed_projection`.
+- B4 no longer consumes cast claims or B0 scene ranges. Each occurrence card
+  carries its full active block; call-specific expansion reads the source catalog.
+- B0 `ChapterBrief`/`CastClaim`/`Scene` types and validator are provenance-only,
+  not active schema ownership.
+- The active B4 consume list otherwise remains unchanged: B1 mentions/glossary,
+  B2 endpoints/turns/events/register/address evidence, and all B3 grounded
+  digest channels.

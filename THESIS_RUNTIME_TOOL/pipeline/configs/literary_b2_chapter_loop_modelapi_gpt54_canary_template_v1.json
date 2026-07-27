@@ -1,0 +1,34 @@
+{
+  "schema_version": "literary_b2_ch1_canary_profile_v4",
+  "profile_id": "literary_b2_chapter_loop_modelapi_gpt54_canary_template_v1",
+  "b2_profile": "literary_b2_slim_phase_a_profile_v5_ch6_capacity.json",
+  "provider_profile": "literary_provider_profile_modelapi_chapter_loop_v1.json",
+  "structured_output_policy": "literary_structured_output_policy_v1.json",
+  "chapter_id": "chapter_loop_template",
+  "role_bindings": {
+    "frame": "literary_b2_frame",
+    "interaction": "literary_b2_interaction"
+  },
+  "contract_versions": {
+    "frame": "v2",
+    "interaction": "v3"
+  },
+  "limits": {
+    "frame_calls": 1,
+    "interaction_calls": 2,
+    "exception_calls": 0,
+    "max_total_calls": 3,
+    "max_retries_per_call": 0,
+    "hard_visible_token_cap": 160000
+  },
+  "safety": {
+    "source_run_may_be_historical": true,
+    "certification_claim_allowed": false,
+    "semantic_review_action": "persist_and_continue",
+    "integrity_failure_action": "halt_before_next_call",
+    "provider_fallback_allowed": false,
+    "production_publish_enabled": false,
+    "stop_after_chapter_id": "chapter_loop_template",
+    "prior_frame_candidate_carry_required": false
+  }
+}

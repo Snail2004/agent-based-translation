@@ -12,10 +12,13 @@ from pipeline.literary import b4_handoff_v3 as handoff
 from pipeline.literary.b4_handoff_v3 import (
     B4HandoffError,
     assemble_b4_input_bundle,
+    build_book_source_manifest,
     build_complete_ground_evidence,
     build_occurrence_cards,
     build_occurrence_routing_view,
     load_verified_builder_v3_inputs,
+    state_lineage_id_for_manifest,
+    verify_b4_input_bundle_identity,
 )
 from pipeline.literary.builder_v3_pipeline import (
     SyntheticStageExecutor,
@@ -27,7 +30,6 @@ from pipeline.literary.checkpoint import CheckpointError, canonical_hash, canoni
 
 NAMES = [("Alice", "Bob"), ("Mira", "Ravel"), ("Iris", "Noel")]
 GROUND_CHANNELS = {
-    "cast_claim_inputs",
     "glossary_inputs",
     "dialogue_turn_inputs",
     "relation_event_inputs",
@@ -342,7 +344,12 @@ def built(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
         m1v3_dir=root,
     )
     assert m2["status"] == "complete", m2
-    return {"root": root, "document": document, "chapters": chapters}
+    return {
+        "root": root,
+        "document": document,
+        "chapters": chapters,
+        "book_source_manifest": build_book_source_manifest(document),
+    }
 
 
 def _load(built: dict[str, Any], chapters: list[str] | None = None) -> dict[str, Any]:
@@ -360,6 +367,7 @@ def _assemble(built: dict[str, Any], chapters: list[str] | None = None) -> dict[
     return assemble_b4_input_bundle(
         built["document"],
         selected,
+        book_source_manifest=built["book_source_manifest"],
         m1v3_dir=built["root"],
         m2v3_dir=built["root"],
     )
@@ -373,7 +381,7 @@ def _tree_hashes(root: Path) -> dict[str, str]:
     }
 
 
-def test_complete_bundle_contains_all_channels_and_p0_fields(built: dict[str, Any]) -> None:
+def test_complete_bundle_contains_all_b0less_channels_and_p0_fields(built: dict[str, Any]) -> None:
     bundle = _assemble(built)
     ground = bundle["ground_evidence"]
     assert set(ground) == GROUND_CHANNELS | {"dedupe_counts"}
@@ -409,6 +417,8 @@ def test_complete_bundle_contains_all_channels_and_p0_fields(built: dict[str, An
         if card["chapter_id"] == "bk_ch01"
         for row in card["context_universe"]["scene_block_candidates"]
     }
+    assert context_ids == {"bk_ch01_b001"}
+    assert "cast_claim_inputs" not in ground
     assert "bk_ch01_b003" not in context_ids
     assert "bk_ch01_b004" not in context_ids
     assert next(row for row in catalog if row["block_id"] == "bk_ch01_b003")["text"] == (
@@ -540,13 +550,13 @@ def test_append_only_history_and_duplicate_contract(built: dict[str, Any], monke
     positions = {("block", "b1"): (0, 0)}
     collector = handoff._GroundCollector()
     kwargs = dict(
-        channel="cast_claim_inputs",
-        kind="cast_claim",
+        channel="glossary_inputs",
+        kind="glossary",
         chapter_id="bk_ch01",
         chapter_index=0,
         source_ordinal=0,
         evidence_refs=[{"ref_kind": "block", "ref_id": "b1", "role": None}],
-        payload={"surface": "x"},
+        payload={"source_term": "x"},
         source_identity="source",
         positions=positions,
     )
@@ -557,7 +567,7 @@ def test_append_only_history_and_duplicate_contract(built: dict[str, Any], monke
     conflicting = handoff._GroundCollector()
     conflicting.add(**kwargs)
     with pytest.raises(B4HandoffError, match="collision"):
-        conflicting.add(**{**kwargs, "payload": {"surface": "y"}})
+        conflicting.add(**{**kwargs, "payload": {"source_term": "y"}})
 
 
 def test_frame_claims_remain_unpromoted_and_occurrence_grounded(built: dict[str, Any]) -> None:
@@ -590,10 +600,94 @@ def test_prefix_scope_and_mode_contract(built: dict[str, Any]) -> None:
         assemble_b4_input_bundle(
             built["document"],
             built["chapters"],
+            book_source_manifest=built["book_source_manifest"],
             m1v3_dir=built["root"],
             m2v3_dir=built["root"],
             knowledge_mode="as_of_experiment",
         )
+
+
+def test_book_lineage_is_cutoff_stable_while_bundle_snapshot_changes(
+    built: dict[str, Any],
+) -> None:
+    chapter_1 = _assemble(built, ["bk_ch01"])
+    chapters_1_2 = _assemble(built, ["bk_ch01", "bk_ch02"])
+    assert chapter_1["state_lineage_id"] == chapters_1_2["state_lineage_id"]
+    assert chapter_1["book_source_manifest_hash"] == chapters_1_2[
+        "book_source_manifest_hash"
+    ]
+    assert chapter_1["bundle_manifest_hash"] != chapters_1_2["bundle_manifest_hash"]
+    assert [row["unit_id"] for row in chapter_1["unit_manifest"]] == ["bk_ch01"]
+    assert [row["unit_id"] for row in chapters_1_2["unit_manifest"]] == [
+        "bk_ch01",
+        "bk_ch02",
+    ]
+
+
+@pytest.mark.parametrize("mutation", ["truncated", "reordered", "changed"])
+def test_book_source_manifest_rejects_noncanonical_document(
+    built: dict[str, Any], mutation: str
+) -> None:
+    document = deepcopy(built["document"])
+    selected = ["bk_ch01", "bk_ch02"]
+    if mutation == "truncated":
+        document["chapters"] = document["chapters"][:2]
+    elif mutation == "reordered":
+        document["chapters"][0], document["chapters"][1] = (
+            document["chapters"][1],
+            document["chapters"][0],
+        )
+    else:
+        document["chapters"][2]["blocks"][0]["clean_text"] += " changed"
+    with pytest.raises(B4HandoffError, match="book source manifest"):
+        assemble_b4_input_bundle(
+            document,
+            selected,
+            book_source_manifest=built["book_source_manifest"],
+            m1v3_dir=built["root"],
+            m2v3_dir=built["root"],
+        )
+
+
+def test_book_lineage_changes_when_the_sealed_source_changes(
+    built: dict[str, Any],
+) -> None:
+    changed = deepcopy(built["document"])
+    changed["chapters"][2]["blocks"][0]["clean_text"] += " changed"
+    changed_manifest = build_book_source_manifest(changed)
+    assert changed_manifest["manifest_hash"] != built["book_source_manifest"][
+        "manifest_hash"
+    ]
+    assert state_lineage_id_for_manifest(changed_manifest) != state_lineage_id_for_manifest(
+        built["book_source_manifest"]
+    )
+
+    duplicate = deepcopy(built["document"])
+    duplicate["chapters"][1]["chapter_id"] = "bk_ch01"
+    with pytest.raises(B4HandoffError, match="duplicate chapter ids"):
+        build_book_source_manifest(duplicate)
+
+
+def test_unit_manifest_and_source_scope_contract(built: dict[str, Any]) -> None:
+    bundle = _assemble(built)
+    provenance = {row["chapter_id"]: row for row in bundle["provenance"]}
+    book_rows = {
+        row["chapter_id"]: row for row in bundle["book_source_manifest"]["ordered_chapters"]
+    }
+    assert len(bundle["unit_manifest"]) == len(built["chapters"])
+    for unit in bundle["unit_manifest"]:
+        chapter_id = unit["unit_id"]
+        catalog = [
+            row for row in bundle["source_block_catalog"] if row["chapter_id"] == chapter_id
+        ]
+        assert unit["block_range"] == [catalog[0]["block_id"], catalog[-1]["block_id"]]
+        assert unit["parent_chapter"] == chapter_id
+        assert unit["cut_reason"] == "author_chapter"
+        assert unit["source_hash"] == book_rows[chapter_id]["source_hash"]
+        assert unit["m1_checkpoint_refs"] == [
+            provenance[chapter_id]["m1v3_identity_hash"]
+        ]
+    assert all(card["chapter_id"] in built["chapters"] for card in bundle["occurrence_cards"])
 
 
 def test_loader_fails_closed_for_missing_config_and_source_changes(built: dict[str, Any], tmp_path: Path) -> None:
@@ -608,16 +702,18 @@ def test_loader_fails_closed_for_missing_config_and_source_changes(built: dict[s
         assemble_b4_input_bundle(
             built["document"],
             built["chapters"],
+            book_source_manifest=built["book_source_manifest"],
             m1v3_dir=built["root"],
             m2v3_dir=built["root"],
             window_target_tokens=501,
         )
     changed = deepcopy(built["document"])
     changed["chapters"][0]["blocks"][0]["clean_text"] += " changed"
-    with pytest.raises(CheckpointError):
+    with pytest.raises(B4HandoffError, match="book source manifest"):
         assemble_b4_input_bundle(
             changed,
             built["chapters"],
+            book_source_manifest=built["book_source_manifest"],
             m1v3_dir=built["root"],
             m2v3_dir=built["root"],
         )
@@ -632,7 +728,7 @@ def test_loader_rejects_semantic_mismatch_and_wrong_m1_identity(
         state = original(checkpoint, out_dir=out_dir)
         if checkpoint["stage"] == "m1v3" and checkpoint["chapter_id"] == "bk_ch01":
             state = deepcopy(state)
-            state["b0_payload"]["neutral_premise"] = "tampered"
+            state["b1_by_window"][0]["payload"]["context_only_used"] = True
         return state
 
     monkeypatch.setattr(handoff, "read_state_from_checkpoint", corrupt_semantic)
@@ -692,6 +788,7 @@ def test_determinism_path_independence_and_evidence_sensitivity(
     relocated = assemble_b4_input_bundle(
         built["document"],
         built["chapters"],
+        book_source_manifest=built["book_source_manifest"],
         m1v3_dir=copied,
         m2v3_dir=copied,
     )
@@ -740,16 +837,65 @@ def test_authority_scan_and_internal_import_boundary() -> None:
 
 def test_manifest_hashes_are_recomputable_from_persisted_contract(built: dict[str, Any]) -> None:
     bundle = _assemble(built)
-    identity_body = {
-        "schema_version": bundle["schema_version"],
-        "handoff_contract_version": bundle["handoff_contract_version"],
-        "selected_chapters": bundle["selected_chapters"],
-        "knowledge_cutoff_scope": bundle["knowledge_cutoff_scope"],
-        "scope_complete_book": bundle["scope_complete_book"],
-        "input_contract": bundle["input_contract"],
-        "provenance": bundle["provenance"],
-    }
-    assert canonical_hash(identity_body) == bundle["input_identity_manifest_hash"]
+    assert canonical_hash(handoff._input_identity_projection(bundle)) == bundle[
+        "input_identity_manifest_hash"
+    ]
     semantic = deepcopy(bundle)
     semantic.pop("bundle_manifest_hash")
     assert canonical_hash(semantic) == bundle["bundle_manifest_hash"]
+    verify_b4_input_bundle_identity(bundle)
+
+
+def test_bundle_identity_verifier_rejects_stale_schema_and_tampering(
+    built: dict[str, Any],
+) -> None:
+    bundle = _assemble(built)
+    stale = deepcopy(bundle)
+    stale["schema_version"] = "literary_b4_input_bundle_v1"
+    with pytest.raises(B4HandoffError, match="schema mismatch"):
+        verify_b4_input_bundle_identity(stale)
+
+    tampered = deepcopy(bundle)
+    tampered["book_source_manifest"]["ordered_chapters"][0]["source_hash"] = "tampered"
+    with pytest.raises(B4HandoffError, match="manifest hash mismatch"):
+        verify_b4_input_bundle_identity(tampered)
+
+    retired_channel = deepcopy(bundle)
+    retired_channel["ground_evidence"]["cast_claim_inputs"] = []
+    semantic = deepcopy(retired_channel)
+    semantic.pop("bundle_manifest_hash")
+    retired_channel["bundle_manifest_hash"] = canonical_hash(semantic)
+    with pytest.raises(B4HandoffError, match="channel contract mismatch"):
+        verify_b4_input_bundle_identity(retired_channel)
+
+    widened_context = deepcopy(bundle)
+    card = widened_context["occurrence_cards"][0]
+    neighbor = next(
+        row
+        for row in widened_context["source_block_catalog"]
+        if row["chapter_id"] == card["chapter_id"] and row["block_id"] != card["block_id"]
+    )
+    card["context_universe"]["scene_block_candidates"].append(
+        {
+            "block_id": neighbor["block_id"],
+            "order_index": neighbor["order_index"],
+            "block_type": neighbor["block_type"],
+            "text": neighbor["text"],
+        }
+    )
+    semantic = deepcopy(widened_context)
+    semantic.pop("bundle_manifest_hash")
+    widened_context["bundle_manifest_hash"] = canonical_hash(semantic)
+    with pytest.raises(B4HandoffError, match="active-block-only"):
+        verify_b4_input_bundle_identity(widened_context)
+
+    bad_unit = deepcopy(bundle)
+    bad_unit["unit_manifest"][0]["block_range"][1] = "bk_ch01_missing"
+    bad_unit["input_identity_manifest_hash"] = canonical_hash(
+        handoff._input_identity_projection(bad_unit)
+    )
+    semantic = deepcopy(bad_unit)
+    semantic.pop("bundle_manifest_hash")
+    bad_unit["bundle_manifest_hash"] = canonical_hash(semantic)
+    with pytest.raises(B4HandoffError, match="unit manifest row identity mismatch"):
+        verify_b4_input_bundle_identity(bad_unit)

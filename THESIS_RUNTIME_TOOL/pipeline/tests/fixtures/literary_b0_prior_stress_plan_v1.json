@@ -1,0 +1,32 @@
+{
+  "mutation_id": "stress_kind_summary_and_same_name_v1",
+  "mutations": [
+    {
+      "prior_card_id": "prior_b0ent_dd73aaedfc9773e022f6",
+      "field": "referent_kind",
+      "replacement": "institution"
+    },
+    {
+      "prior_card_id": "prior_b0ent_2951e747ac05ee4c4f90",
+      "field": "identity_summary",
+      "replacement": "The narrator and a lifelong resident of Thrushcross Grange who has never rented the property."
+    }
+  ],
+  "expected_outcomes": [
+    {
+      "prior_card_id": "prior_b0ent_dd73aaedfc9773e022f6",
+      "verdict": "challenge",
+      "issue_code": "kind_conflict"
+    },
+    {
+      "prior_card_id": "prior_b0ent_2951e747ac05ee4c4f90",
+      "verdict": "challenge",
+      "issue_code": "unsupported_stable_claim"
+    },
+    {
+      "prior_card_id": "prior_synthetic_mrs_heathcliff_v1",
+      "verdict": "uncertain",
+      "issue_code": null
+    }
+  ]
+}

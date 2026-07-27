@@ -1,0 +1,335 @@
+{
+  "schema_version": "literary_chapter_loop_stage_bindings_v1",
+  "binding_id": "literary_chapter_loop_current_v1",
+  "stages": [
+    {
+      "stage_name": "b1_scan",
+      "script": "pipeline/scripts/run_literary_b1_scan_v1.py",
+      "command": "canary",
+      "role": "b1_scan",
+      "api": true,
+      "conditional": false,
+      "inputs": {
+        "document": "run.document",
+        "prior_cards": "previous.identity_apply:prior_cards.json|previous.b1_registry_writer:prior_cards.json",
+        "previous_summary_root": "previous.b0_summary:root",
+        "capability_root": "runtime.b1_scan.capability.default"
+      },
+      "outputs": [
+        "b1_scan_artifact.json",
+        "canary_report.json"
+      ],
+      "report": "canary_report.json"
+    },
+    {
+      "stage_name": "b1_enrich",
+      "script": "pipeline/scripts/run_literary_b1_enrich_v1.py",
+      "command": "canary",
+      "role": "b1_enrich",
+      "api": true,
+      "conditional": false,
+      "inputs": {
+        "document": "run.document",
+        "scan_artifact": "current.b1_scan:b1_scan_artifact.json",
+        "prior_cards": "previous.identity_apply:prior_cards.json|previous.b1_registry_writer:prior_cards.json",
+        "previous_summary_root": "previous.b0_summary:root",
+        "capability_root": "runtime.b1_enrich.capability.default"
+      },
+      "outputs": [
+        "b1_enrich_artifact.json",
+        "canary_report.json"
+      ],
+      "report": "canary_report.json"
+    },
+    {
+      "stage_name": "b1_local_auditor",
+      "script": "pipeline/scripts/run_literary_b1_enrich_local_auditor_live_v1.py",
+      "command": "canary",
+      "role": "local_auditor",
+      "api": true,
+      "conditional": false,
+      "inputs": {
+        "document": "run.document",
+        "scan_artifact": "current.b1_scan:b1_scan_artifact.json",
+        "enrich_artifact": "current.b1_enrich:b1_enrich_artifact.json",
+        "capability_root": "runtime.b1_local_auditor.capability.default",
+        "runtime_profile": "runtime.b1_local_auditor.runtime_profile"
+      },
+      "outputs": [
+        "local_audit_artifact.json",
+        "canary_report.json"
+      ],
+      "report": "canary_report.json"
+    },
+    {
+      "stage_name": "b1_registry_writer",
+      "script": "pipeline/scripts/run_literary_b1_chapter_registry_writer_v1.py",
+      "command": null,
+      "role": "code",
+      "api": false,
+      "conditional": false,
+      "inputs": {
+        "document": "run.document",
+        "scan_artifact": "current.b1_scan:b1_scan_artifact.json",
+        "enrich_artifact": "current.b1_enrich:b1_enrich_artifact.json",
+        "audit_artifact": "current.b1_local_auditor:local_audit_artifact.json",
+        "prior_cards": "previous.identity_apply:prior_cards.json|previous.b1_registry_writer:prior_cards.json",
+        "reconciled_projection": "previous.identity_apply:reconciled_projection.json"
+      },
+      "outputs": [
+        "chapter_registry.json",
+        "cross_chapter_hearing_queue.json",
+        "prior_cards.json",
+        "writer_report.json"
+      ],
+      "report": "writer_report.json"
+    },
+    {
+      "stage_name": "xchapter_prepare",
+      "script": "pipeline/scripts/run_literary_b1_cross_chapter_audits_v1.py",
+      "command": null,
+      "role": "code",
+      "api": false,
+      "conditional": false,
+      "inputs": {
+        "queue": "current.b1_registry_writer:cross_chapter_hearing_queue.json",
+        "registry": "current.b1_registry_writer:chapter_registry.json",
+        "chapters": "run.chapter_bridges_through_current"
+      },
+      "outputs": [
+        "prepared_requests",
+        "dry_run_report.json"
+      ],
+      "report": "dry_run_report.json"
+    },
+    {
+      "stage_name": "xchapter_hearing",
+      "script": "pipeline/scripts/run_literary_b1_cross_chapter_auditor_live_v1.py",
+      "command": "run",
+      "role": "identity_auditor",
+      "api": true,
+      "conditional": true,
+      "condition": "current.xchapter_prepare:ready_component_count>0",
+      "inputs": {
+        "prepared_dir": "current.xchapter_prepare:prepared_requests",
+        "queue": "current.b1_registry_writer:cross_chapter_hearing_queue.json",
+        "registry": "current.b1_registry_writer:chapter_registry.json",
+        "chapters": "run.chapter_bridges_through_current",
+        "identity_capability_root": "runtime.xchapter_hearing.capability.identity",
+        "stable_claim_capability_root": "runtime.xchapter_hearing.capability.stable_claim",
+        "runtime_profile": "runtime.xchapter_hearing.runtime_profile"
+      },
+      "outputs": [
+        "validated_decisions.json",
+        "review_issues.json",
+        "run_report.json"
+      ],
+      "report": "run_report.json"
+    },
+    {
+      "stage_name": "identity_apply",
+      "script": "pipeline/scripts/run_literary_b1_apply_cross_chapter_decisions_v1.py",
+      "command": null,
+      "role": "code",
+      "api": false,
+      "conditional": true,
+      "condition": "current.xchapter_hearing:status=accepted",
+      "inputs": {
+        "registries": "all.b1_registry_writer:chapter_registry.json",
+        "queue": "current.b1_registry_writer:cross_chapter_hearing_queue.json",
+        "decisions": "current.xchapter_hearing:validated_decisions.json",
+        "ledger": "previous.identity_apply:decision_ledger.json"
+      },
+      "outputs": [
+        "decision_ledger.json",
+        "reconciled_projection.json",
+        "prior_cards.json",
+        "apply_report.json"
+      ],
+      "report": "apply_report.json"
+    },
+    {
+      "stage_name": "b1_to_b2_input",
+      "script": "pipeline/scripts/run_literary_b1_registry_to_b2_input_v1.py",
+      "command": null,
+      "role": "code",
+      "api": false,
+      "conditional": false,
+      "inputs": {
+        "document": "run.document",
+        "registries": "all.b1_registry_writer:root",
+        "reconciled_projection": "current.identity_apply:reconciled_projection.json|previous.identity_apply:reconciled_projection.json"
+      },
+      "outputs": [
+        "b2_registry_input.json",
+        "adapter_report.json"
+      ],
+      "report": "adapter_report.json"
+    },
+    {
+      "stage_name": "b2_frame_interaction",
+      "script": "pipeline/scripts/run_literary_b2_registry_modelapi_v1.py",
+      "command": "run",
+      "role": "b2",
+      "api": true,
+      "conditional": false,
+      "inputs": {
+        "source_run_root": "current.b1_to_b2_input:root",
+        "prior_b2_root": "previous.b2_frame_interaction:root",
+        "frozen_db": "run.frozen_db",
+        "frame_capability_root": "runtime.b2_frame_interaction.capability.frame",
+        "interaction_capability_root": "runtime.b2_frame_interaction.capability.interaction",
+        "canary_profile": "runtime.b2_frame_interaction.context_profile"
+      },
+      "outputs": [
+        "chapter_b2_artifact.json",
+        "live_report.json"
+      ],
+      "report": "live_report.json"
+    },
+    {
+      "stage_name": "b2_review_routing",
+      "script": "pipeline/scripts/run_literary_b2_review_routing_v1.py",
+      "command": null,
+      "role": "code",
+      "api": false,
+      "conditional": false,
+      "inputs": {
+        "b2_root": "current.b2_frame_interaction:root",
+        "b2_input_root": "current.b1_to_b2_input:root",
+        "registry_root": "current.b1_registry_writer:root",
+        "local_audit_root": "current.b1_local_auditor:root",
+        "hearing_queue_root": "current.b1_registry_writer:root"
+      },
+      "outputs": [
+        "review_routing_plan.json",
+        "cross_chapter_hearing_queue.json",
+        "routing_report.json"
+      ],
+      "report": "routing_report.json"
+    },
+    {
+      "stage_name": "speaker_recovery",
+      "script": "pipeline/scripts/run_literary_b2_speaker_recovery_modelapi_v1.py",
+      "command": "canary",
+      "role": "speaker_recovery",
+      "api": true,
+      "conditional": true,
+      "condition": "current.b2_review_routing:route_a_count>0",
+      "inputs": {
+        "b2_root": "current.b2_frame_interaction:root",
+        "frozen_db": "run.frozen_db",
+        "capability_root": "runtime.speaker_recovery.capability.default",
+        "runtime_profile": "runtime.speaker_recovery.runtime_profile"
+      },
+      "outputs": [
+        "speaker_recovery_artifact.json",
+        "recovery_index.json",
+        "canary_report.json"
+      ],
+      "report": "canary_report.json"
+    },
+    {
+      "stage_name": "b3_temporal",
+      "script": "pipeline/scripts/run_literary_b3_temporal_chapter_v1.py",
+      "command": null,
+      "role": "b3_temporal",
+      "api": true,
+      "conditional": false,
+      "inputs": {
+        "b2_root": "current.b2_frame_interaction:root",
+        "speaker_recovery_root": "current.speaker_recovery:root",
+        "identity_hearing_root": "current.xchapter_hearing:root",
+        "prior_b3_roots": "all_previous.b3_apply:root",
+        "capability_root": "runtime.b3_temporal.capability.default",
+        "context_profile": "runtime.b3_temporal.context_profile",
+        "runtime_profile": "runtime.b3_temporal.runtime_profile"
+      },
+      "outputs": [
+        "chapter_temporal_artifact.json",
+        "component_catalog.json",
+        "chapter_report.json"
+      ],
+      "report": "chapter_report.json"
+    },
+    {
+      "stage_name": "b3_auditor",
+      "script": "pipeline/scripts/run_literary_b3_temporal_auditor_modelapi_v1.py",
+      "command": "audit",
+      "role": "b3_auditor",
+      "api": true,
+      "conditional": true,
+      "condition": "current.b3_temporal:serviceable_case_count>0",
+      "inputs": {
+        "b3_root": "current.b3_temporal:root",
+        "capability_root": "runtime.b3_auditor.capability.default",
+        "runtime_profile": "runtime.b3_auditor.runtime_profile"
+      },
+      "outputs": [
+        "overlays",
+        "audit_index.json"
+      ],
+      "report": "audit_index.json"
+    },
+    {
+      "stage_name": "b3_apply",
+      "script": "pipeline/scripts/run_literary_b3_apply_temporal_review_decisions_v1.py",
+      "command": null,
+      "role": "code",
+      "api": false,
+      "conditional": false,
+      "inputs": {
+        "b3_root": "current.b3_temporal:root",
+        "overlays": "current.b3_auditor:overlays",
+        "prior_component_catalogs": "all_previous.b3_temporal:component_catalog.json",
+        "reconciled_projection": "current.identity_apply:reconciled_projection.json|previous.identity_apply:reconciled_projection.json"
+      },
+      "outputs": [
+        "reconciled_temporal_artifact.json",
+        "temporal_decision_ledger.json",
+        "apply_report.json",
+        "frame_catalog.json"
+      ],
+      "report": "apply_report.json"
+    },
+    {
+      "stage_name": "b0_summary",
+      "script": "pipeline/scripts/run_literary_b0_chapter_summary_modelapi_v1.py",
+      "command": "canary",
+      "role": "b0_summary",
+      "api": true,
+      "conditional": false,
+      "inputs": {
+        "document": "run.document",
+        "b1_root": "current.b1_registry_writer:root",
+        "b2_root": "current.b2_frame_interaction:root",
+        "speaker_recovery_root": "current.speaker_recovery:root",
+        "b3_root": "current.b3_apply:root",
+        "prior_summary_root": "previous.b0_summary:root",
+        "capability_root": "runtime.b0_summary.capability.default",
+        "runtime_profile": "runtime.b0_summary.runtime_profile"
+      },
+      "outputs": [
+        "chapter_summary_artifact.json",
+        "capsule_log.json",
+        "canary_report.json"
+      ],
+      "report": "canary_report.json"
+    },
+    {
+      "stage_name": "checkpoint",
+      "script": null,
+      "command": null,
+      "role": "code",
+      "api": false,
+      "conditional": false,
+      "inputs": {
+        "summary_root": "current.b0_summary:root"
+      },
+      "outputs": [
+        "checkpoint.json"
+      ],
+      "report": "checkpoint.json"
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "schema_version": "literary_shared_llm_runtime_profile_v2",
+  "profile_id": "literary_shared_llm_modelapi_b2_long_chapter_v4_64k_frame",
+  "profile_revision": "modelapi_gpt54_b2_prompt_validated_long_chapter_v4_64k_frame",
+  "backend_mode": "shared_v1",
+  "sources": [
+    {
+      "source_alias": "modelapi_shared",
+      "source_id": "modelapi_shared_v1",
+      "source_revision": "modelapi_profile_v1",
+      "authority_class": "third_party",
+      "source_class": "remote_api",
+      "adapter_id": "openai_python_v1",
+      "protocol": "openai_chat_completions",
+      "route_id": "chat_completions_create",
+      "endpoint_class": "remote",
+      "base_url": "https://modelapi.vn/v1",
+      "credential_ref": "credential.modelapi_shared_v1",
+      "physical_quota_bucket_id": "modelapi-shared-v1",
+      "selection_mode": "host_resolved_exact_source",
+      "fallback_enabled": false
+    }
+  ],
+  "roles": [
+    {
+      "role_id": "literary.b2.frame",
+      "preset_id": "literary.b2.frame.gpt54_modelapi_prompt_validated_long_v4_64k",
+      "preset_revision": "v4",
+      "legacy_role_ids": [
+        "literary_b2_frame"
+      ],
+      "requested_model_id": "gpt-5.4",
+      "source_alias": "modelapi_shared",
+      "output_envelope": {
+        "mode": "json_object",
+        "schema_dialect": "json_schema_2020_12",
+        "instruction_id": "literary.json_only_output_instruction",
+        "instruction_revision": "v2"
+      },
+      "generation": {
+        "context_window_tokens": null,
+        "max_input_tokens": 64000,
+        "max_output_tokens": 2500,
+        "temperature": 1,
+        "top_p": 1,
+        "seed": 20260721,
+        "reasoning_effort": "none",
+        "verbosity": "low"
+      },
+      "limits": {
+        "max_calls": 1,
+        "max_prompt_tokens": 64000,
+        "max_completion_tokens": 2500,
+        "max_total_tokens": 66500,
+        "max_cost_usd": null,
+        "request_timeout_ms": 300000
+      },
+      "transport_retry": {
+        "max_retries": 0,
+        "backoff_policy": "none",
+        "initial_delay_ms": 0,
+        "max_delay_ms": 0,
+        "retryable_codes": []
+      },
+      "semantic_retry": {
+        "max_retries": 0,
+        "retryable_categories": []
+      },
+      "namespaces": {
+        "output": "literary.b2.frame.modelapi.long.v4.output",
+        "checkpoint": "literary.b2.frame.modelapi.long.v4.checkpoint",
+        "cache": "literary.b2.frame.modelapi.long.v4.cache"
+      }
+    },
+    {
+      "role_id": "literary.b2.interaction",
+      "preset_id": "literary.b2.interaction.gpt54_modelapi_prompt_validated_long_v4",
+      "preset_revision": "v4",
+      "legacy_role_ids": [
+        "literary_b2_interaction"
+      ],
+      "requested_model_id": "gpt-5.4",
+      "source_alias": "modelapi_shared",
+      "output_envelope": {
+        "mode": "json_object",
+        "schema_dialect": "json_schema_2020_12",
+        "instruction_id": "literary.json_only_output_instruction",
+        "instruction_revision": "v2"
+      },
+      "generation": {
+        "context_window_tokens": null,
+        "max_input_tokens": 25000,
+        "max_output_tokens": 6000,
+        "temperature": 1,
+        "top_p": 1,
+        "seed": 20260721,
+        "reasoning_effort": "none",
+        "verbosity": "low"
+      },
+      "limits": {
+        "max_calls": 2,
+        "max_prompt_tokens": 50000,
+        "max_completion_tokens": 12000,
+        "max_total_tokens": 62000,
+        "max_cost_usd": null,
+        "request_timeout_ms": 300000
+      },
+      "transport_retry": {
+        "max_retries": 0,
+        "backoff_policy": "none",
+        "initial_delay_ms": 0,
+        "max_delay_ms": 0,
+        "retryable_codes": []
+      },
+      "semantic_retry": {
+        "max_retries": 0,
+        "retryable_categories": []
+      },
+      "namespaces": {
+        "output": "literary.b2.interaction.modelapi.long.v4.output",
+        "checkpoint": "literary.b2.interaction.modelapi.long.v4.checkpoint",
+        "cache": "literary.b2.interaction.modelapi.long.v4.cache"
+      }
+    }
+  ],
+  "safety": {
+    "provider_fallback_allowed": false,
+    "application_response_cache_enabled": false,
+    "production_publish_enabled": false
+  }
+}

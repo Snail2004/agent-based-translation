@@ -1,0 +1,41 @@
+{
+  "schema_version": "literary_b2_recovery_live_profile_v2",
+  "profile_id": "literary_b2_recovery_local_gateway_ch2_v2",
+  "provider_profile": "literary_provider_profile_local_gateway_premium_v1.json",
+  "structured_output_policy": "literary_structured_output_policy_local_gateway_premium_v1.json",
+  "stage_bindings": {
+    "registry_recovery": {
+      "provider_role_id": "literary_local_conflict_auditor",
+      "schema_name": "literary_b2_registry_recovery_v1",
+      "prompt_token_cap": 12000,
+      "max_output_tokens": 8000
+    },
+    "event_review": {
+      "provider_role_id": "literary_local_conflict_auditor",
+      "schema_name": "literary_b2_event_review_v2",
+      "prompt_token_cap": 20000,
+      "max_output_tokens": 12000
+    }
+  },
+  "generation": {
+    "temperature": 1.0,
+    "seed": 20260718,
+    "reasoning_effort": "none",
+    "verbosity": "low"
+  },
+  "limits": {
+    "registry_recovery_calls": 1,
+    "event_review_calls": 1,
+    "max_total_calls": 2,
+    "max_retries_per_call": 0,
+    "hard_visible_token_cap": 50000
+  },
+  "safety": {
+    "provider_fallback_allowed": false,
+    "source_artifact_mutation_allowed": false,
+    "book_global_identity_mutation_allowed": false,
+    "production_publish_enabled": false,
+    "stop_after_chapter_id": "wh_ch02",
+    "event_review_contract_version": "v2"
+  }
+}

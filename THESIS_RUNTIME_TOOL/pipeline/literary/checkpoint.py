@@ -54,6 +54,42 @@ def file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def resolve_existing_canonical_path(path: str | Path) -> Path:
+    """Resolve a canonical-JSON path without losing filesystem Unicode spelling."""
+
+    candidate = Path(path)
+    if candidate.exists():
+        return candidate.resolve()
+    if candidate.is_absolute():
+        candidates = [Path(candidate.anchor)]
+        remaining = candidate.parts[1:]
+    else:
+        candidates = [Path.cwd()]
+        remaining = candidate.parts
+    for part in remaining:
+        normalized = unicodedata.normalize("NFC", part).casefold()
+        matches: dict[str, Path] = {}
+        for current in candidates:
+            if not current.is_dir():
+                continue
+            for child in current.iterdir():
+                if (
+                    unicodedata.normalize("NFC", child.name).casefold()
+                    == normalized
+                ):
+                    matches[str(child)] = child
+        if not matches:
+            raise CheckpointError(
+                f"Canonical path has no filesystem equivalent: {candidate}"
+            )
+        candidates = [matches[key] for key in sorted(matches)]
+    if len(candidates) != 1 or not candidates[0].exists():
+        raise CheckpointError(
+            f"Canonical path has no unique filesystem equivalent: {candidate}"
+        )
+    return candidates[0].resolve()
+
+
 def chapter_source_hash(chapter: dict[str, Any]) -> str:
     rows = [
         {

@@ -24,6 +24,7 @@ from pipeline.literary.checkpoint import CheckpointError, canonical_hash, canoni
 from pipeline.literary.checkpoint_v3 import (
     M1_CHECKPOINT_SCHEMA_VERSION_V3,
     M1_GROUND_STATE_VERSION_V3,
+    M2_CHECKPOINT_SCHEMA_VERSION_V3,
     VALIDATOR_CONTRACT_VERSION,
     builder_v3_root,
     contract_versions,
@@ -351,8 +352,15 @@ def test_three_chapter_states_round_trip_and_reference_indexes_are_complete(tmp_
     assert canonical_hash(_m1_semantic_projection(m1_state)) == m1_state["semantic_state_hash"]
     assert canonical_hash(_m2_semantic_projection(m2_state)) == m2_state["semantic_state_hash"]
 
+    injected = deepcopy(m1_state)
+    injected["b0_payload"] = {"cast_claims": []}
+    injected["semantic_state_hash"] = canonical_hash(_m1_semantic_projection(injected))
+    with pytest.raises(CheckpointError, match="retired b0_payload"):
+        pipeline_v3._validate_restored_state(injected, stage="m1v3")
+
     kinds = [row["kind"] for row in m1_state["reference_index"]]
-    assert kinds.count("cast_claim") == 1
+    assert kinds.count("cast_claim") == 0
+    assert "b0_payload" not in m1_state
     assert kinds.count("mention") == 2
     assert kinds.count("turn") == 1
     assert kinds.count("event") == 1
@@ -416,37 +424,70 @@ def test_three_chapter_straight_and_resume_have_identical_semantics_and_identiti
     ]
 
 
+def test_b0less_checkpoint_versions_reject_old_m1_and_m2(tmp_path: Path) -> None:
+    _run_all(tmp_path)
+    for stage, expected_version, old_version in (
+        ("m1v3", M1_CHECKPOINT_SCHEMA_VERSION_V3, "literary_m1_checkpoint_v3"),
+        ("m2v3", M2_CHECKPOINT_SCHEMA_VERSION_V3, "literary_m2_checkpoint_v3"),
+    ):
+        checkpoint = read_current_checkpoint(
+            out_dir=tmp_path, stage=stage, chapter_id="bk_ch03"
+        )
+        assert checkpoint and checkpoint["schema_version"] == expected_version
+        stale = deepcopy(checkpoint)
+        stale["schema_version"] = old_version
+        stale["checkpoint_identity"]["schema_version"] = old_version
+        stale["checkpoint_identity_hash"] = canonical_hash(stale["checkpoint_identity"])
+        errors = validate_v3_checkpoint(stale, root=tmp_path)
+        assert "schema_version" in errors
+
+
 def test_request_contract_and_fingerprint_are_stage_scoped() -> None:
     original = dict(REQUEST_CONTRACT_HASHES)
     changed = deepcopy(REQUEST_SHAPE_CONTRACT)
     changed["b2"]["ordering"]["window_mentions"] = "reverse"
     changed_hashes = {stage: canonical_hash(value) for stage, value in changed.items()}
     assert changed_hashes["b2"] != original["b2"]
-    assert {stage: changed_hashes[stage] for stage in ("b0", "b1", "b3")} == {
-        stage: original[stage] for stage in ("b0", "b1", "b3")
+    assert {stage: changed_hashes[stage] for stage in ("b1", "b3")} == {
+        stage: original[stage] for stage in ("b1", "b3")
     }
     blocks = [{"block_id": "b1", "order_index": 1, "block_type": "paragraph", "text": "x"}]
     first = _build_request(
-        stage="b0",
+        stage="b1",
         chapter_id="c1",
-        window_id=None,
-        allowlisted_sections={"chapter_blocks": blocks},
+        window_id="w_c1_01",
+        allowlisted_sections={"active_window_blocks": blocks, "context_only_tail": []},
         lineage_manifest=[],
     )
     second = _build_request(
-        stage="b0",
+        stage="b1",
         chapter_id="c1",
-        window_id=None,
-        allowlisted_sections={"chapter_blocks": [{**blocks[0], "text": "y"}]},
+        window_id="w_c1_01",
+        allowlisted_sections={
+            "active_window_blocks": [{**blocks[0], "text": "y"}],
+            "context_only_tail": [],
+        },
         lineage_manifest=[],
     )
     assert first.request_fingerprint != second.request_fingerprint
     with pytest.raises(ValueError, match="sections mismatch"):
         _build_request(
+            stage="b1",
+            chapter_id="c1",
+            window_id="w_c1_01",
+            allowlisted_sections={
+                "active_window_blocks": blocks,
+                "context_only_tail": [],
+                "registry": [],
+            },
+            lineage_manifest=[],
+        )
+    with pytest.raises(ValueError, match="unsupported Builder-v3 request stage"):
+        _build_request(
             stage="b0",
             chapter_id="c1",
             window_id=None,
-            allowlisted_sections={"chapter_blocks": blocks, "registry": []},
+            allowlisted_sections={"chapter_blocks": blocks},
             lineage_manifest=[],
         )
 
@@ -468,7 +509,7 @@ def test_executor_receives_immutable_bytes_and_audit_survives_rejection(tmp_path
     request_files = list((builder_v3_root(tmp_path) / "audit").rglob("request.json"))
     raw_files = list((builder_v3_root(tmp_path) / "audit").rglob("raw_result.json"))
     validation_files = list((builder_v3_root(tmp_path) / "audit").rglob("validation.json"))
-    assert len(request_files) == len(raw_files) == len(validation_files) == 2
+    assert len(request_files) == len(raw_files) == len(validation_files) == 1
     seen = executor.call_log[-1]["canonical_request_json"].encode("utf-8")
     assert request_files[-1].read_bytes() == seen
     assert any(
@@ -525,27 +566,26 @@ def test_stage_scoped_sentinel_matrix_and_untrusted_projection(tmp_path: Path) -
         window_max_blocks=1,
     )
     assert m1["status"] == "complete", m1
-    b0 = next(row for row in executor.call_log if row["key"] == ["b0", "bk_ch01", None])
+    assert not any(row["key"][0] == "b0" for row in executor.call_log)
     b1_first = next(
         row for row in executor.call_log if row["key"] == ["b1", "bk_ch01", "w_bk_ch01_01"]
     )
     b2_first = next(
         row for row in executor.call_log if row["key"] == ["b2", "bk_ch01", "w_bk_ch01_01"]
     )
-    assert "FUTURE_SENTINEL" in b0["canonical_request_json"]
     assert "FUTURE_SENTINEL" not in b1_first["canonical_request_json"]
     assert "FUTURE_SENTINEL" not in json.dumps(
         json.loads(b2_first["canonical_request_json"])["allowlisted_sections"],
         ensure_ascii=False,
     )
     b2_sections = json.loads(b2_first["canonical_request_json"])["allowlisted_sections"]
-    assert b2_sections["b0_scene_projection"] == [
-        {
-            **b2_sections["b0_scene_projection"][0],
-            "role_hint": "ROLE_NEAR_SENTINEL",
-            "trust": "untrusted",
-        }
-    ]
+    assert set(b2_sections) == {
+        "active_window_blocks",
+        "context_only_tail",
+        "window_mentions",
+    }
+    assert "b0_scene_projection" not in b2_sections
+    assert "b0_typed_projection" not in b2_sections
     assert "ROLE_FAR_SENTINEL" not in json.dumps(b2_sections, ensure_ascii=False)
     assert "ROLE_NEAR_SENTINEL" not in b1_first["canonical_request_json"]
 
@@ -570,7 +610,7 @@ def test_stage_scoped_sentinel_matrix_and_untrusted_projection(tmp_path: Path) -
     )
 
 
-def test_foreign_b1_reference_halts_m1_after_audit(tmp_path: Path) -> None:
+def test_foreign_b1_reference_is_cleared_before_m1_publish(tmp_path: Path) -> None:
     scripts = _scripts()
     scripts[("b2", "bk_ch01", "w_bk_ch01_01")]["speaker_turns"][0]["speaker"][
         "mention_ref"
@@ -579,10 +619,19 @@ def test_foreign_b1_reference_halts_m1_after_audit(tmp_path: Path) -> None:
     report = run_m1_v3(
         _document(), ["bk_ch01"], executor=executor, out_dir=tmp_path
     )
-    assert report["status"] == "halted"
-    assert report["stopping_error"]["stage"] == "b2"
-    assert not current_pointer_path(tmp_path, "m1v3", "bk_ch01").exists()
-    assert len(list((builder_v3_root(tmp_path) / "audit").rglob("raw_result.json"))) == 3
+    assert report["status"] == "complete", report
+    checkpoint = read_current_checkpoint(
+        out_dir=tmp_path,
+        stage="m1v3",
+        chapter_id="bk_ch01",
+    )
+    assert checkpoint is not None
+    state = read_state_from_checkpoint(checkpoint, out_dir=tmp_path)
+    assert "m_foreign" not in json.dumps(state, ensure_ascii=False)
+    turn = state["b2_by_window"][0]["payload"]["speaker_turns"][0]
+    assert turn["speaker"]["mention_ref"] is None
+    assert report["validation_counters"]["mention_ref_cleared_foreign"] == 1
+    assert len(list((builder_v3_root(tmp_path) / "audit").rglob("raw_result.json"))) == 2
 
 
 def test_source_metadata_change_invalidates_resume_before_execute(tmp_path: Path) -> None:
@@ -823,8 +872,9 @@ def test_checkpoint_rejects_execution_mode_and_tampered_state(tmp_path: Path) ->
 
 
 def test_p0_contract_version_is_bumped() -> None:
-    assert VALIDATOR_CONTRACT_VERSION == "literary_builder_v3_validator_contract_v2"
+    assert VALIDATOR_CONTRACT_VERSION == "literary_builder_v3_validator_contract_v13"
     assert contract_versions()["validator"] == VALIDATOR_CONTRACT_VERSION
+    assert M2_CHECKPOINT_SCHEMA_VERSION_V3 == "literary_m2_checkpoint_v3_b0less_v2"
 
 
 def test_p0_old_validator_contract_checkpoint_is_rejected(tmp_path: Path) -> None:

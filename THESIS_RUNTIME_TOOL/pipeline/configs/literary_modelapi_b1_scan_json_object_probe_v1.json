@@ -1,0 +1,36 @@
+{
+  "schema_version": "literary_modelapi_b1_scan_json_object_probe_profile_v1",
+  "profile_id": "literary_modelapi_b1_scan_json_object_probe_v1",
+  "profile_revision": "modelapi_gpt54_b1_scan_schema_v1",
+  "role_id": "literary.b1.scan",
+  "requested_model_id": "gpt-5.4",
+  "accepted_observed_model_ids": ["gpt-5.4"],
+  "capability_kind": "json_object",
+  "schema_name": "literary_b1_scan_response_v1",
+  "schema_dialect": "json_schema_2020_12",
+  "generation": {
+    "temperature": 1,
+    "top_p": 1,
+    "seed": 20260721,
+    "reasoning_effort": "none",
+    "verbosity": "low",
+    "max_completion_tokens": 1024
+  },
+  "limits": {
+    "max_calls": 1,
+    "max_prompt_utf8_bytes": 65536,
+    "max_response_utf8_bytes": 32768,
+    "max_prompt_tokens": 10000,
+    "max_completion_tokens": 1024,
+    "max_total_tokens": 11024,
+    "request_timeout_ms": 120000
+  },
+  "safety": {
+    "authority": "capability_only",
+    "fallback_enabled": false,
+    "transport_retry_max": 0,
+    "semantic_retry_max": 0,
+    "response_cache_enabled": false,
+    "application_publish_enabled": false
+  }
+}

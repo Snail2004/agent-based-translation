@@ -1,0 +1,5 @@
+{
+  "schema_version": "literary_b4_story_bible_profile_v1",
+  "b4_token_budget": 30000,
+  "memory_dormancy_chapters": 3
+}

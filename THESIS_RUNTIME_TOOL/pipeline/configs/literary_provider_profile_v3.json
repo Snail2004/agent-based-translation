@@ -1,0 +1,75 @@
+{
+  "schema_version": "thesis_provider_profile_v1",
+  "profile_id": "literary_console_default_v3",
+  "credentials": {
+    "ckey-account-v1": {
+      "provider": "google_genai",
+      "credential_revision": "ckey-account-v1",
+      "relative_file": "CKEY.txt",
+      "nonempty_line": 1,
+      "enabled": true,
+      "base_url": "https://api.xah.io",
+      "request_timeout_ms": 480000
+    },
+    "openai-row1": {
+      "provider": "openai",
+      "credential_revision": "openai-key1-literary-v1",
+      "relative_file": "OPENAI-KEY-1.txt",
+      "nonempty_line": 1,
+      "enabled": true,
+      "base_url": null,
+      "request_timeout_ms": 180000
+    }
+  },
+  "roles": {
+    "literary_b0": {
+      "provider": "google_genai",
+      "model_id": "vuduythanh2023/gemini-3.5-flash",
+      "bucket_order": [
+        "ckey-account-v1"
+      ]
+    },
+    "literary_b0_contract_fallback": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": [
+        "openai-row1"
+      ]
+    },
+    "literary_local_conflict_auditor": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": [
+        "openai-row1"
+      ]
+    },
+    "literary_stable_claim_auditor": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": [
+        "openai-row1"
+      ]
+    },
+    "literary_incremental_identity_auditor": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": [
+        "openai-row1"
+      ]
+    },
+    "literary_b2_frame": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": [
+        "openai-row1"
+      ]
+    },
+    "literary_b2_interaction": {
+      "provider": "google_genai",
+      "model_id": "vuduythanh2023/gemini-3.5-flash",
+      "bucket_order": [
+        "ckey-account-v1"
+      ]
+    }
+  }
+}

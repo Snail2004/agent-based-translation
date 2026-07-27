@@ -332,7 +332,7 @@ def test_same_anchor_turn_event_uses_deterministic_local_tiebreak() -> None:
     assert narrative_payload["speaker_turns"][0]["turn_id"] == turn["turn_id"]
 
 
-def test_mention_ref_must_resolve_inside_the_current_window() -> None:
+def test_foreign_mention_ref_is_cleared_without_dropping_grounded_rows() -> None:
     mentions, _ = _narrative_result()
     cross_window_mentions = deepcopy(mentions)
     cross_window_mentions[0]["block_id"] = "bk_ch01_b002"
@@ -344,8 +344,45 @@ def test_mention_ref_must_resolve_inside_the_current_window() -> None:
         mentions=cross_window_mentions,
     )
     assert result.report.ok, result.report.to_dict()
-    assert result.report.counts["dropped_unresolved_mention_ref"] >= 1
-    assert result.payload["speaker_turns"] == []
+    assert result.report.counts["mention_ref_cleared_foreign"] == 2
+    assert len(result.payload["speaker_turns"]) == 1
+    turn = result.payload["speaker_turns"][0]
+    assert turn["speaker"]["mention_ref"] is None
+    assert turn["addressee"]["mention_ref"] == mentions[1]["mention_id"]
+    event = result.payload["relation_events"][0]
+    assert event["actor"]["mention_ref"] is None
+    assert event["target"]["mention_ref"] == mentions[1]["mention_id"]
+
+
+def test_missing_mention_block_id_is_derived_from_one_active_block() -> None:
+    payload = _lexicon()
+    for mention in payload["character_mentions"]:
+        mention.pop("block_id")
+
+    result = validate_lexicon_v3(payload, blocks=_blocks())
+
+    assert result.report.ok, result.report.to_dict()
+    assert [row["block_id"] for row in result.payload["character_mentions"]] == [
+        "bk_ch01_b001",
+        "bk_ch01_b001",
+    ]
+    assert result.report.counts["mention_block_id_derived"] == 2
+
+
+def test_missing_mention_block_id_drops_ambiguous_cross_block_anchor() -> None:
+    blocks = _blocks()
+    blocks[1]["clean_text"] = "Alice greeted Bob."
+    blocks[1]["source_text"] = "Alice greeted Bob."
+    payload = _lexicon()
+    payload["character_mentions"] = [deepcopy(payload["character_mentions"][0])]
+    payload["character_mentions"][0].pop("block_id")
+
+    result = validate_lexicon_v3(payload, blocks=blocks)
+
+    assert result.report.ok, result.report.to_dict()
+    assert result.payload["character_mentions"] == []
+    assert result.report.counts["dropped_mention"] == 1
+    assert result.report.counts["fail_closed_locate"] == 1
 
 
 def test_scene_overlap_and_gap_are_fatal() -> None:
@@ -372,6 +409,74 @@ def test_scene_overlap_and_gap_are_fatal() -> None:
     )
     assert not gap.report.ok
     assert gap.report.counts["scene_gap"] == 1
+
+
+def test_cast_claim_scene_range_is_derived_from_the_evidence_block() -> None:
+    payload = _brief(
+        scenes=[
+            {
+                "block_range": ["bk_ch01_b001", "bk_ch01_b002"],
+                "co_present_count": 2,
+                "participants": ["Alice", "Bob"],
+            },
+            {
+                "block_range": ["bk_ch01_b003", "bk_ch01_b003"],
+                "co_present_count": 1,
+                "participants": ["Bob"],
+            },
+        ]
+    )
+    payload["cast_claims"][0].pop("scene_range")
+
+    result = validate_chapter_brief_v3(payload, blocks=_blocks())
+
+    assert result.report.ok, result.report.to_dict()
+    assert result.payload["cast_claims"][0]["scene_range"] == [
+        "bk_ch01_b001",
+        "bk_ch01_b002",
+    ]
+    assert result.report.counts["cast_claim_scene_derived"] == 1
+
+    payload["cast_claims"][0]["scene_range"] = ["bk_ch01_b003", "bk_ch01_b003"]
+    result = validate_chapter_brief_v3(payload, blocks=_blocks())
+    assert result.report.ok, result.report.to_dict()
+    assert result.payload["cast_claims"][0]["scene_range"] == [
+        "bk_ch01_b001",
+        "bk_ch01_b002",
+    ]
+    assert result.report.counts["ignored_model_scene_range"] == 1
+
+
+def test_heading_only_scene_is_not_part_of_the_coverage_partition() -> None:
+    blocks = [
+        {
+            "block_id": "bk_ch01_heading",
+            "block_type": "heading",
+            "order_index": 0,
+            "clean_text": "CHAPTER I",
+            "source_text": "CHAPTER I",
+        },
+        *_blocks(),
+    ]
+    payload = _brief(
+        scenes=[
+            {
+                "block_range": ["bk_ch01_heading", "bk_ch01_heading"],
+                "co_present_count": 0,
+                "participants": [],
+            },
+            {
+                "block_range": ["bk_ch01_b001", "bk_ch01_b003"],
+                "co_present_count": 2,
+                "participants": ["Alice", "Bob"],
+            },
+        ]
+    )
+
+    result = validate_chapter_brief_v3(payload, blocks=blocks)
+
+    assert not result.report.ok
+    assert "scenes_party_size[0].block_range is invalid" in result.report.errors
 
 
 def test_full_two_axis_table_routes_and_flags_exactly() -> None:
@@ -419,6 +524,73 @@ def test_full_two_axis_table_routes_and_flags_exactly() -> None:
         assert speaker["attribution_method"] == "nearby_context"
 
 
+def test_endpoint_axis_echo_is_deauthorized_but_foreign_typo_stays_fatal() -> None:
+    payload = {
+        "chapter_id": "bk_ch01",
+        "window_block_ids": ["bk_ch01_b003"],
+        "context_only_used": False,
+        "speaker_turns": [],
+        "relation_events": [
+            {
+                "actor": _endpoint("Bob", "The dog followed Bob.", None),
+                "target": _endpoint(
+                    "dog",
+                    "The dog followed Bob.",
+                    None,
+                    scope="animal",
+                    kind="animal",
+                ),
+                "event_type": "follows",
+                "evidence_quote": "The dog followed Bob.",
+                "block_id": "bk_ch01_b003",
+            }
+        ],
+    }
+    normalized = validate_narrative_v3(payload, blocks=_blocks()[2:])
+    assert normalized.report.ok, normalized.report.to_dict()
+    target = normalized.payload["relation_events"][0]["target"]
+    assert target["reference_scope"] == "unknown"
+    assert target["referent_kind_claim"] == "animal"
+    assert target["runtime_eligibility"] == "deferred"
+    assert normalized.payload["relation_events"][0]["runtime_eligibility"] == "route_out"
+    assert normalized.report.counts["reference_scope_axis_echo_normalized"] == 1
+
+    group_vocabulary = deepcopy(payload)
+    group_target = group_vocabulary["relation_events"][0]["target"]
+    group_target["reference_scope"] = "group_reference"
+    group_target["referent_kind_claim"] = "animal"
+    normalized_group = validate_narrative_v3(group_vocabulary, blocks=_blocks()[2:])
+    assert normalized_group.report.ok, normalized_group.report.to_dict()
+    normalized_target = normalized_group.payload["relation_events"][0]["target"]
+    assert normalized_target["reference_scope"] == "unknown"
+    assert normalized_target["referent_kind_claim"] == "animal"
+    assert normalized_target["runtime_eligibility"] == "deferred"
+    assert normalized_group.report.counts["reference_scope_axis_echo_normalized"] == 1
+
+    typo = deepcopy(payload)
+    typo["relation_events"][0]["target"]["reference_scope"] = "individal"
+    rejected = validate_narrative_v3(typo, blocks=_blocks()[2:])
+    assert not rejected.report.ok
+    assert "target.reference_scope outside enum: 'individal'" in rejected.report.errors
+
+
+def test_mention_ref_must_point_to_the_same_source_occurrence() -> None:
+    lexicon = validate_lexicon_v3(_lexicon(), blocks=_blocks())
+    assert lexicon.report.ok, lexicon.report.to_dict()
+    mentions = lexicon.payload["character_mentions"]
+    alice_id = str(mentions[0]["mention_id"])
+    payload = _narrative(mentions)
+    payload["relation_events"][0]["target"]["mention_ref"] = alice_id
+
+    result = validate_narrative_v3(payload, blocks=_blocks(), mentions=mentions)
+
+    assert result.report.ok, result.report.to_dict()
+    event = result.payload["relation_events"][0]
+    assert event["actor"]["mention_ref"] == alice_id
+    assert event["target"]["mention_ref"] is None
+    assert result.report.counts["mention_ref_cleared_anchor_mismatch"] == 1
+
+
 def test_phase_label_cannot_leak_into_event_type() -> None:
     mentions, _ = _narrative_result()
     payload = _narrative(mentions)
@@ -427,6 +599,55 @@ def test_phase_label_cannot_leak_into_event_type() -> None:
     assert not result.report.ok
     assert result.report.counts["phase_leak"] == 1
     assert result.payload["relation_events"] == []
+
+
+def test_resolution_status_in_attribution_method_drops_only_the_bad_event() -> None:
+    mentions, _ = _narrative_result()
+    payload = _narrative(mentions)
+    bad_event = deepcopy(payload["relation_events"][0])
+    bad_event["target"]["attribution_method"] = "unknown"
+    payload["relation_events"].append(bad_event)
+
+    result = validate_narrative_v3(payload, blocks=_blocks(), mentions=mentions)
+
+    assert result.report.ok, result.report.to_dict()
+    assert len(result.payload["relation_events"]) == 1
+    assert result.payload["relation_events"][0]["event_type"] == "greets"
+    assert result.report.counts["attribution_method_resolution_status_dropped"] == 1
+    assert result.report.counts["dropped_event_attribution_method_resolution_status"] == 1
+    assert result.report.counts["dropped_event"] == 1
+
+
+def test_foreign_attribution_method_drops_only_the_bad_event() -> None:
+    for foreign_value in ("unknwon", "context_only_used"):
+        mentions, _ = _narrative_result()
+        payload = _narrative(mentions)
+        bad_event = deepcopy(payload["relation_events"][0])
+        bad_event["target"]["attribution_method"] = foreign_value
+        payload["relation_events"].append(bad_event)
+
+        result = validate_narrative_v3(payload, blocks=_blocks(), mentions=mentions)
+
+        assert result.report.ok, result.report.to_dict()
+        assert len(result.payload["relation_events"]) == 1
+        assert result.payload["relation_events"][0]["event_type"] == "greets"
+        assert result.report.counts["invalid_attribution_method_dropped"] == 1
+        assert result.report.counts["dropped_event_invalid_attribution_method"] == 1
+
+
+def test_malformed_event_shape_drops_only_that_event() -> None:
+    mentions, _ = _narrative_result()
+    payload = _narrative(mentions)
+    malformed = {"actor": deepcopy(payload["relation_events"][0]["actor"])}
+    payload["relation_events"].append(malformed)
+
+    result = validate_narrative_v3(payload, blocks=_blocks(), mentions=mentions)
+
+    assert result.report.ok, result.report.to_dict()
+    assert len(result.payload["relation_events"]) == 1
+    assert result.report.counts["dropped_invalid_event"] == 1
+    assert result.report.counts["dropped_event_shape_fields"] == 4
+    assert "fatal_shape_contract" not in result.report.counts
 
 
 def test_nested_frame_tree_records_deepest_active_leaf() -> None:
@@ -547,8 +768,15 @@ def test_mid_block_frame_boundary_is_located_or_fails_closed() -> None:
         "evidence_quote": "Alice greeted Bob.",
     }
     result = validate_digest_v3(_digest(frames=[outer, not_midblock]), blocks=_blocks()[:1])
-    assert not result.report.ok
-    assert result.report.counts["dropped_non_midblock_boundary"] == 1
+    assert result.report.ok, result.report.to_dict()
+    normalized = next(
+        frame
+        for frame in result.payload["narration_frame_segments"]
+        if frame["local_segment_key"] == "letter"
+    )
+    assert normalized["start_boundary"] is None
+    assert "start_anchor" not in normalized
+    assert result.report.counts["frame_boundary_edge_collapsed"] == 1
 
 
 def test_mid_block_siblings_use_source_intervals_for_overlap_and_coverage() -> None:
@@ -675,7 +903,7 @@ def test_nonperson_event_is_routed_out_without_being_dropped() -> None:
     assert result.report.counts["route_out_event"] == 1
 
 
-def test_cast_claim_source_blocks_are_validated_against_scene_range() -> None:
+def test_cast_claim_source_blocks_are_normalized_to_the_evidence_block() -> None:
     payload = _brief()
     claim = payload["cast_claims"][0]
     claim.update(
@@ -688,22 +916,40 @@ def test_cast_claim_source_blocks_are_validated_against_scene_range() -> None:
     )
     result = validate_chapter_brief_v3(payload, blocks=_blocks())
     assert result.report.ok, result.report.to_dict()
-    assert result.payload["cast_claims"][0]["source_block_ids"] == ["bk_ch01_b001", "bk_ch01_b002"]
+    assert result.payload["cast_claims"][0]["source_block_ids"] == ["bk_ch01_b002"]
+    assert result.report.counts["source_block_ids_normalized_to_evidence_block"] == 1
 
     outside = deepcopy(payload)
     outside["cast_claims"][0]["source_block_ids"] = ["bk_ch01_b001", "bk_ch01_b004"]
     result = validate_chapter_brief_v3(outside, blocks=_blocks())
     assert not result.report.ok
-    assert result.report.counts["cast_claim_source_outside_scene"] == 1
+    assert any("source_block_ids unknown" in error for error in result.report.errors)
 
 
 def test_cast_claim_surface_must_match_its_minted_anchor() -> None:
     payload = _brief()
-    payload["cast_claims"][0]["anchor_text"] = "Bob"
+    invalid = deepcopy(payload["cast_claims"][0])
+    invalid["anchor_text"] = "Bob"
+    payload["cast_claims"] = [invalid, payload["cast_claims"][0]]
     result = validate_chapter_brief_v3(payload, blocks=_blocks())
+    assert result.report.ok, result.report.to_dict()
+    assert len(result.payload["cast_claims"]) == 1
+    assert result.payload["cast_claims"][0]["surface"] == "Alice"
+    assert result.report.counts["dropped_surface_anchor_mismatch"] == 1
+
+
+def test_cast_claim_rejects_cross_block_stitched_quote() -> None:
+    stitched = _brief()
+    stitched["cast_claims"][0].update(
+        {
+            "source_block_ids": ["bk_ch01_b001", "bk_ch01_b002"],
+            "evidence_quote": "Alice arrived. ... Bob waited.",
+        }
+    )
+    result = validate_chapter_brief_v3(stitched, blocks=_blocks())
     assert not result.report.ok
     assert result.payload["cast_claims"] == []
-    assert result.report.counts["dropped_surface_anchor_mismatch"] == 1
+    assert result.report.counts["fail_closed_locate"] == 1
 
 
 def _shape_samples() -> dict[str, dict[str, object]]:
@@ -831,9 +1077,9 @@ def test_shape_contract_fields_cannot_drift_from_typed_dataclasses() -> None:
     }
     code_filled = {
         "ChapterBrief": {"input_max_order"},
-        "CastClaim": {"cast_claim_id", "anchor", "evidence_max_order"},
+        "CastClaim": {"cast_claim_id", "anchor", "evidence_max_order", "scene_range"},
         "Mention": {"mention_id", "anchor"},
-        "Endpoint": {"endpoint_id", "anchor", "resolution_evidence", "runtime_eligibility"},
+        "Endpoint": {"endpoint_id", "anchor", "resolution_evidence", "runtime_eligibility", "surface"},
         "Turn": {"turn_id", "position_key"},
         "AddressTerm": {"address_occurrence_id", "anchor"},
         "Event": {"event_id", "position_key"},
@@ -857,6 +1103,37 @@ def test_shape_contract_rejects_wrong_types_and_illegal_nulls() -> None:
     endpoint = deepcopy(_shape_samples()["Endpoint"])
     endpoint["mention_ref"] = None
     assert validate_shape_contract("Endpoint", endpoint) == []
+
+
+def test_endpoint_surface_and_event_type_format_are_code_derived() -> None:
+    payload = {
+        "chapter_id": "bk_ch01",
+        "window_block_ids": ["bk_ch01_b001"],
+        "context_only_used": False,
+        "speaker_turns": [],
+        "relation_events": [
+            {
+                "actor": _endpoint("Resolved Alice", "Alice greeted Bob.", None),
+                "target": _endpoint("Resolved Bob", "Alice greeted Bob.", None),
+                "event_type": "Greets Bob Warmly",
+                "evidence_quote": "Alice greeted Bob.",
+                "block_id": "bk_ch01_b001",
+            }
+        ],
+    }
+    payload["relation_events"][0]["actor"]["anchor_text"] = "Alice"
+    payload["relation_events"][0]["actor"].pop("surface")
+    payload["relation_events"][0]["target"]["anchor_text"] = "Bob"
+
+    result = validate_narrative_v3(payload, blocks=_blocks()[:1])
+
+    assert result.report.ok, result.report.to_dict()
+    event = result.payload["relation_events"][0]
+    assert event["actor"]["surface"] == "Alice"
+    assert event["target"]["surface"] == "Bob"
+    assert event["event_type"] == "greets_bob_warmly"
+    assert result.report.counts["ignored_model_endpoint_surface"] == 1
+    assert result.report.counts["event_type_format_normalized"] == 1
 
 
 def test_stage_validators_actually_enforce_nested_shape_contracts() -> None:

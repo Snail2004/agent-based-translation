@@ -24,8 +24,10 @@ from pipeline.literary.checkpoint import (
     artifact_manifest,
     build_checkpoint,
     canonical_hash,
+    canonical_json,
     chapter_source_hash,
     read_checkpoint,
+    resolve_existing_canonical_path,
     validate_checkpoint,
     write_checkpoint_atomic,
 )
@@ -212,6 +214,16 @@ def test_checkpoint_lock_blocks_live_owner_and_takes_over_dead_owner(tmp_path: P
     takeover = CheckpointLock(tmp_path, alive_check=lambda _pid: False).acquire()
     assert takeover.took_over_stale is True
     takeover.release()
+
+
+def test_canonical_path_resolves_unique_unicode_equivalent(tmp_path: Path) -> None:
+    decomposed = tmp_path / "Ta\u0300i lie\u0323\u0302u" / "artifact.json"
+    decomposed.parent.mkdir()
+    decomposed.write_text("{}\n", encoding="utf-8")
+    canonical_spelling = Path(json.loads(canonical_json(str(decomposed))))
+    canonical_spelling.parent.mkdir(exist_ok=True)
+
+    assert resolve_existing_canonical_path(canonical_spelling) == decomposed.resolve()
 
 
 @pytest.mark.skipif(not DESIGN_DOC.exists(), reason="Prompt design doc is not present")

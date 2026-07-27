@@ -1,0 +1,31 @@
+{
+  "schema_version": "thesis_provider_profile_v1",
+  "profile_id": "literary_b2_reference_provider_v1",
+  "credentials": {
+    "openai-row1": {
+      "provider": "openai",
+      "credential_revision": "openai-key1-literary-v1",
+      "relative_file": "OPENAI-KEY-1.txt",
+      "nonempty_line": 1,
+      "enabled": true,
+      "base_url": null,
+      "request_timeout_ms": 180000
+    }
+  },
+  "roles": {
+    "literary_b2_frame": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": [
+        "openai-row1"
+      ]
+    },
+    "literary_b2_interaction_reference": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": [
+        "openai-row1"
+      ]
+    }
+  }
+}

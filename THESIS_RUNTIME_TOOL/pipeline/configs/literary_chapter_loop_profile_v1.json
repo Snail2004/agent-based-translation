@@ -1,0 +1,123 @@
+{
+  "schema_version": "literary_chapter_cycle_profile_v1",
+  "profile_id": "literary_chapter_loop_modelapi_v1",
+  "stage_graph_id": "literary_chapter_loop_v1",
+  "provider_profile": "literary_provider_profile_modelapi_chapter_loop_v1.json",
+  "role_bindings": {
+    "b0_contract_fallback": "literary_b0_contract_fallback",
+    "b0_summary": "literary_b0_summary",
+    "b1_enrich": "literary_b1_enrich",
+    "b1_scan": "literary_b1_scan",
+    "b2": "literary_b2_composite",
+    "b3_auditor": "literary_b3_auditor",
+    "b3_temporal": "literary_b3_temporal",
+    "identity_auditor": "literary_cross_chapter_auditor",
+    "local_auditor": "literary_local_auditor",
+    "speaker_recovery": "literary_speaker_recovery"
+  },
+  "stage_limits": {
+    "b0_summary": {
+      "prompt_token_cap": 32000,
+      "max_output_tokens": 8192,
+      "temperature": 1.0,
+      "seed": 20260721,
+      "reasoning_effort": "none",
+      "max_calls_per_chapter": 1
+    },
+    "b1_enrich": {
+      "prompt_token_cap": 32000,
+      "max_output_tokens": 16384,
+      "temperature": 1.0,
+      "seed": 20260721,
+      "reasoning_effort": "none",
+      "max_calls_per_chapter": 1
+    },
+    "b1_scan": {
+      "prompt_token_cap": 24000,
+      "max_output_tokens": 16384,
+      "temperature": 1.0,
+      "seed": 20260721,
+      "reasoning_effort": "none",
+      "max_calls_per_chapter": 1
+    },
+    "b2": {
+      "prompt_token_cap": 240000,
+      "max_output_tokens": 48000,
+      "temperature": 1.0,
+      "seed": 20260721,
+      "reasoning_effort": "none",
+      "max_calls_per_chapter": 16
+    },
+    "b3_auditor": {
+      "prompt_token_cap": 32000,
+      "max_output_tokens": 8192,
+      "temperature": 1.0,
+      "seed": 20260721,
+      "reasoning_effort": "none",
+      "max_calls_per_chapter": 32
+    },
+    "b3_temporal": {
+      "prompt_token_cap": 80000,
+      "max_output_tokens": 24000,
+      "temperature": 1.0,
+      "seed": 20260721,
+      "reasoning_effort": "none",
+      "max_calls_per_chapter": 4
+    },
+    "identity_auditor": {
+      "prompt_token_cap": 160000,
+      "max_output_tokens": 32000,
+      "temperature": 1.0,
+      "seed": 20260721,
+      "reasoning_effort": "none",
+      "max_calls_per_chapter": 32
+    },
+    "local_auditor": {
+      "prompt_token_cap": 160000,
+      "max_output_tokens": 32000,
+      "temperature": 1.0,
+      "seed": 20260721,
+      "reasoning_effort": "none",
+      "max_calls_per_chapter": 32
+    },
+    "speaker_recovery": {
+      "prompt_token_cap": 80000,
+      "max_output_tokens": 16000,
+      "temperature": 1.0,
+      "seed": 20260721,
+      "reasoning_effort": "none",
+      "max_calls_per_chapter": 4
+    }
+  },
+  "resilience": {
+    "transport_retries_per_request": 0,
+    "contract_repairs_per_response": 0,
+    "b0_contract_fallback_enabled": false
+  },
+  "orchestration": {
+    "checkpoint_after_each_chapter": true,
+    "allow_chapter_skip": false,
+    "production_publish_enabled": false,
+    "max_api_calls_per_chapter": 100,
+    "max_api_calls_per_run": 1000,
+    "default_stop_after_chapter_count": 10
+  },
+  "semantic_leads": {
+    "max_leads_per_chapter": 8,
+    "max_identity_components_per_chapter": 32,
+    "overflow_action": "defer_without_authority"
+  },
+  "reporting": {
+    "persist_raw_attempts": true,
+    "persist_usage_when_reported": true,
+    "redact_credentials": true
+  },
+  "locked_safety": {
+    "integrity_failure_action": "pause_no_retry",
+    "unknown_failure_action": "pause",
+    "semantic_pending_action": "persist_without_authority_and_continue",
+    "auditor_smaller_model_fallback_allowed": false,
+    "chapter_skip_allowed": false,
+    "gold_in_runtime_request_allowed": false
+  }
+}

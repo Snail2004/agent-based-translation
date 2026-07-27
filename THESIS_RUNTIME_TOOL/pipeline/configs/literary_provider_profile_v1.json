@@ -1,0 +1,116 @@
+{
+  "schema_version": "thesis_provider_profile_v1",
+  "profile_id": "literary_console_default_v1",
+  "credentials": {
+    "ckey-account-v1": {
+      "provider": "google_genai",
+      "credential_revision": "ckey-account-v1",
+      "relative_file": "CKEY.txt",
+      "nonempty_line": 1,
+      "enabled": true,
+      "base_url": "https://api.xah.io",
+      "request_timeout_ms": 120000
+    },
+    "gemini-shopapi-v1": {
+      "provider": "google_genai",
+      "credential_revision": "gemini-shopapi-v1",
+      "relative_file": "GEMINI-KEY.txt",
+      "nonempty_line": 1,
+      "enabled": true,
+      "base_url": "https://api.shopaikey.com",
+      "request_timeout_ms": 480000
+    },
+    "gemini-free-row1-v1": {
+      "provider": "google_genai",
+      "credential_revision": "gemini-free-row1-v1",
+      "relative_file": "GEMINI-KEY-FREE.txt",
+      "nonempty_line": 1,
+      "enabled": true,
+      "base_url": null,
+      "request_timeout_ms": 120000
+    },
+    "gemini-free-row2-v1": {
+      "provider": "google_genai",
+      "credential_revision": "gemini-free-row2-v1",
+      "relative_file": "GEMINI-KEY-FREE.txt",
+      "nonempty_line": 2,
+      "enabled": true,
+      "base_url": null,
+      "request_timeout_ms": 120000
+    },
+    "gemini-free-row3-v1": {
+      "provider": "google_genai",
+      "credential_revision": "gemini-free-row3-v1",
+      "relative_file": "GEMINI-KEY-FREE.txt",
+      "nonempty_line": 3,
+      "enabled": true,
+      "base_url": null,
+      "request_timeout_ms": 120000
+    },
+    "gemini-free-row4-v1": {
+      "provider": "google_genai",
+      "credential_revision": "gemini-free-row4-v1",
+      "relative_file": "GEMINI-KEY-FREE.txt",
+      "nonempty_line": 4,
+      "enabled": true,
+      "base_url": null,
+      "request_timeout_ms": 120000
+    },
+    "gemini-free-row5-v2": {
+      "provider": "google_genai",
+      "credential_revision": "gemini-free-row5-v2",
+      "relative_file": "GEMINI-KEY-FREE.txt",
+      "nonempty_line": 5,
+      "enabled": false,
+      "base_url": null,
+      "request_timeout_ms": 120000
+    },
+    "openai-row1": {
+      "provider": "openai",
+      "credential_revision": "openai-row1",
+      "relative_file": "OPENAI-KEY-1.txt",
+      "nonempty_line": 1,
+      "enabled": true,
+      "base_url": null,
+      "request_timeout_ms": 120000
+    },
+    "openai-row2": {
+      "provider": "openai",
+      "credential_revision": "openai-row2",
+      "relative_file": "OPENAI-KEY-2.txt",
+      "nonempty_line": 1,
+      "enabled": true,
+      "base_url": null,
+      "request_timeout_ms": 120000
+    }
+  },
+  "roles": {
+    "literary_b0": {
+      "provider": "google_genai",
+      "model_id": "vuduythanh2023/gemini-3.5-flash",
+      "bucket_order": [
+        "ckey-account-v1"
+      ]
+    },
+    "literary_b0_contract_fallback": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["openai-row1", "openai-row2"]
+    },
+    "literary_local_conflict_auditor": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["openai-row1", "openai-row2"]
+    },
+    "literary_stable_claim_auditor": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["openai-row1", "openai-row2"]
+    },
+    "literary_incremental_identity_auditor": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["openai-row2", "openai-row1"]
+    }
+  }
+}

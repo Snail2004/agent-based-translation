@@ -1,0 +1,59 @@
+{
+  "schema_version": "literary_openai_identity_capability_probe_profile_v1",
+  "profile_id": "literary_openai_official_identity_native_so_probe_v1",
+  "profile_revision": "openai_row2_gpt54_identity_v1",
+  "shared_core_revision": "de7c74ba348bffe507aa86933f438b3ed4c5af29",
+  "runtime_profile": {
+    "profile_id": "literary_shared_llm_openai_official_v2",
+    "profile_revision": "openai_row2_gpt54_native_v1",
+    "profile_sha256": "63ca4ef6dfcde42effb893de3430c591e6e1d150ad549e47856e4e9b8d1c3aa9",
+    "source_alias": "openai_official_row2"
+  },
+  "capability_intent": {
+    "capability_id": "openai_row2_gpt54_literary_identity_native_so_v1",
+    "capability_revision": "identity_transport_4bf9dc6a_validator_34a8bcbf_v1",
+    "role_id": "literary.audit.identity_surface",
+    "requested_model_id": "gpt-5.4",
+    "accepted_observed_model_ids": ["gpt-5.4", "gpt-5.4-2026-03-05"],
+    "capability_kind": "native_structured_output",
+    "schema_name": "literary_identity_surface_auditor_v1",
+    "schema_dialect": "openai_strict_json_schema_subset_v1",
+    "schema_sha256": "4bf9dc6abdf0f873b36a1ebc507c466cbca73cdca8f639ca9ef5e004ab91709b",
+    "local_validator_id": "literary.audit.identity_surface.validator",
+    "local_validator_revision": "v1",
+    "local_validator_sha256": "34a8bcbf9a7931b273d08640a4ddb525773a216931f3b9003f39c1686685b754"
+  },
+  "transport_projection": {
+    "projection_id": "literary_openai_transport_schema_projection_v1",
+    "canonical_schema_sha256": "a6a6e356f83405f17f3aa3bede30d5af9f5ca58f9c63913c5aec1686af7abb0c",
+    "transport_schema_sha256": "4bf9dc6abdf0f873b36a1ebc507c466cbca73cdca8f639ca9ef5e004ab91709b",
+    "omitted_keywords": ["minItems", "minLength", "uniqueItems"],
+    "omitted_constraint_count": 8,
+    "omission_set_sha256": "a6a41d56fed7324cf9bae1b9cd0f0c214fa2ee4516b689a0d8368b2aeb011988"
+  },
+  "generation": {
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "seed": 20260720,
+    "reasoning_effort": "none",
+    "verbosity": "low",
+    "max_completion_tokens": 1024
+  },
+  "limits": {
+    "max_calls": 1,
+    "max_prompt_utf8_bytes": 16000,
+    "max_response_utf8_bytes": 12000,
+    "max_prompt_tokens": 6000,
+    "max_completion_tokens": 1024,
+    "max_total_tokens": 7024,
+    "request_timeout_ms": 120000
+  },
+  "safety": {
+    "authority": "capability_only",
+    "fallback_enabled": false,
+    "transport_retry_max": 0,
+    "semantic_retry_max": 0,
+    "response_cache_enabled": false,
+    "application_publish_enabled": false
+  }
+}

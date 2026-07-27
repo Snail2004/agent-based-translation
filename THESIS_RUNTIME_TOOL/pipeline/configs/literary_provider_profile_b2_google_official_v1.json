@@ -1,0 +1,24 @@
+{
+  "schema_version": "thesis_provider_profile_v1",
+  "profile_id": "literary_b2_google_official_provider_v1",
+  "credentials": {
+    "gemini-free-row4-v1": {
+      "provider": "google_genai",
+      "credential_revision": "gemini-free-row4-temporary-literary-v1",
+      "relative_file": "GEMINI-KEY-FREE.txt",
+      "nonempty_line": 4,
+      "enabled": true,
+      "base_url": null,
+      "request_timeout_ms": 180000
+    }
+  },
+  "roles": {
+    "literary_b2_interaction": {
+      "provider": "google_genai",
+      "model_id": "gemini-3.5-flash",
+      "bucket_order": [
+        "gemini-free-row4-v1"
+      ]
+    }
+  }
+}

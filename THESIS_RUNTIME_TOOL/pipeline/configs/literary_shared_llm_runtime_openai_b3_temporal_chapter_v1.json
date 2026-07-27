@@ -1,0 +1,79 @@
+{
+  "schema_version": "literary_shared_llm_runtime_profile_v2",
+  "profile_id": "literary_shared_llm_openai_b3_temporal_chapter_v1",
+  "profile_revision": "openai_row2_gpt54_b3_chapter_prompt_validated_v2",
+  "backend_mode": "shared_v1",
+  "sources": [
+    {
+      "source_alias": "openai_official_row2",
+      "source_id": "openai_official_row2_v1",
+      "source_revision": "openai_key2_literary_20260719_v1",
+      "authority_class": "direct_official_openai",
+      "source_class": "remote_api",
+      "adapter_id": "openai_python_v1",
+      "protocol": "openai_chat_completions",
+      "route_id": "chat_completions_create",
+      "endpoint_class": "remote",
+      "base_url": "https://api.openai.com/v1",
+      "credential_ref": "credential.openai_row2",
+      "physical_quota_bucket_id": "openai-row2",
+      "selection_mode": "host_resolved_exact_source",
+      "fallback_enabled": false
+    }
+  ],
+  "roles": [
+    {
+      "role_id": "literary.b3.temporal_state",
+      "preset_id": "literary.b3.temporal_state.gpt54_chapter_prompt_validated_v2",
+      "preset_revision": "v2",
+      "legacy_role_ids": [],
+      "requested_model_id": "gpt-5.4",
+      "source_alias": "openai_official_row2",
+      "output_envelope": {
+        "mode": "json_object",
+        "schema_dialect": "json_schema_2020_12",
+        "instruction_id": "literary.json_only_output_instruction",
+        "instruction_revision": "v2"
+      },
+      "generation": {
+        "context_window_tokens": null,
+        "max_input_tokens": 20000,
+        "max_output_tokens": 8000,
+        "temperature": 1,
+        "top_p": 1,
+        "seed": 20260720,
+        "reasoning_effort": "none",
+        "verbosity": "low"
+      },
+      "limits": {
+        "max_calls": 2,
+        "max_prompt_tokens": 40000,
+        "max_completion_tokens": 16000,
+        "max_total_tokens": 56000,
+        "max_cost_usd": null,
+        "request_timeout_ms": 300000
+      },
+      "transport_retry": {
+        "max_retries": 0,
+        "backoff_policy": "none",
+        "initial_delay_ms": 0,
+        "max_delay_ms": 0,
+        "retryable_codes": []
+      },
+      "semantic_retry": {
+        "max_retries": 0,
+        "retryable_categories": []
+      },
+      "namespaces": {
+        "output": "literary.b3.temporal_state.chapter.v2.output",
+        "checkpoint": "literary.b3.temporal_state.chapter.v2.checkpoint",
+        "cache": "literary.b3.temporal_state.chapter.v2.cache"
+      }
+    }
+  ],
+  "safety": {
+    "provider_fallback_allowed": false,
+    "application_response_cache_enabled": false,
+    "production_publish_enabled": false
+  }
+}

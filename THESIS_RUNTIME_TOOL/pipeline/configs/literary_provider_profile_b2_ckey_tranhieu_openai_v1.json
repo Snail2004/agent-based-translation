@@ -1,0 +1,24 @@
+{
+  "schema_version": "thesis_provider_profile_v1",
+  "profile_id": "literary_b2_ckey_tranhieu_openai_diagnostic_v1",
+  "credentials": {
+    "ckey-account-v1": {
+      "provider": "openai",
+      "credential_revision": "ckey-account-v1",
+      "relative_file": "CKEY.txt",
+      "nonempty_line": 1,
+      "enabled": true,
+      "base_url": "https://api.xah.io/v1",
+      "request_timeout_ms": 480000
+    }
+  },
+  "roles": {
+    "literary_b2_interaction": {
+      "provider": "openai",
+      "model_id": "tranhieu13102003/gemini-3.5-flash",
+      "bucket_order": [
+        "ckey-account-v1"
+      ]
+    }
+  }
+}

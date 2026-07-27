@@ -1,0 +1,33 @@
+{
+  "schema_version": "literary_b2_ch1_canary_profile_v3",
+  "profile_id": "literary_b2_ch1_openai_gpt54_samehead_v1",
+  "b2_profile": "literary_b2_phase_a_profile_v1.json",
+  "provider_profile": "literary_provider_profile_openai_gpt54_samehead_v1.json",
+  "structured_output_policy": "literary_structured_output_policy_v1.json",
+  "chapter_id": "wh_ch01",
+  "role_bindings": {
+    "frame": "literary_b2_frame",
+    "interaction": "literary_b2_interaction"
+  },
+  "contract_versions": {
+    "frame": "v1",
+    "interaction": "v2"
+  },
+  "limits": {
+    "frame_calls": 1,
+    "interaction_calls": 2,
+    "exception_calls": 0,
+    "max_total_calls": 3,
+    "max_retries_per_call": 0,
+    "hard_visible_token_cap": 100000
+  },
+  "safety": {
+    "source_run_may_be_historical": true,
+    "certification_claim_allowed": false,
+    "semantic_review_action": "persist_and_continue",
+    "integrity_failure_action": "halt_before_next_call",
+    "provider_fallback_allowed": false,
+    "production_publish_enabled": false,
+    "stop_after_chapter_id": "wh_ch01"
+  }
+}

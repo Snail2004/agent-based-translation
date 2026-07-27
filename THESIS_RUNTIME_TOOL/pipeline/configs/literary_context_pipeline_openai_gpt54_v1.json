@@ -1,0 +1,54 @@
+{
+  "schema_version": "literary_context_pipeline_profile_v1",
+  "profile_id": "literary_context_pipeline_openai_gpt54_v1",
+  "b1_pipeline_profile": "literary_pipeline_profile_openai_gpt54_samehead_v1.json",
+  "b2_phase_profile": "literary_b2_phase_a_profile_v1.json",
+  "provider_profile": "literary_provider_profile_openai_gpt54_samehead_v1.json",
+  "structured_output_policy": "literary_structured_output_policy_v1.json",
+  "role_bindings": {
+    "b2_frame": "literary_b2_frame",
+    "b2_interaction": "literary_b2_interaction",
+    "registry_recovery": "literary_local_conflict_auditor",
+    "event_review": "literary_local_conflict_auditor"
+  },
+  "contract_versions": {
+    "frame": "v1",
+    "interaction": "v2",
+    "event_review": "v2"
+  },
+  "generation": {
+    "temperature": 1.0,
+    "seed": 20260719,
+    "reasoning_effort": "none",
+    "verbosity": "low"
+  },
+  "recovery_stage_limits": {
+    "registry_recovery": {
+      "prompt_token_cap": 12000,
+      "max_output_tokens": 8000
+    },
+    "event_review": {
+      "prompt_token_cap": 20000,
+      "max_output_tokens": 12000
+    }
+  },
+  "limits": {
+    "max_chapters_per_run": 34,
+    "b2_interaction_calls_per_chapter_cap": 6,
+    "b2_hard_visible_token_cap_per_chapter": 220000,
+    "recovery_registry_calls_per_chapter_cap": 4,
+    "recovery_event_calls_per_chapter_cap": 6,
+    "recovery_hard_visible_token_cap_per_chapter": 300000,
+    "max_b2_attempts_per_chapter": 1,
+    "max_recovery_attempts_per_chapter": 2
+  },
+  "safety": {
+    "provider_fallback_allowed": false,
+    "semantic_pending_action": "persist_without_authority_and_continue",
+    "integrity_failure_action": "halt_before_next_call",
+    "source_artifact_mutation_allowed": false,
+    "book_global_identity_mutation_allowed": false,
+    "gold_in_runtime_request_allowed": false,
+    "production_publish_enabled": false
+  }
+}

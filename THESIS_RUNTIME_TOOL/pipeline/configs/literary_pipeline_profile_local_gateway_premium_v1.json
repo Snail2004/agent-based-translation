@@ -1,0 +1,60 @@
+{
+  "schema_version": "literary_pipeline_profile_v2",
+  "profile_id": "literary_pipeline_local_gateway_premium_v1",
+  "chapter_cycle_profile": "literary_chapter_cycle_profile_local_gateway_premium_v1.json",
+  "design_doc": "../../../design/LITERARY_PROMPT_DESIGN.md",
+  "usage_baseline": "literary_local_gateway_usage_baseline_v1.json",
+  "structured_output_policy": "literary_structured_output_policy_local_gateway_premium_v1.json",
+  "public_stage_contract": {
+    "b1": {
+      "enabled": true,
+      "implementation_role": "b0",
+      "implementation_stage_names": [
+        "b0",
+        "b0_prior"
+      ]
+    },
+    "local_auditor": {
+      "enabled": true,
+      "implementation_role": "local_auditor",
+      "implementation_stage_names": [
+        "local_auditor"
+      ]
+    },
+    "stable_claim_auditor": {
+      "enabled": true,
+      "implementation_role": "stable_claim_auditor",
+      "implementation_stage_names": [
+        "stable_claim_components"
+      ]
+    },
+    "identity_surface_auditor": {
+      "enabled": true,
+      "implementation_role": "identity_auditor",
+      "implementation_stage_names": [
+        "identity_components"
+      ]
+    },
+    "b2": {
+      "enabled": false,
+      "implementation_role": null,
+      "implementation_stage_names": []
+    }
+  },
+  "chapter_selection": {
+    "requires_contiguous_order": true,
+    "requires_prefix_or_checkpoint_when_not_starting_at_first_chapter": true,
+    "standalone_mode_is_non_authoritative": true
+  },
+  "console_controls": {
+    "expose_model_selection": true,
+    "expose_provider_selection": true,
+    "expose_credential_handle_selection": true,
+    "expose_token_caps": true,
+    "expose_retry_caps": true,
+    "expose_stop_after_chapter_count": true,
+    "expose_structured_output_mode": true,
+    "secret_values_in_profile_allowed": false
+  },
+  "production_publish_enabled": false
+}

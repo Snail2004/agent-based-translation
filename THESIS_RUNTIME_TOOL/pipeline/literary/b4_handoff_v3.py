@@ -13,6 +13,7 @@ from pipeline.literary.builder_v3_pipeline import (
     DEFAULT_TAIL_K,
     DEFAULT_WINDOW_MAX_BLOCKS,
     DEFAULT_WINDOW_TARGET_TOKENS,
+    EXECUTION_MODE_REAL_API,
     EXECUTION_MODE_SYNTHETIC,
     KNOWLEDGE_MODE,
     REQUEST_CONTRACT_HASHES,
@@ -28,12 +29,24 @@ from pipeline.literary.checkpoint_v3 import (
     read_current_checkpoint,
     read_state_from_checkpoint,
 )
+from pipeline.literary.book_source_lineage import (
+    BOOK_SOURCE_MANIFEST_SCHEMA_VERSION,
+    STATE_LINEAGE_SCHEMA_VERSION,
+    BookSourceChapter,
+    BookSourceLineageError,
+    BookSourceManifest,
+    book_source_manifest_body as _shared_manifest_body,
+    build_book_source_manifest as _shared_build_manifest,
+    chapter_source_hash as _shared_source_hash,
+    state_lineage_id_for_manifest as _shared_lineage_id,
+    verify_book_source_manifest as _shared_verify_manifest,
+)
 from pipeline.literary.source_anchor import nfc_block_string
 
 
-VERIFIED_INPUTS_SCHEMA_VERSION = "literary_builder_v3_verified_inputs_v1"
-BUNDLE_SCHEMA_VERSION = "literary_b4_input_bundle_v1"
-HANDOFF_CONTRACT_VERSION = "literary_b4_handoff_contract_v1"
+VERIFIED_INPUTS_SCHEMA_VERSION = "literary_builder_v3_verified_inputs_v2"
+BUNDLE_SCHEMA_VERSION = "literary_b4_input_bundle_v3"
+HANDOFF_CONTRACT_VERSION = "literary_b4_handoff_contract_v3"
 
 _OCCURRENCE_KINDS = {"mention", "endpoint"}
 _ENDPOINT_BUCKETS = {
@@ -63,7 +76,6 @@ _REF_KIND_ORDER = {
 }
 _ENDPOINT_ROLES = {"speaker", "addressee", "actor", "target"}
 _CHANNELS = (
-    "cast_claim_inputs",
     "glossary_inputs",
     "dialogue_turn_inputs",
     "relation_event_inputs",
@@ -118,7 +130,40 @@ def _block_view(block: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _source_hash(chapter: Mapping[str, Any]) -> str:
-    return canonical_hash([_block_view(row) for row in _ordered_blocks(chapter)])
+    try:
+        return _shared_source_hash(chapter)
+    except BookSourceLineageError as exc:
+        raise B4HandoffError(str(exc)) from exc
+
+
+def _book_source_manifest_body(manifest: Mapping[str, Any]) -> dict[str, Any]:
+    try:
+        return _shared_manifest_body(manifest)
+    except BookSourceLineageError as exc:
+        raise B4HandoffError(str(exc)) from exc
+
+
+def build_book_source_manifest(document: Mapping[str, Any]) -> BookSourceManifest:
+    try:
+        return _clone(_shared_build_manifest(document))
+    except BookSourceLineageError as exc:
+        raise B4HandoffError(str(exc)) from exc
+
+
+def verify_book_source_manifest(
+    document: Mapping[str, Any], manifest: Mapping[str, Any]
+) -> BookSourceManifest:
+    try:
+        return _clone(_shared_verify_manifest(document, manifest))
+    except BookSourceLineageError as exc:
+        raise B4HandoffError(str(exc)) from exc
+
+
+def state_lineage_id_for_manifest(manifest: Mapping[str, Any]) -> str:
+    try:
+        return _shared_lineage_id(manifest)
+    except BookSourceLineageError as exc:
+        raise B4HandoffError(str(exc)) from exc
 
 
 def _m1_semantic_projection(state: Mapping[str, Any]) -> dict[str, Any]:
@@ -150,6 +195,8 @@ def _validate_state(
     )
     if state.get("schema_version") != expected_schema or state.get("chapter_id") != chapter_id:
         raise CheckpointError(f"restored {stage} state identity mismatch: {chapter_id}")
+    if stage == "m1v3" and "b0_payload" in state:
+        raise CheckpointError(f"restored m1v3 state carries retired b0_payload: {chapter_id}")
     expected_contract = contract_versions() if stage == "m1v3" else None
     if state.get("contract_versions") != expected_contract:
         raise CheckpointError(f"restored {stage} state contract mismatch: {chapter_id}")
@@ -203,6 +250,7 @@ def _expected_checkpoint(
     tail_k: int,
     summary_k: int,
     input_m1v3_identity_hash: str | None = None,
+    execution_contract_hash: str | None = None,
 ) -> dict[str, Any]:
     expected = {
         "stage": stage,
@@ -228,6 +276,10 @@ def _expected_checkpoint(
     }
     if stage == "m2v3":
         expected["input_m1v3_identity_hash"] = input_m1v3_identity_hash
+    if execution_mode == EXECUTION_MODE_REAL_API:
+        if not execution_contract_hash:
+            raise ValueError("real Step-4 checkpoint expectation lacks contract hash")
+        expected["execution_contract_hash"] = execution_contract_hash
     return expected
 
 
@@ -243,13 +295,23 @@ def load_verified_builder_v3_inputs(
     window_max_blocks: int = DEFAULT_WINDOW_MAX_BLOCKS,
     tail_k: int = DEFAULT_TAIL_K,
     summary_k: int = DEFAULT_SUMMARY_K,
+    m1_execution_contract_hash: str | None = None,
+    m2_execution_contract_hash: str | None = None,
 ) -> dict[str, Any]:
     """Load an exact Builder-v3 prefix after validating both checkpoint chains."""
 
     if knowledge_mode != KNOWLEDGE_MODE:
         raise ValueError("Step-4 supports whole_book_frozen only")
-    if execution_mode != EXECUTION_MODE_SYNTHETIC:
-        raise ValueError("Step-4 currently supports synthetic checkpoints only")
+    if execution_mode not in {EXECUTION_MODE_SYNTHETIC, EXECUTION_MODE_REAL_API}:
+        raise ValueError("Step-4 received an unsupported execution mode")
+    if execution_mode == EXECUTION_MODE_SYNTHETIC and (
+        m1_execution_contract_hash or m2_execution_contract_hash
+    ):
+        raise ValueError("synthetic Step-4 cannot carry real execution contracts")
+    if execution_mode == EXECUTION_MODE_REAL_API and not (
+        m1_execution_contract_hash and m2_execution_contract_hash
+    ):
+        raise ValueError("real Step-4 requires M1 and M2 execution contract hashes")
     whole = [dict(row) for row in document.get("chapters") or []]
     whole_ids = [str(row.get("chapter_id") or "") for row in whole]
     if not whole or not chapters or any(not value for value in whole_ids):
@@ -269,6 +331,13 @@ def load_verified_builder_v3_inputs(
         "contract_versions": contract_versions(),
         "request_contract_hashes": dict(REQUEST_CONTRACT_HASHES),
     }
+    if execution_mode == EXECUTION_MODE_REAL_API:
+        config_identity.update(
+            {
+                "m1_execution_contract_hash": m1_execution_contract_hash,
+                "m2_execution_contract_hash": m2_execution_contract_hash,
+            }
+        )
     verified: list[dict[str, Any]] = []
     m1_parent: str | None = None
     m2_parent: str | None = None
@@ -290,6 +359,7 @@ def load_verified_builder_v3_inputs(
                 window_max_blocks=window_max_blocks,
                 tail_k=tail_k,
                 summary_k=summary_k,
+                execution_contract_hash=m1_execution_contract_hash,
             ),
         )
         if m1 is None:
@@ -313,6 +383,7 @@ def load_verified_builder_v3_inputs(
                 tail_k=tail_k,
                 summary_k=summary_k,
                 input_m1v3_identity_hash=str(m1["checkpoint_identity_hash"]),
+                execution_contract_hash=m2_execution_contract_hash,
             ),
         )
         if m2 is None:
@@ -392,47 +463,20 @@ def _unique_evidence_span(
     return containing[0]
 
 
-def _scene_context(
+def _active_block_context(
     *,
     block_id: str,
     source_blocks: Sequence[Mapping[str, Any]],
-    scenes: Sequence[Mapping[str, Any]],
 ) -> dict[str, Any]:
     block_map = {str(row.get("block_id") or ""): dict(row) for row in source_blocks}
     if block_id not in block_map:
         raise B4HandoffError(f"occurrence block is absent from source: {block_id}")
-    coverage = [
-        str(row.get("block_id") or "")
-        for row in source_blocks
-        if str(row.get("block_type") or "") in {"paragraph", "dialogue"}
-    ]
-    matches: list[tuple[list[str], list[str]]] = []
-    for scene in scenes:
-        raw_range = scene.get("block_range")
-        if not isinstance(raw_range, list) or len(raw_range) != 2:
-            continue
-        try:
-            start = coverage.index(str(raw_range[0]))
-            end = coverage.index(str(raw_range[1]))
-        except ValueError:
-            continue
-        if start <= end:
-            ids = coverage[start : end + 1]
-            if block_id in ids:
-                matches.append(([str(raw_range[0]), str(raw_range[1])], ids))
-    if len(matches) == 1:
-        scene_range, ids = matches[0]
-        return {
-            "active_block": _clone(block_map[block_id]),
-            "scene_block_candidates": [_clone(block_map[value]) for value in ids],
-            "scene_range": scene_range,
-            "source": "b0_scene_partition",
-        }
+    active = _clone(block_map[block_id])
     return {
-        "active_block": _clone(block_map[block_id]),
-        "scene_block_candidates": [_clone(block_map[block_id])],
+        "active_block": active,
+        "scene_block_candidates": [_clone(active)],
         "scene_range": [block_id, block_id],
-        "source": "active_block_fallback",
+        "source": "active_block_only",
     }
 
 
@@ -517,9 +561,24 @@ def _validate_block_resolution(
     for card in occurrence_cards:
         block_id = str(card.get("block_id") or "")
         universe = card.get("context_universe") or {}
+        if not isinstance(universe, Mapping):
+            raise B4HandoffError("occurrence context universe is not an object")
+        active = universe.get("active_block")
+        candidates = universe.get("scene_block_candidates")
+        if (
+            universe.get("source") != "active_block_only"
+            or universe.get("scene_range") != [block_id, block_id]
+            or not isinstance(active, Mapping)
+            or not isinstance(candidates, list)
+            or len(candidates) != 1
+            or candidates[0] != active
+        ):
+            raise B4HandoffError(
+                f"occurrence context is not active-block-only: {card.get('occurrence_id')}"
+            )
         context_rows = [
-            universe.get("active_block"),
-            *(universe.get("scene_block_candidates") or []),
+            active,
+            *candidates,
         ]
         if block_id not in block_map:
             raise B4HandoffError(f"occurrence card block is absent from catalog: {block_id}")
@@ -698,7 +757,6 @@ def build_occurrence_cards(inputs: Mapping[str, Any]) -> list[dict[str, Any]]:
         }:
             raise B4HandoffError("occurrence roster/reference-index exact-cover mismatch")
 
-        scenes = (chapter["m1_state"].get("b0_payload") or {}).get("scenes_party_size") or []
         for identifier, roster_row in roster.items():
             matches = owners.get(identifier) or []
             if len(matches) != 1:
@@ -740,8 +798,8 @@ def build_occurrence_cards(inputs: Mapping[str, Any]) -> list[dict[str, Any]]:
                     "owner_id": owner["owner_id"],
                     "owner_role": owner["owner_role"],
                 },
-                "context_universe": _scene_context(
-                    block_id=block_id, source_blocks=source_blocks, scenes=scenes
+                "context_universe": _active_block_context(
+                    block_id=block_id, source_blocks=source_blocks
                 ),
             }
             if owner["occurrence_kind"] == "mention":
@@ -1112,20 +1170,6 @@ def build_complete_ground_evidence(
         source_blocks = chapter["source_blocks"]
         positions, occurrence_kinds = _reference_positions(chapter, occurrence_cards)
 
-        for ordinal, claim in enumerate((m1_state.get("b0_payload") or {}).get("cast_claims") or []):
-            payload = {**_clone(claim), "trust": "untrusted"}
-            collector.add(
-                channel="cast_claim_inputs",
-                kind="cast_claim",
-                chapter_id=chapter_id,
-                chapter_index=chapter_index,
-                source_ordinal=ordinal,
-                evidence_refs=_block_refs(claim.get("source_block_ids") or []),
-                payload=payload,
-                source_identity=m1_identity,
-                positions=positions,
-            )
-
         for ordinal, glossary, _window_id in _iter_window_payloads(
             m1_state.get("b1_by_window") or [], "glossary_candidates"
         ):
@@ -1383,6 +1427,153 @@ def build_complete_ground_evidence(
     return _clone(result)
 
 
+def _build_unit_manifest(inputs: Mapping[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for chapter in inputs.get("chapters") or []:
+        chapter_id = str(chapter.get("chapter_id") or "")
+        blocks = [dict(row) for row in chapter.get("source_blocks") or []]
+        m1_identity = str(chapter.get("m1v3_identity_hash") or "")
+        if not chapter_id or not blocks or not m1_identity:
+            raise B4HandoffError("unit manifest source is incomplete")
+        block_ids = [str(row.get("block_id") or "") for row in blocks]
+        if any(not value for value in block_ids):
+            raise B4HandoffError("unit manifest source has an empty block id")
+        rows.append(
+            {
+                "unit_id": chapter_id,
+                "block_range": [block_ids[0], block_ids[-1]],
+                "parent_chapter": chapter_id,
+                "cut_reason": "author_chapter",
+                "source_hash": canonical_hash(blocks),
+                "m1_checkpoint_refs": [m1_identity],
+            }
+        )
+    if not rows:
+        raise B4HandoffError("unit manifest is empty")
+    return rows
+
+
+def _input_identity_projection(bundle: Mapping[str, Any]) -> dict[str, Any]:
+    required = (
+        "schema_version",
+        "handoff_contract_version",
+        "book_source_manifest",
+        "book_source_manifest_hash",
+        "state_lineage_id",
+        "unit_manifest",
+        "selected_chapters",
+        "knowledge_cutoff_scope",
+        "scope_complete_book",
+        "input_contract",
+        "provenance",
+    )
+    missing = [key for key in required if key not in bundle]
+    if missing:
+        raise B4HandoffError(f"bundle input identity fields are missing: {missing}")
+    return _clone({key: bundle[key] for key in required})
+
+
+def _verify_unit_manifest(bundle: Mapping[str, Any]) -> None:
+    selected = [str(value) for value in bundle.get("selected_chapters") or []]
+    units = bundle.get("unit_manifest")
+    if not isinstance(units, list) or len(units) != len(selected):
+        raise B4HandoffError("B4 unit manifest does not match selected chapters")
+    source_by_chapter = {
+        str(row.get("chapter_id") or ""): str(row.get("source_hash") or "")
+        for row in (bundle.get("book_source_manifest") or {}).get("ordered_chapters") or []
+    }
+    m1_by_chapter = {
+        str(row.get("chapter_id") or ""): str(row.get("m1v3_identity_hash") or "")
+        for row in bundle.get("provenance") or []
+    }
+    blocks_by_chapter: dict[str, list[str]] = {}
+    for row in bundle.get("source_block_catalog") or []:
+        chapter_id = str(row.get("chapter_id") or "")
+        block_id = str(row.get("block_id") or "")
+        if chapter_id and block_id:
+            blocks_by_chapter.setdefault(chapter_id, []).append(block_id)
+    actual_ids: list[str] = []
+    expected_fields = {
+        "unit_id",
+        "block_range",
+        "parent_chapter",
+        "cut_reason",
+        "source_hash",
+        "m1_checkpoint_refs",
+    }
+    for raw_unit in units:
+        if not isinstance(raw_unit, Mapping) or set(raw_unit) != expected_fields:
+            raise B4HandoffError("B4 unit manifest row is malformed")
+        unit_id = str(raw_unit.get("unit_id") or "")
+        actual_ids.append(unit_id)
+        block_range = raw_unit.get("block_range")
+        refs = raw_unit.get("m1_checkpoint_refs")
+        chapter_blocks = blocks_by_chapter.get(unit_id, [])
+        expected_range = (
+            [chapter_blocks[0], chapter_blocks[-1]] if chapter_blocks else []
+        )
+        if (
+            not unit_id
+            or raw_unit.get("parent_chapter") != unit_id
+            or raw_unit.get("cut_reason") != "author_chapter"
+            or not isinstance(block_range, (list, tuple))
+            or len(block_range) != 2
+            or any(not str(value) for value in block_range)
+            or list(block_range) != expected_range
+            or not isinstance(refs, (list, tuple))
+            or not refs
+            or any(not str(value) for value in refs)
+            or raw_unit.get("source_hash") != source_by_chapter.get(unit_id)
+            or list(refs) != [m1_by_chapter.get(unit_id)]
+        ):
+            raise B4HandoffError("B4 unit manifest row identity mismatch")
+    if actual_ids != selected:
+        raise B4HandoffError("B4 unit manifest does not match selected chapters")
+
+
+def verify_b4_input_bundle_identity(bundle: Mapping[str, Any]) -> None:
+    if bundle.get("schema_version") != BUNDLE_SCHEMA_VERSION:
+        raise B4HandoffError("B4 input bundle schema mismatch")
+    if bundle.get("handoff_contract_version") != HANDOFF_CONTRACT_VERSION:
+        raise B4HandoffError("B4 handoff contract mismatch")
+    manifest = bundle.get("book_source_manifest")
+    if not isinstance(manifest, Mapping):
+        raise B4HandoffError("B4 input bundle lacks a book source manifest")
+    manifest_body = _book_source_manifest_body(manifest)
+    manifest_hash = str(manifest.get("manifest_hash") or "")
+    if canonical_hash(manifest_body) != manifest_hash:
+        raise B4HandoffError("B4 book source manifest hash mismatch")
+    if bundle.get("book_source_manifest_hash") != manifest_hash:
+        raise B4HandoffError("B4 book source manifest identity mismatch")
+    if bundle.get("state_lineage_id") != state_lineage_id_for_manifest(manifest):
+        raise B4HandoffError("B4 state lineage identity mismatch")
+    ground = bundle.get("ground_evidence")
+    if not isinstance(ground, Mapping):
+        raise B4HandoffError("B4 ground evidence is not an object")
+    expected_ground_keys = set(_CHANNELS) | {"dedupe_counts"}
+    if set(ground) != expected_ground_keys:
+        raise B4HandoffError("B4 ground evidence channel contract mismatch")
+    catalog = bundle.get("source_block_catalog")
+    cards = bundle.get("occurrence_cards")
+    if (
+        not isinstance(catalog, Sequence)
+        or isinstance(catalog, (str, bytes))
+        or not isinstance(cards, Sequence)
+        or isinstance(cards, (str, bytes))
+    ):
+        raise B4HandoffError("B4 catalog or occurrence cards are malformed")
+    _validate_block_resolution(catalog, cards, ground)
+    _verify_unit_manifest(bundle)
+    if canonical_hash(_input_identity_projection(bundle)) != bundle.get(
+        "input_identity_manifest_hash"
+    ):
+        raise B4HandoffError("B4 input identity manifest hash mismatch")
+    semantic = _clone(dict(bundle))
+    expected_bundle_hash = str(semantic.pop("bundle_manifest_hash", ""))
+    if not expected_bundle_hash or canonical_hash(semantic) != expected_bundle_hash:
+        raise B4HandoffError("B4 bundle manifest hash mismatch")
+
+
 def _contains_entity_identifier(value: Any) -> bool:
     if isinstance(value, str):
         return value.startswith("ent_")
@@ -1416,6 +1607,7 @@ def assemble_b4_input_bundle(
     document: Mapping[str, Any],
     chapters: Sequence[str],
     *,
+    book_source_manifest: Mapping[str, Any],
     m1v3_dir: Path,
     m2v3_dir: Path,
     knowledge_mode: str = KNOWLEDGE_MODE,
@@ -1424,9 +1616,12 @@ def assemble_b4_input_bundle(
     window_max_blocks: int = DEFAULT_WINDOW_MAX_BLOCKS,
     tail_k: int = DEFAULT_TAIL_K,
     summary_k: int = DEFAULT_SUMMARY_K,
+    m1_execution_contract_hash: str | None = None,
+    m2_execution_contract_hash: str | None = None,
 ) -> dict[str, Any]:
     """Build the complete internal B4 input bundle without persisting state."""
 
+    verified_book_manifest = verify_book_source_manifest(document, book_source_manifest)
     inputs = load_verified_builder_v3_inputs(
         document,
         chapters,
@@ -1438,12 +1633,15 @@ def assemble_b4_input_bundle(
         window_max_blocks=window_max_blocks,
         tail_k=tail_k,
         summary_k=summary_k,
+        m1_execution_contract_hash=m1_execution_contract_hash,
+        m2_execution_contract_hash=m2_execution_contract_hash,
     )
     cards = build_occurrence_cards(inputs)
     routing = build_occurrence_routing_view(inputs, cards)
     ground = build_complete_ground_evidence(inputs, cards)
     source_block_catalog = _build_source_block_catalog(inputs)
     summary_lineage = _summary_lineage(inputs)
+    unit_manifest = _build_unit_manifest(inputs)
     _validate_block_resolution(source_block_catalog, cards, ground)
     provenance = [
         {
@@ -1454,18 +1652,14 @@ def assemble_b4_input_bundle(
         for row in inputs["chapters"]
     ]
     input_contract = _clone(inputs["config_identity"])
-    input_identity_body = {
-        "schema_version": BUNDLE_SCHEMA_VERSION,
-        "handoff_contract_version": HANDOFF_CONTRACT_VERSION,
-        "selected_chapters": list(inputs["selected_chapters"]),
-        "knowledge_cutoff_scope": inputs["knowledge_cutoff_scope"],
-        "scope_complete_book": bool(inputs["scope_complete_book"]),
-        "input_contract": input_contract,
-        "provenance": provenance,
-    }
+    book_manifest_hash = str(verified_book_manifest["manifest_hash"])
     bundle: dict[str, Any] = {
         "schema_version": BUNDLE_SCHEMA_VERSION,
         "handoff_contract_version": HANDOFF_CONTRACT_VERSION,
+        "book_source_manifest": verified_book_manifest,
+        "book_source_manifest_hash": book_manifest_hash,
+        "state_lineage_id": state_lineage_id_for_manifest(verified_book_manifest),
+        "unit_manifest": unit_manifest,
         "knowledge_mode": inputs["knowledge_mode"],
         "execution_mode": inputs["execution_mode"],
         "selected_chapters": list(inputs["selected_chapters"]),
@@ -1478,21 +1672,32 @@ def assemble_b4_input_bundle(
         "occurrence_routing": routing,
         "ground_evidence": ground,
         "provenance": provenance,
-        "input_identity_manifest_hash": canonical_hash(input_identity_body),
     }
+    bundle["input_identity_manifest_hash"] = canonical_hash(
+        _input_identity_projection(bundle)
+    )
     _assert_no_authority_smuggling(bundle)
     bundle["bundle_manifest_hash"] = canonical_hash(bundle)
+    verify_b4_input_bundle_identity(bundle)
     return _clone(bundle)
 
 
 __all__ = [
     "B4HandoffError",
+    "BOOK_SOURCE_MANIFEST_SCHEMA_VERSION",
     "BUNDLE_SCHEMA_VERSION",
+    "BookSourceManifest",
     "HANDOFF_CONTRACT_VERSION",
+    "STATE_LINEAGE_SCHEMA_VERSION",
     "VERIFIED_INPUTS_SCHEMA_VERSION",
+    "_input_identity_projection",
     "assemble_b4_input_bundle",
+    "build_book_source_manifest",
     "build_complete_ground_evidence",
     "build_occurrence_cards",
     "build_occurrence_routing_view",
     "load_verified_builder_v3_inputs",
+    "state_lineage_id_for_manifest",
+    "verify_b4_input_bundle_identity",
+    "verify_book_source_manifest",
 ]

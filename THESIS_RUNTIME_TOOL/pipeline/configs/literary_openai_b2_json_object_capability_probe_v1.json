@@ -1,0 +1,75 @@
+{
+  "schema_version": "literary_openai_b2_json_object_capability_probe_profile_v1",
+  "profile_id": "literary_openai_official_b2_json_object_probe_v1",
+  "profile_revision": "openai_row2_gpt54_b2_json_object_v6",
+  "shared_core_revision": "dece3488f591b726bd4eb0883f42829c7a58410d",
+  "runtime_profile": {
+    "profile_id": "literary_shared_llm_openai_official_b2_slim_v3",
+    "profile_revision": "openai_row2_gpt54_b2_prompt_validated_v2",
+    "profile_sha256": "83f1d7913fd1de6a0eeb4f55a425ce3bfa2b613c79853dc6fb05092e0fe145ae",
+    "source_alias": "openai_official_row2"
+  },
+  "capability_intents": [
+    {
+      "probe_name": "frame",
+      "capability_id": "openai_row2_gpt54_literary_b2_frame_json_object_v1",
+      "capability_revision": "frame_schema_6c753a5e_validator_e623327e_openai_row2_v5",
+      "role_id": "literary.b2.frame",
+      "requested_model_id": "gpt-5.4",
+      "accepted_observed_model_ids": [
+        "gpt-5.4",
+        "gpt-5.4-2026-03-05"
+      ],
+      "capability_kind": "json_object",
+      "schema_name": "literary_b2_frame_v2",
+      "schema_dialect": "json_schema_2020_12",
+      "schema_sha256": "6c753a5ec6928394053f2b762dd74324f7ebea9878762f2918607abfa841233b",
+      "local_validator_id": "literary.b2.frame.validator",
+      "local_validator_revision": "v2",
+      "local_validator_sha256": "e623327ebb7b0d42b47600e60c15c67cf26fe9107065a2aef1196b3eb866ca85"
+    },
+    {
+      "probe_name": "interaction",
+      "capability_id": "openai_row2_gpt54_literary_b2_interaction_json_object_v1",
+      "capability_revision": "interaction_schema_5c43ad64_validator_b65749f3_openai_row2_v7",
+      "role_id": "literary.b2.interaction",
+      "requested_model_id": "gpt-5.4",
+      "accepted_observed_model_ids": [
+        "gpt-5.4",
+        "gpt-5.4-2026-03-05"
+      ],
+      "capability_kind": "json_object",
+      "schema_name": "literary_b2_interaction_v3",
+      "schema_dialect": "json_schema_2020_12",
+      "schema_sha256": "5c43ad64740596df27d08a3e2e1e693a76c675a33f659fc376ce03758c3a6434",
+      "local_validator_id": "literary.b2.interaction.validator",
+      "local_validator_revision": "v4",
+      "local_validator_sha256": "b65749f3272a092aa2d209ba6065f8d5df7cbdcf94161b3d2657034de46c09d5"
+    }
+  ],
+  "generation": {
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "seed": 20260720,
+    "reasoning_effort": "none",
+    "verbosity": "low",
+    "max_completion_tokens": 1024
+  },
+  "limits": {
+    "max_calls_per_probe": 1,
+    "max_prompt_utf8_bytes": 65536,
+    "max_response_utf8_bytes": 32768,
+    "max_prompt_tokens": 10000,
+    "max_completion_tokens": 1024,
+    "max_total_tokens": 11024,
+    "request_timeout_ms": 120000
+  },
+  "safety": {
+    "authority": "capability_only",
+    "fallback_enabled": false,
+    "transport_retry_max": 0,
+    "semantic_retry_max": 0,
+    "response_cache_enabled": false,
+    "application_publish_enabled": false
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "prior_card": {
+    "prior_card_id": "prior_synthetic_mrs_heathcliff_v1",
+    "canonical_surface": "Mrs. Heathcliff",
+    "stable_surfaces": [
+      "Mrs. Heathcliff",
+      "Heathcliff"
+    ],
+    "referent_kind": "person",
+    "referential_gender": "feminine",
+    "identity_summary": "A woman who bears the Heathcliff family name.",
+    "authority_scope": "test_verified_global_as_of_prior_scope",
+    "first_supported_block_id": "wh_ch01_b026",
+    "provenance_refs": [
+      {
+        "chapter_id": "wh_ch01",
+        "block_id": "wh_ch01_b026"
+      }
+    ]
+  }
+}

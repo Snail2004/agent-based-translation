@@ -1,0 +1,104 @@
+{
+  "document_id": "synthetic_prior_claim_book_v1",
+  "chapters": [
+    {
+      "chapter_id": "syn_ch01",
+      "blocks": [
+        {
+          "block_id": "syn_ch01_b001",
+          "order_index": 1,
+          "block_type": "paragraph",
+          "clean_text": "Captain Rowan entered the archive before dawn."
+        },
+        {
+          "block_id": "syn_ch01_b002",
+          "order_index": 2,
+          "block_type": "paragraph",
+          "clean_text": "The lamps were lit along the narrow corridor."
+        },
+        {
+          "block_id": "syn_ch01_b003",
+          "order_index": 3,
+          "block_type": "paragraph",
+          "clean_text": "She signed the register before the clerk."
+        },
+        {
+          "block_id": "syn_ch01_b004",
+          "order_index": 4,
+          "block_type": "paragraph",
+          "clean_text": "A bell rang once in the eastern room."
+        },
+        {
+          "block_id": "syn_ch01_b005",
+          "order_index": 5,
+          "block_type": "paragraph",
+          "clean_text": "He waited in silence beside a sealed parcel."
+        },
+        {
+          "block_id": "syn_ch01_b006",
+          "order_index": 6,
+          "block_type": "paragraph",
+          "clean_text": "North Gate stood beyond the archive garden."
+        }
+      ]
+    },
+    {
+      "chapter_id": "syn_ch02",
+      "blocks": [
+        {
+          "block_id": "syn_ch02_b001",
+          "order_index": 1,
+          "block_type": "paragraph",
+          "clean_text": "Captain Rowan returned to the archive."
+        },
+        {
+          "block_id": "syn_ch02_b002",
+          "order_index": 2,
+          "block_type": "paragraph",
+          "clean_text": "The clerk greeted her before she signed again."
+        },
+        {
+          "block_id": "syn_ch02_b003",
+          "order_index": 3,
+          "block_type": "paragraph",
+          "clean_text": "Mira Voss arrived at noon with the sealed parcel."
+        },
+        {
+          "block_id": "syn_ch02_b004",
+          "order_index": 4,
+          "block_type": "paragraph",
+          "clean_text": "He placed it on the table without speaking."
+        },
+        {
+          "block_id": "syn_ch02_b005",
+          "order_index": 5,
+          "block_type": "paragraph",
+          "clean_text": "North Gate remained the stone entrance to the garden."
+        }
+      ]
+    },
+    {
+      "chapter_id": "syn_ch03",
+      "blocks": [
+        {
+          "block_id": "syn_ch03_b001",
+          "order_index": 1,
+          "block_type": "paragraph",
+          "clean_text": "Captain Rowan addressed the council."
+        },
+        {
+          "block_id": "syn_ch03_b002",
+          "order_index": 2,
+          "block_type": "paragraph",
+          "clean_text": "She closed the hearing after a brief statement."
+        },
+        {
+          "block_id": "syn_ch03_b003",
+          "order_index": 3,
+          "block_type": "paragraph",
+          "clean_text": "Mira Voss watched from the rear bench."
+        }
+      ]
+    }
+  ]
+}

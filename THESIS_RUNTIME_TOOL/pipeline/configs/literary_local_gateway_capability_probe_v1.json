@@ -1,0 +1,43 @@
+{
+  "schema_version": "literary_local_gateway_capability_probe_profile_v1",
+  "profile_id": "literary_local_gateway_b2_exact_schema_probe_v1",
+  "provider_profile": "literary_provider_profile_local_gateway_premium_v1.json",
+  "quota_bucket_id": "local-gpt-gateway-v1",
+  "probes": [
+    {
+      "probe_id": "gpt_5_4_b1_inventory_current",
+      "role_id": "literary_b0",
+      "schema_id": "b1_inventory_current",
+      "output_token_cap": 2048
+    },
+    {
+      "probe_id": "gpt_5_4_b2_interaction_v2",
+      "role_id": "literary_b2_interaction",
+      "schema_id": "b2_interaction_v2",
+      "output_token_cap": 2048
+    },
+    {
+      "probe_id": "gpt_5_5_local_auditor_current",
+      "role_id": "literary_local_conflict_auditor",
+      "schema_id": "local_auditor_current",
+      "output_token_cap": 2048
+    },
+    {
+      "probe_id": "gpt_5_5_b2_frame_v1",
+      "role_id": "literary_b2_frame",
+      "schema_id": "b2_frame_v1",
+      "output_token_cap": 2048
+    }
+  ],
+  "limits": {
+    "max_calls": 4,
+    "max_retries_per_call": 0,
+    "hard_visible_token_cap": 40000
+  },
+  "safety": {
+    "provider_fallback_allowed": false,
+    "production_publish_enabled": false,
+    "semantic_quality_claim_allowed": false,
+    "stop_on_first_failure": true
+  }
+}

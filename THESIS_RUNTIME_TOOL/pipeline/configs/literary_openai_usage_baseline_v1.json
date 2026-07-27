@@ -1,0 +1,14 @@
+{
+  "schema_version": "literary_openai_usage_baseline_v1",
+  "baseline_id": "openai_key1_literary_20260716",
+  "quota_bucket_id": "openai-row1",
+  "credential_revision": "openai-key1-literary-v1",
+  "provider_counter_baselines": {
+    "gpt-5.4": 0,
+    "gpt-5.4-mini": 13666
+  },
+  "counter_unit": "tokens",
+  "reset_period": null,
+  "hard_quota": null,
+  "remaining_quota_must_not_be_inferred": true
+}

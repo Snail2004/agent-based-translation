@@ -1,0 +1,131 @@
+{
+  "schema_version": "literary_shared_llm_runtime_profile_v2",
+  "profile_id": "literary_shared_llm_modelapi_b1_cross_chapter_auditor_v3_64k_capacity32",
+  "profile_revision": "modelapi_gpt54_b1_cross_chapter_capacity_only_64k_32_calls_v3",
+  "backend_mode": "shared_v1",
+  "sources": [
+    {
+      "source_alias": "modelapi_shared",
+      "source_id": "modelapi_shared_v1",
+      "source_revision": "modelapi_profile_v1",
+      "authority_class": "third_party",
+      "source_class": "remote_api",
+      "adapter_id": "openai_python_v1",
+      "protocol": "openai_chat_completions",
+      "route_id": "chat_completions_create",
+      "endpoint_class": "remote",
+      "base_url": "https://modelapi.vn/v1",
+      "credential_ref": "credential.modelapi_shared_v1",
+      "physical_quota_bucket_id": "modelapi-shared-v1",
+      "selection_mode": "host_resolved_exact_source",
+      "fallback_enabled": false
+    }
+  ],
+  "roles": [
+    {
+      "role_id": "literary.audit.identity_surface",
+      "preset_id": "literary.audit.identity_surface.gpt54_modelapi_capacity_only_64k_32_calls_v3",
+      "preset_revision": "v3",
+      "legacy_role_ids": [
+        "literary_incremental_identity_auditor"
+      ],
+      "requested_model_id": "gpt-5.4",
+      "source_alias": "modelapi_shared",
+      "output_envelope": {
+        "mode": "json_object",
+        "schema_dialect": "json_schema_2020_12",
+        "instruction_id": "literary.json_only_output_instruction",
+        "instruction_revision": "v2"
+      },
+      "generation": {
+        "context_window_tokens": null,
+        "max_input_tokens": 64000,
+        "max_output_tokens": 2500,
+        "temperature": 1,
+        "top_p": 1,
+        "seed": 20260721,
+        "reasoning_effort": "none",
+        "verbosity": "low"
+      },
+      "limits": {
+        "max_calls": 32,
+        "max_prompt_tokens": 2048000,
+        "max_completion_tokens": 80000,
+        "max_total_tokens": 2128000,
+        "max_cost_usd": null,
+        "request_timeout_ms": 300000
+      },
+      "transport_retry": {
+        "max_retries": 0,
+        "backoff_policy": "none",
+        "initial_delay_ms": 0,
+        "max_delay_ms": 0,
+        "retryable_codes": []
+      },
+      "semantic_retry": {
+        "max_retries": 0,
+        "retryable_categories": []
+      },
+      "namespaces": {
+        "output": "literary.audit.identity_surface.modelapi.capacity_only.v3.output",
+        "checkpoint": "literary.audit.identity_surface.modelapi.capacity_only.v3.checkpoint",
+        "cache": "literary.audit.identity_surface.modelapi.capacity_only.v3.cache"
+      }
+    },
+    {
+      "role_id": "literary.audit.stable_claim",
+      "preset_id": "literary.audit.stable_claim.gpt54_modelapi_capacity_only_64k_32_calls_v3",
+      "preset_revision": "v3",
+      "legacy_role_ids": [
+        "literary_stable_claim_auditor"
+      ],
+      "requested_model_id": "gpt-5.4",
+      "source_alias": "modelapi_shared",
+      "output_envelope": {
+        "mode": "json_object",
+        "schema_dialect": "json_schema_2020_12",
+        "instruction_id": "literary.json_only_output_instruction",
+        "instruction_revision": "v2"
+      },
+      "generation": {
+        "context_window_tokens": null,
+        "max_input_tokens": 64000,
+        "max_output_tokens": 2500,
+        "temperature": 1,
+        "top_p": 1,
+        "seed": 20260721,
+        "reasoning_effort": "none",
+        "verbosity": "low"
+      },
+      "limits": {
+        "max_calls": 32,
+        "max_prompt_tokens": 2048000,
+        "max_completion_tokens": 80000,
+        "max_total_tokens": 2128000,
+        "max_cost_usd": null,
+        "request_timeout_ms": 300000
+      },
+      "transport_retry": {
+        "max_retries": 0,
+        "backoff_policy": "none",
+        "initial_delay_ms": 0,
+        "max_delay_ms": 0,
+        "retryable_codes": []
+      },
+      "semantic_retry": {
+        "max_retries": 0,
+        "retryable_categories": []
+      },
+      "namespaces": {
+        "output": "literary.audit.stable_claim.modelapi.capacity_only.v3.output",
+        "checkpoint": "literary.audit.stable_claim.modelapi.capacity_only.v3.checkpoint",
+        "cache": "literary.audit.stable_claim.modelapi.capacity_only.v3.cache"
+      }
+    }
+  ],
+  "safety": {
+    "provider_fallback_allowed": false,
+    "application_response_cache_enabled": false,
+    "production_publish_enabled": false
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "schema_version": "literary_b2_phase_a_profile_v1",
+  "profile_id": "literary_b2_slim_durable_phase_a_longrun_capacity_v7_160_128",
+  "source_windows": {
+    "target_active_source_tokens": 2500,
+    "max_active_blocks": 28,
+    "preceding_tail_blocks": 2
+  },
+  "context_caps": {
+    "frame_candidate_card_cap": 160,
+    "interaction_candidate_card_cap": 128,
+    "candidate_surface_group_cap": 192,
+    "provenance_refs_per_card": 4,
+    "uncertainty_rows_per_request": 32
+  },
+  "token_caps": {
+    "frame_prompt_tokens": 64000,
+    "frame_output_tokens": 2500,
+    "interaction_prompt_tokens": 96000,
+    "interaction_output_tokens": 6000,
+    "pending_frame_context_reserve_tokens": 1200
+  },
+  "call_caps": {
+    "frame_calls_per_chapter": 1,
+    "interaction_calls_per_chapter": 6,
+    "exception_review_calls_per_chapter": 2
+  },
+  "model_role_defaults": {
+    "frame_reference": "gpt-5.4",
+    "interaction_scale_candidate": "gpt-5.4",
+    "interaction_reference": "gpt-5.4",
+    "exception_review": "gpt-5.4"
+  },
+  "safety": {
+    "semantic_ambiguity_action": "persist_pending_and_continue",
+    "integrity_failure_action": "pause_before_next_api_call",
+    "candidate_overflow_action": "split_then_pause_if_single_block",
+    "gold_in_runtime_request_allowed": false,
+    "production_publish_enabled": false
+  }
+}

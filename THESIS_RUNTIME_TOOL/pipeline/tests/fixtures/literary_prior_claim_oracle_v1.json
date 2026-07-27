@@ -1,0 +1,23 @@
+{
+  "oracle_schema_version": "hidden_prior_claim_oracle_v1",
+  "cases": [
+    {
+      "case_id": "rowan_gender_correction",
+      "prior_card_id": "prior_rowan",
+      "disputed_field": "referential_gender",
+      "expected_projected_value": "feminine"
+    },
+    {
+      "case_id": "mira_missing_prior_anchor",
+      "prior_card_id": "prior_mira",
+      "disputed_field": "referential_gender",
+      "expected_state": "pending_preflight"
+    },
+    {
+      "case_id": "gate_kind_correction",
+      "prior_card_id": "prior_north_gate",
+      "disputed_field": "referent_kind",
+      "expected_projected_value": "place"
+    }
+  ]
+}

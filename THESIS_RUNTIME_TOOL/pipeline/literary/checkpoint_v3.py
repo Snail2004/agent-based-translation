@@ -20,16 +20,17 @@ from pipeline.literary.checkpoint import (
 
 
 BUILDER_SCHEMA_V3 = "v3"
-M1_CHECKPOINT_SCHEMA_VERSION_V3 = "literary_m1_checkpoint_v3"
-M2_CHECKPOINT_SCHEMA_VERSION_V3 = "literary_m2_checkpoint_v3"
-VALIDATOR_CONTRACT_VERSION = "literary_builder_v3_validator_contract_v2"
+M1_CHECKPOINT_SCHEMA_VERSION_V3 = "literary_m1_checkpoint_v3_b0less_v1"
+M2_CHECKPOINT_SCHEMA_VERSION_V3 = "literary_m2_checkpoint_v3_b0less_v2"
+VALIDATOR_CONTRACT_VERSION = "literary_builder_v3_validator_contract_v13"
 SOURCE_ANCHOR_VERSION = "literary_source_anchor_v1"
-CONTEXT_POLICY_VERSION = "literary_builder_v3_context_policy_v1"
-REQUEST_CONTRACT_VERSION = "literary_builder_v3_request_contract_v1"
+CONTEXT_POLICY_VERSION = "literary_builder_v3_context_policy_v2"
+REQUEST_CONTRACT_VERSION = "literary_builder_v3_request_contract_v2"
 SYNTHETIC_EXECUTOR_VERSION = "literary_builder_v3_synthetic_executor_v1"
+REAL_EXECUTOR_VERSION = "literary_builder_v3_real_executor_v1"
 
-M1_GROUND_STATE_VERSION_V3 = "literary_m1_ground_state_v3"
-M2_DIGEST_STATE_VERSION_V3 = "literary_m2_digest_state_v3"
+M1_GROUND_STATE_VERSION_V3 = "literary_m1_ground_state_v3_b0less_v1"
+M2_DIGEST_STATE_VERSION_V3 = "literary_m2_digest_state_v3_b0less_v2"
 
 STAGE_SCHEMA_VERSIONS = {
     "m1v3": M1_CHECKPOINT_SCHEMA_VERSION_V3,

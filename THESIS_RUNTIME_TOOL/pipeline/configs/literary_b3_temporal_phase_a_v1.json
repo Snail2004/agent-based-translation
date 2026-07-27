@@ -1,0 +1,35 @@
+{
+  "schema_version": "literary_b3_temporal_phase_a_profile_v1",
+  "profile_id": "literary_b3_temporal_phase_a_v1",
+  "role": {
+    "role_id": "literary.b3.temporal_state",
+    "recommended_preset_id": "literary.b3.temporal_state.gpt54_reference_v1",
+    "recommended_model": "gpt-5.4"
+  },
+  "batching": {
+    "default_scope": "chapter_batch",
+    "max_components_per_request": 64,
+    "max_requests_per_chapter": 4,
+    "split_only_between_components": true
+  },
+  "context_caps": {
+    "max_candidate_cards_per_request": 96,
+    "max_turns_per_component": 160,
+    "max_events_per_component": 32,
+    "max_source_blocks_per_component": 96,
+    "max_prior_states_per_component": 32,
+    "provenance_refs_per_card": 4
+  },
+  "token_caps": {
+    "prompt_tokens_per_request": 20000,
+    "output_tokens_per_request": 8000
+  },
+  "safety": {
+    "phase": "phase_a_zero_api",
+    "semantic_ambiguity_action": "persist_pending_and_continue",
+    "single_component_overflow_action": "halt_before_api",
+    "provider_fallback_allowed": false,
+    "gold_or_oracle_allowed": false,
+    "production_publish_enabled": false
+  }
+}

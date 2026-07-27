@@ -1,0 +1,72 @@
+{
+  "schema_version": "thesis_provider_profile_v1",
+  "profile_id": "literary_b2_google_official_remaining_provider_v1",
+  "credentials": {
+    "gemini-free-row1-v1": {
+      "provider": "google_genai",
+      "credential_revision": "gemini-free-row1-temporary-literary-v1",
+      "relative_file": "GEMINI-KEY-FREE.txt",
+      "nonempty_line": 1,
+      "enabled": true,
+      "base_url": null,
+      "request_timeout_ms": 180000
+    },
+    "gemini-free-row2-v1": {
+      "provider": "google_genai",
+      "credential_revision": "gemini-free-row2-temporary-literary-v1",
+      "relative_file": "GEMINI-KEY-FREE.txt",
+      "nonempty_line": 2,
+      "enabled": true,
+      "base_url": null,
+      "request_timeout_ms": 180000
+    },
+    "gemini-free-row3-v1": {
+      "provider": "google_genai",
+      "credential_revision": "gemini-free-row3-temporary-literary-v1",
+      "relative_file": "GEMINI-KEY-FREE.txt",
+      "nonempty_line": 3,
+      "enabled": true,
+      "base_url": null,
+      "request_timeout_ms": 180000
+    },
+    "gemini-free-row5-v2": {
+      "provider": "google_genai",
+      "credential_revision": "gemini-free-row5-temporary-literary-v2",
+      "relative_file": "GEMINI-KEY-FREE.txt",
+      "nonempty_line": 5,
+      "enabled": true,
+      "base_url": null,
+      "request_timeout_ms": 180000
+    }
+  },
+  "roles": {
+    "literary_b2_interaction_row1": {
+      "provider": "google_genai",
+      "model_id": "gemini-3.5-flash",
+      "bucket_order": [
+        "gemini-free-row1-v1"
+      ]
+    },
+    "literary_b2_interaction_row2": {
+      "provider": "google_genai",
+      "model_id": "gemini-3.5-flash",
+      "bucket_order": [
+        "gemini-free-row2-v1"
+      ]
+    },
+    "literary_b2_interaction_row3": {
+      "provider": "google_genai",
+      "model_id": "gemini-3.5-flash",
+      "bucket_order": [
+        "gemini-free-row3-v1"
+      ]
+    },
+    "literary_b2_interaction_row5": {
+      "provider": "google_genai",
+      "model_id": "gemini-3.5-flash",
+      "bucket_order": [
+        "gemini-free-row5-v2"
+      ]
+    }
+  }
+}

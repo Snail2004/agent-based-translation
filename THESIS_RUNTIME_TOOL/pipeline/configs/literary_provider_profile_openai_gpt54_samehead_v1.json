@@ -1,0 +1,52 @@
+{
+  "schema_version": "thesis_provider_profile_v1",
+  "profile_id": "literary_openai_gpt54_samehead_v1",
+  "credentials": {
+    "openai-row1": {
+      "provider": "openai",
+      "credential_revision": "openai-key1-literary-v1",
+      "relative_file": "OPENAI-KEY-1.txt",
+      "nonempty_line": 1,
+      "enabled": true,
+      "base_url": null,
+      "request_timeout_ms": 300000
+    }
+  },
+  "roles": {
+    "literary_b0": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["openai-row1"]
+    },
+    "literary_b0_contract_fallback": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["openai-row1"]
+    },
+    "literary_local_conflict_auditor": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["openai-row1"]
+    },
+    "literary_stable_claim_auditor": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["openai-row1"]
+    },
+    "literary_incremental_identity_auditor": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["openai-row1"]
+    },
+    "literary_b2_frame": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["openai-row1"]
+    },
+    "literary_b2_interaction": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["openai-row1"]
+    }
+  }
+}

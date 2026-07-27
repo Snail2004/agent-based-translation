@@ -1,0 +1,77 @@
+{
+  "schema_version": "literary_chapter_cycle_profile_v1",
+  "profile_id": "literary_context_cycle_openai_gpt54_samehead_v1",
+  "provider_profile": "literary_provider_profile_openai_gpt54_samehead_v1.json",
+  "role_bindings": {
+    "b0": "literary_b0",
+    "b0_contract_fallback": "literary_b0_contract_fallback",
+    "local_auditor": "literary_local_conflict_auditor",
+    "stable_claim_auditor": "literary_stable_claim_auditor",
+    "identity_auditor": "literary_incremental_identity_auditor"
+  },
+  "stage_limits": {
+    "b0": {
+      "prompt_token_cap": 20000,
+      "max_output_tokens": 4096,
+      "temperature": 1.0,
+      "seed": 20260719,
+      "reasoning_effort": "none",
+      "max_calls_per_chapter": 1
+    },
+    "local_auditor": {
+      "prompt_token_cap": 10000,
+      "max_output_tokens": 4096,
+      "temperature": 1.0,
+      "seed": 20260719,
+      "reasoning_effort": "none",
+      "max_calls_per_chapter": 1
+    },
+    "stable_claim_auditor": {
+      "prompt_token_cap": 10000,
+      "max_output_tokens": 4096,
+      "temperature": 1.0,
+      "seed": 20260719,
+      "reasoning_effort": "none",
+      "max_calls_per_chapter": 4
+    },
+    "identity_auditor": {
+      "prompt_token_cap": 10000,
+      "max_output_tokens": 4096,
+      "temperature": 1.0,
+      "seed": 20260719,
+      "reasoning_effort": "none",
+      "max_calls_per_chapter": 4
+    }
+  },
+  "resilience": {
+    "transport_retries_per_request": 0,
+    "contract_repairs_per_response": 0,
+    "b0_contract_fallback_enabled": false
+  },
+  "orchestration": {
+    "checkpoint_after_each_chapter": true,
+    "allow_chapter_skip": false,
+    "production_publish_enabled": false,
+    "max_api_calls_per_chapter": 16,
+    "max_api_calls_per_run": 16,
+    "default_stop_after_chapter_count": 1
+  },
+  "semantic_leads": {
+    "max_leads_per_chapter": 8,
+    "max_identity_components_per_chapter": 4,
+    "overflow_action": "defer_without_authority"
+  },
+  "reporting": {
+    "persist_raw_attempts": true,
+    "persist_usage_when_reported": true,
+    "redact_credentials": true
+  },
+  "locked_safety": {
+    "integrity_failure_action": "pause_no_retry",
+    "unknown_failure_action": "pause",
+    "semantic_pending_action": "persist_without_authority_and_continue",
+    "auditor_smaller_model_fallback_allowed": false,
+    "chapter_skip_allowed": false,
+    "gold_in_runtime_request_allowed": false
+  }
+}

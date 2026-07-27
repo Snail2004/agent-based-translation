@@ -1,0 +1,89 @@
+{
+  "schema_version": "literary_chapter_loop_runtime_bindings_v1",
+  "binding_id": "replace_with_run_binding_id",
+  "stages": {
+    "b1_scan": {
+      "runtime_profile": "replace/runtime_profile.json",
+      "context_profile": null,
+      "capabilities": {
+        "default": "replace/b1_scan_probe_root"
+      },
+      "source_id": "replace_source_id",
+      "model_id": "replace_model_id"
+    },
+    "b1_enrich": {
+      "runtime_profile": "replace/runtime_profile.json",
+      "context_profile": null,
+      "capabilities": {
+        "default": "replace/b1_enrich_probe_root"
+      },
+      "source_id": "replace_source_id",
+      "model_id": "replace_model_id"
+    },
+    "b1_local_auditor": {
+      "runtime_profile": "replace/runtime_profile.json",
+      "context_profile": null,
+      "capabilities": {
+        "default": "replace/local_auditor_probe_root"
+      },
+      "source_id": "replace_source_id",
+      "model_id": "replace_model_id"
+    },
+    "xchapter_hearing": {
+      "runtime_profile": "replace/runtime_profile.json",
+      "context_profile": null,
+      "capabilities": {
+        "identity": "replace/identity_hearing_probe_root",
+        "stable_claim": "replace/stable_claim_hearing_probe_root"
+      },
+      "source_id": "replace_source_id",
+      "model_id": "replace_model_id"
+    },
+    "b2_frame_interaction": {
+      "runtime_profile": "replace/runtime_profile.json",
+      "context_profile": "replace/b2_context_profile.json",
+      "capabilities": {
+        "frame": "replace/b2_frame_probe_root",
+        "interaction": "replace/b2_interaction_probe_root"
+      },
+      "source_id": "replace_source_id",
+      "model_id": "replace_model_id"
+    },
+    "speaker_recovery": {
+      "runtime_profile": "replace/runtime_profile.json",
+      "context_profile": null,
+      "capabilities": {
+        "default": "replace/speaker_recovery_probe_root"
+      },
+      "source_id": "replace_source_id",
+      "model_id": "replace_model_id"
+    },
+    "b3_temporal": {
+      "runtime_profile": "replace/runtime_profile.json",
+      "context_profile": "replace/b3_context_profile.json",
+      "capabilities": {
+        "default": "replace/b3_temporal_probe_root"
+      },
+      "source_id": "replace_source_id",
+      "model_id": "replace_model_id"
+    },
+    "b3_auditor": {
+      "runtime_profile": "replace/runtime_profile.json",
+      "context_profile": null,
+      "capabilities": {
+        "default": "replace/b3_auditor_probe_root"
+      },
+      "source_id": "replace_source_id",
+      "model_id": "replace_model_id"
+    },
+    "b0_summary": {
+      "runtime_profile": "replace/runtime_profile.json",
+      "context_profile": null,
+      "capabilities": {
+        "default": "replace/b0_summary_probe_root"
+      },
+      "source_id": "replace_source_id",
+      "model_id": "replace_model_id"
+    }
+  }
+}

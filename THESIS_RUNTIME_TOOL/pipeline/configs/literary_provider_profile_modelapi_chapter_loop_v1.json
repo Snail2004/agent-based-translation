@@ -1,0 +1,67 @@
+{
+  "schema_version": "thesis_provider_profile_v1",
+  "profile_id": "literary_modelapi_chapter_loop_gpt54_v1",
+  "credentials": {
+    "modelapi-shared-v1": {
+      "provider": "openai",
+      "credential_revision": "modelapi-profile-v1",
+      "relative_file": "LOCAL-GPT-GATEWAY.txt",
+      "nonempty_line": 1,
+      "enabled": true,
+      "base_url": "https://modelapi.vn/v1",
+      "request_timeout_ms": 300000
+    }
+  },
+  "roles": {
+    "literary_b0_contract_fallback": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["modelapi-shared-v1"]
+    },
+    "literary_b0_summary": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["modelapi-shared-v1"]
+    },
+    "literary_b1_enrich": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["modelapi-shared-v1"]
+    },
+    "literary_b1_scan": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["modelapi-shared-v1"]
+    },
+    "literary_b2_composite": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["modelapi-shared-v1"]
+    },
+    "literary_b3_auditor": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["modelapi-shared-v1"]
+    },
+    "literary_b3_temporal": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["modelapi-shared-v1"]
+    },
+    "literary_cross_chapter_auditor": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["modelapi-shared-v1"]
+    },
+    "literary_local_auditor": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["modelapi-shared-v1"]
+    },
+    "literary_speaker_recovery": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": ["modelapi-shared-v1"]
+    }
+  }
+}

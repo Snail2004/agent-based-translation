@@ -51,6 +51,9 @@ from pipeline.literary.source_anchor import (
 T = TypeVar("T")
 
 
+_RESOLUTION_STATUS_VALUES = frozenset({"named", "candidate", "unknown"})
+
+
 @dataclass(frozen=True)
 class ValidationResult(Generic[T]):
     """The Builder-v3 validator return contract.
@@ -99,7 +102,6 @@ SHAPE_CONTRACTS: dict[str, dict[str, FieldContract]] = {
         "surface_kind": _field("str", allowed=SURFACE_KINDS),
         "referent_kind_claim": _field("str", allowed=REFERENT_KIND_CLAIMS),
         "role_hint": _field("str"),
-        "scene_range": _field("pair_str"),
         "source_block_ids": _field("list_str_nonempty"),
         "anchor_text": _field("str"),
         "evidence_quote": _field("str"),
@@ -124,7 +126,7 @@ SHAPE_CONTRACTS: dict[str, dict[str, FieldContract]] = {
         "anchor_text": _field("str"),
         "evidence_quote": _field("str"),
         "occurrence_hint": _field("positive_int", required=False),
-        "block_id": _field("str"),
+        "block_id": _field("str", required=False),
     },
     "Glossary": {
         "source_term": _field("str"),
@@ -141,7 +143,6 @@ SHAPE_CONTRACTS: dict[str, dict[str, FieldContract]] = {
         "relation_events": _field("list"),
     },
     "Endpoint": {
-        "surface": _field("str"),
         "reference_scope": _field("str", allowed=REFERENCE_SCOPES),
         "referent_kind_claim": _field("str", allowed=REFERENT_KIND_CLAIMS),
         "mention_ref": _field("str", nullable=True),
@@ -402,6 +403,13 @@ def _enum(
     return False
 
 
+def _normalize_event_type(value: Any) -> str:
+    """Normalize formatting only; the model remains responsible for event semantics."""
+
+    text = nfc_text(str(value or "")).casefold()
+    return re.sub(r"_+", "_", re.sub(r"[^a-z0-9]+", "_", text)).strip("_")
+
+
 def _require_mapping(
     value: Any,
     field: str,
@@ -540,11 +548,50 @@ def _endpoint_eligibility(
         warnings.append(f"{label} retained with invalid two-axis combination")
 
 
+def _normalize_reference_scope_axis_echo(
+    endpoint: dict[str, Any],
+    *,
+    warnings: list[str],
+    counts: Counter[str],
+    label: str,
+) -> None:
+    """Fail closed when the ontology value was copied into the scope axis.
+
+    The model still owns both judgments.  Code only recognizes an exact
+    cross-axis echo and removes its authority by replacing the invalid scope
+    with ``unknown``.  Typos and all other foreign values remain fatal through
+    the normal shape contract.
+    """
+
+    scope = str(endpoint.get("reference_scope") or "")
+    kind = str(endpoint.get("referent_kind_claim") or "")
+    if scope in REFERENCE_SCOPES:
+        return
+    if scope in REFERENT_KIND_CLAIMS:
+        endpoint["reference_scope"] = "unknown"
+        counts["reference_scope_axis_echo_normalized"] += 1
+        warnings.append(
+            f"{label}.reference_scope used ontology-axis vocabulary; normalized to unknown"
+        )
+
+
+def _same_occurrence(
+    endpoint: Mapping[str, Any],
+    mention: Mapping[str, Any],
+) -> bool:
+    endpoint_anchor = endpoint.get("anchor")
+    mention_anchor = mention.get("anchor")
+    if not isinstance(endpoint_anchor, Mapping) or not isinstance(mention_anchor, Mapping):
+        return False
+    fields = ("block_id", "char_start", "char_end")
+    return all(endpoint_anchor.get(field) == mention_anchor.get(field) for field in fields)
+
+
 def _normalize_endpoint(
     endpoint_value: Any,
     *,
     block: Mapping[str, Any],
-    mention_ids: set[str],
+    mention_map: Mapping[str, Mapping[str, Any]],
     errors: list[str],
     warnings: list[str],
     counts: Counter[str],
@@ -553,6 +600,12 @@ def _normalize_endpoint(
     endpoint = _require_mapping(endpoint_value, label, errors)
     if endpoint is None:
         return None
+    _normalize_reference_scope_axis_echo(
+        endpoint,
+        warnings=warnings,
+        counts=counts,
+        label=label,
+    )
     if not _shape_ok(
         "Endpoint",
         endpoint,
@@ -562,11 +615,15 @@ def _normalize_endpoint(
     ):
         counts["dropped_invalid_endpoint"] += 1
         return None
+    model_surface = endpoint.pop("surface", None)
     mention_ref = endpoint.get("mention_ref")
-    if mention_ref is not None and str(mention_ref) not in mention_ids:
-        counts["dropped_unresolved_mention_ref"] += 1
-        warnings.append(f"{label} dropped: mention_ref is outside same-window mentions")
-        return None
+    if mention_ref is not None and str(mention_ref) not in mention_map:
+        endpoint["mention_ref"] = None
+        mention_ref = None
+        counts["mention_ref_cleared_foreign"] += 1
+        warnings.append(
+            f"{label}.mention_ref cleared because it is outside same-window mentions"
+        )
     if not _enum(
         endpoint.get("attribution_method"),
         ATTRIBUTION_METHODS,
@@ -583,6 +640,21 @@ def _normalize_endpoint(
     )
     if located is None:
         return None
+    derived_surface = str(located.get("anchor_text") or "")
+    if model_surface is not None and nfc_text(str(model_surface)) != nfc_text(derived_surface):
+        counts["ignored_model_endpoint_surface"] += 1
+        warnings.append(f"{label} model surface ignored; code used anchor_text")
+    located["surface"] = derived_surface
+    counts["endpoint_surface_derived"] += 1
+    if mention_ref is not None and not _same_occurrence(
+        located,
+        mention_map[str(mention_ref)],
+    ):
+        located["mention_ref"] = None
+        counts["mention_ref_cleared_anchor_mismatch"] += 1
+        warnings.append(
+            f"{label}.mention_ref cleared because it does not identify the same source occurrence"
+        )
     _endpoint_eligibility(
         located,
         errors=errors,
@@ -592,6 +664,36 @@ def _normalize_endpoint(
     )
     located["resolution_evidence"] = str(located.get("evidence_quote") or "")
     return located
+
+
+def _invalid_attribution_method_roles(
+    row: Mapping[str, Any],
+    roles: Sequence[str],
+) -> list[str]:
+    """Return endpoint roles whose attribution method is outside the enum.
+
+    Attribution is an item-local model judgment. Code cannot repair a foreign
+    value without inventing that judgment, so the containing turn/event is
+    dropped while unrelated rows from the same response remain usable.
+    """
+
+    invalid: list[str] = []
+    for role in roles:
+        endpoint = row.get(role)
+        if not isinstance(endpoint, Mapping):
+            continue
+        if str(endpoint.get("attribution_method") or "") not in ATTRIBUTION_METHODS:
+            invalid.append(role)
+    return invalid
+
+
+def _resolution_status_role_count(row: Mapping[str, Any], roles: Sequence[str]) -> int:
+    return sum(
+        1
+        for role in roles
+        if isinstance(row.get(role), Mapping)
+        and str(row[role].get("attribution_method") or "") in _RESOLUTION_STATUS_VALUES
+    )
 
 
 def validate_chapter_brief_v3(
@@ -633,6 +735,7 @@ def validate_chapter_brief_v3(
 
     scenes = _require_list(normalized.get("scenes_party_size"), "scenes_party_size", errors)
     covered: Counter[str] = Counter()
+    scene_ranges_by_block: defaultdict[str, list[tuple[str, str]]] = defaultdict(list)
     if scenes is not None:
         for index, scene_value in enumerate(scenes):
             scene = _require_mapping(scene_value, f"scenes_party_size[{index}]", errors)
@@ -651,8 +754,10 @@ def validate_chapter_brief_v3(
             if not range_ids:
                 errors.append(f"scenes_party_size[{index}].block_range is invalid")
                 continue
+            scene_key = (range_ids[0], range_ids[-1])
             for block_id in range_ids:
                 covered[block_id] += 1
+                scene_ranges_by_block[block_id].append(scene_key)
     for block_id in coverage_ids:
         if covered[block_id] == 0:
             errors.append(f"scene_gap: {block_id}")
@@ -680,21 +785,12 @@ def validate_chapter_brief_v3(
             if nfc_text(str(claim.get("surface") or "")) != nfc_text(
                 str(claim.get("anchor_text") or "")
             ):
-                errors.append(f"cast_claims[{index}].surface and anchor_text differ")
+                warnings.append("cast_claim dropped: surface and anchor_text differ")
                 counts["dropped_surface_anchor_mismatch"] += 1
                 continue
             source_ids = claim.get("source_block_ids")
             if not isinstance(source_ids, list) or not source_ids:
                 errors.append(f"cast_claims[{index}].source_block_ids is required")
-                continue
-            scene_ids = _range_block_ids(claim.get("scene_range"), coverage_ids)
-            if not scene_ids:
-                errors.append(f"cast_claims[{index}].scene_range is invalid")
-                continue
-            outside = [str(block_id) for block_id in source_ids if str(block_id) not in scene_ids]
-            if outside:
-                errors.append(f"cast_claims[{index}].source_block_ids outside scene_range: {outside}")
-                counts["cast_claim_source_outside_scene"] += 1
                 continue
             candidates: list[tuple[dict[str, Any], int]] = []
             for source_id in source_ids:
@@ -726,10 +822,34 @@ def validate_chapter_brief_v3(
                     warnings.append("cast_claim dropped: anchor does not locate in a source block")
                 continue
             located_claim, _ = candidates[0]
-            located_claim["evidence_max_order"] = max(
-                int(block_map[str(block_id)].get("order_index") or 0) for block_id in source_ids
+            anchor = SourceAnchor.from_value(located_claim["anchor"])
+            containing_scenes = scene_ranges_by_block.get(anchor.block_id, [])
+            if len(containing_scenes) != 1:
+                errors.append(
+                    f"cast_claims[{index}] cannot derive one scene from evidence block"
+                )
+                counts["cast_claim_scene_derivation_failed"] += 1
+                continue
+            derived_scene = containing_scenes[0]
+            model_scene = claim.get("scene_range")
+            if model_scene is not None and list(model_scene) != list(derived_scene):
+                counts["ignored_model_scene_range"] += 1
+            located_claim["scene_range"] = list(derived_scene)
+            if source_ids != [anchor.block_id]:
+                counts["source_block_ids_normalized_to_evidence_block"] += 1
+                warnings.append(
+                    "cast_claim source_block_ids normalized to the located evidence block"
+                )
+            located_claim["source_block_ids"] = [anchor.block_id]
+            located_claim["evidence_max_order"] = int(
+                block_map[anchor.block_id].get("order_index") or 0
             )
+            counts["cast_claim_scene_derived"] += 1
             kept_claims.append(located_claim)
+
+    if claim_rows and not kept_claims:
+        errors.append("all_cast_claims_dropped")
+        counts["all_cast_claims_dropped"] += 1
 
     def claim_sort_key(claim: Mapping[str, Any]) -> tuple[int, int, int, str]:
         anchor = SourceAnchor.from_value(claim["anchor"])
@@ -793,17 +913,57 @@ def validate_lexicon_v3(
                 counts["dropped_invalid_mention"] += 1
                 continue
             block_id = str(mention.get("block_id") or "")
-            if block_id not in window_ids or block_id not in block_map:
-                counts["dropped_mention_outside_window"] += 1
-                warnings.append(f"mention dropped: block outside window {block_id}")
-                continue
-            located = _locate_in_block(
-                mention,
-                block_map[block_id],
-                counts=counts,
-                warnings=warnings,
-                label="mention",
-            )
+            if block_id:
+                if block_id not in window_ids or block_id not in block_map:
+                    counts["dropped_mention_outside_window"] += 1
+                    warnings.append(f"mention dropped: block outside window {block_id}")
+                    continue
+                located = _locate_in_block(
+                    mention,
+                    block_map[block_id],
+                    counts=counts,
+                    warnings=warnings,
+                    label="mention",
+                )
+            else:
+                anchor_text = str(mention.get("anchor_text") or "")
+                evidence_quote = str(mention.get("evidence_quote") or "")
+                surface = str(mention.get("surface") or "")
+                if nfc_text(surface) != nfc_text(anchor_text):
+                    counts["dropped_surface_anchor_mismatch"] += 1
+                    counts["dropped_mention"] += 1
+                    warnings.append("mention dropped: surface and anchor_text differ")
+                    continue
+                hint = mention.get("occurrence_hint")
+                hint_value = int(hint) if isinstance(hint, int) and hint > 0 else None
+                candidates: list[dict[str, Any]] = []
+                ordered_window_ids = sorted(
+                    window_ids & block_map.keys(),
+                    key=lambda value: (
+                        int(block_map[value].get("order_index") or 0),
+                        value,
+                    ),
+                )
+                for candidate_id in ordered_window_ids:
+                    result = locate_anchor(
+                        block_map[candidate_id],
+                        anchor_text=anchor_text,
+                        evidence_quote=evidence_quote,
+                        occurrence_hint=hint_value,
+                    )
+                    if result.ok:
+                        candidate = dict(mention)
+                        candidate["block_id"] = candidate_id
+                        candidate["anchor"] = _anchor_dict(result.anchor)
+                        candidates.append(candidate)
+                if len(candidates) != 1:
+                    counts["fail_closed_locate"] += 1
+                    counts["dropped_mention"] += 1
+                    reason = "multiple active blocks" if candidates else "no active block"
+                    warnings.append(f"mention dropped: anchor locates in {reason}")
+                    continue
+                located = candidates[0]
+                counts["mention_block_id_derived"] += 1
             if located is not None:
                 kept.append(located)
     try:
@@ -860,8 +1020,8 @@ def validate_narrative_v3(
     ):
         return ValidationResult(normalized, _report("narrative_v3", errors, warnings, counts))
     valid_window_ids = {str(value) for value in normalized.get("window_block_ids") or []}
-    mention_ids = {
-        str(row.get("mention_id"))
+    mention_map = {
+        str(row.get("mention_id")): row
         for row in mentions
         if row.get("mention_id")
         and str(row.get("block_id") or "") in valid_window_ids
@@ -875,6 +1035,26 @@ def validate_narrative_v3(
         for index, turn_value in enumerate(turn_rows):
             turn = _require_mapping(turn_value, f"speaker_turns[{index}]", errors)
             if turn is None:
+                continue
+            invalid_roles = _invalid_attribution_method_roles(
+                turn,
+                ("speaker", "addressee"),
+            )
+            if invalid_roles:
+                resolution_count = _resolution_status_role_count(
+                    turn,
+                    ("speaker", "addressee"),
+                )
+                counts["invalid_attribution_method_dropped"] += len(invalid_roles)
+                counts["dropped_turn_invalid_attribution_method"] += 1
+                if resolution_count:
+                    counts["attribution_method_resolution_status_dropped"] += resolution_count
+                    counts["dropped_turn_attribution_method_resolution_status"] += 1
+                counts["dropped_turn"] += 1
+                warnings.append(
+                    f"speaker_turns[{index}] dropped: invalid attribution_method for "
+                    f"{','.join(invalid_roles)}"
+                )
                 continue
             if not _shape_ok(
                 "Turn",
@@ -894,7 +1074,7 @@ def validate_narrative_v3(
             speaker = _normalize_endpoint(
                 turn.get("speaker"),
                 block=block_map[block_id],
-                mention_ids=mention_ids,
+                mention_map=mention_map,
                 errors=errors,
                 warnings=warnings,
                 counts=counts,
@@ -906,7 +1086,7 @@ def validate_narrative_v3(
                 addressee = _normalize_endpoint(
                     addressee_value,
                     block=block_map[block_id],
-                    mention_ids=mention_ids,
+                    mention_map=mention_map,
                     errors=errors,
                     warnings=warnings,
                     counts=counts,
@@ -958,31 +1138,60 @@ def validate_narrative_v3(
             event = _require_mapping(event_value, f"relation_events[{index}]", errors)
             if event is None:
                 continue
-            if not _shape_ok(
+            invalid_roles = _invalid_attribution_method_roles(
+                event,
+                ("actor", "target"),
+            )
+            if invalid_roles:
+                resolution_count = _resolution_status_role_count(
+                    event,
+                    ("actor", "target"),
+                )
+                counts["invalid_attribution_method_dropped"] += len(invalid_roles)
+                counts["dropped_event_invalid_attribution_method"] += 1
+                if resolution_count:
+                    counts["attribution_method_resolution_status_dropped"] += resolution_count
+                    counts["dropped_event_attribution_method_resolution_status"] += 1
+                counts["dropped_event"] += 1
+                warnings.append(
+                    f"relation_events[{index}] dropped: invalid attribution_method for "
+                    f"{','.join(invalid_roles)}"
+                )
+                continue
+            event_shape_errors = validate_shape_contract(
                 "Event",
                 event,
                 path=f"relation_events[{index}]",
-                errors=errors,
-                counts=counts,
-            ):
+            )
+            if event_shape_errors:
                 counts["dropped_invalid_event"] += 1
+                counts["dropped_event_shape_fields"] += len(event_shape_errors)
+                warnings.extend(
+                    f"relation_events[{index}] dropped: {message}"
+                    for message in event_shape_errors
+                )
                 continue
             block_id = str(event.get("block_id") or "")
             if block_id not in valid_window_ids or block_id not in block_map:
                 counts["dropped_event_outside_window"] += 1
                 continue
             event_type = str(event.get("event_type") or "")
-            if not re.fullmatch(r"[a-z][a-z0-9_]*", event_type):
+            normalized_event_type = _normalize_event_type(event_type)
+            if not re.fullmatch(r"[a-z][a-z0-9_]*", normalized_event_type):
                 errors.append(f"event[{index}].event_type must be lower_snake_case")
                 continue
-            if event_type in PHASE_LEAK_EVENT_TYPES:
-                errors.append(f"phase_leak: event[{index}].event_type={event_type}")
+            if normalized_event_type != event_type:
+                counts["event_type_format_normalized"] += 1
+                warnings.append("event_type formatting normalized to lower_snake_case")
+            event["event_type"] = normalized_event_type
+            if normalized_event_type in PHASE_LEAK_EVENT_TYPES:
+                errors.append(f"phase_leak: event[{index}].event_type={normalized_event_type}")
                 counts["phase_leak"] += 1
                 continue
             actor = _normalize_endpoint(
                 event.get("actor"),
                 block=block_map[block_id],
-                mention_ids=mention_ids,
+                mention_map=mention_map,
                 errors=errors,
                 warnings=warnings,
                 counts=counts,
@@ -991,7 +1200,7 @@ def validate_narrative_v3(
             target = _normalize_endpoint(
                 event.get("target"),
                 block=block_map[block_id],
-                mention_ids=mention_ids,
+                mention_map=mention_map,
                 errors=errors,
                 warnings=warnings,
                 counts=counts,
@@ -1292,11 +1501,12 @@ def validate_digest_v3(
                         (side == "start" and located.anchor.char_start == 0)
                         or (side == "end" and located.anchor.char_end == block_length)
                     ):
-                        errors.append(
-                            f"frame[{index}].{side}_boundary is not a mid-block boundary"
+                        frame[f"{side}_boundary"] = None
+                        frame.pop(f"{side}_anchor", None)
+                        counts["frame_boundary_edge_collapsed"] += 1
+                        warnings.append(
+                            f"frame[{index}].{side}_boundary collapsed to its block edge"
                         )
-                        counts["dropped_non_midblock_boundary"] += 1
-                        boundary_failed = True
             if boundary_failed:
                 continue
             try:

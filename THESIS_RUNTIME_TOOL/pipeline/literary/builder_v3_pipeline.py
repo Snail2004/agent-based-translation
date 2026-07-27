@@ -3,19 +3,19 @@ from __future__ import annotations
 from collections import Counter
 from copy import deepcopy
 from dataclasses import dataclass
+from hashlib import sha256
 import json
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, Protocol, Sequence
 import uuid
 
+from pipeline.agents.llm_config import LLMConfig
 from pipeline.literary.builder_pilot import (
-    ValidationReport,
     build_literary_windows,
     select_chapters,
 )
 from pipeline.literary.builder_validators_v3 import (
     ValidationResult,
-    validate_chapter_brief_v3,
     validate_digest_v3,
     validate_lexicon_v3,
     validate_narrative_v3,
@@ -34,6 +34,7 @@ from pipeline.literary.checkpoint_v3 import (
     M2_CHECKPOINT_SCHEMA_VERSION_V3,
     M2_DIGEST_STATE_VERSION_V3,
     REQUEST_CONTRACT_VERSION,
+    REAL_EXECUTOR_VERSION,
     SYNTHETIC_EXECUTOR_VERSION,
     builder_v3_root,
     contract_versions,
@@ -50,10 +51,111 @@ from pipeline.literary.source_anchor import nfc_block_string
 
 KNOWLEDGE_MODE = "whole_book_frozen"
 EXECUTION_MODE_SYNTHETIC = "synthetic"
+EXECUTION_MODE_REAL_API = "real_api"
+RESPONSE_FORMAT_JSON = {"type": "json_object"}
 DEFAULT_WINDOW_TARGET_TOKENS = 500
 DEFAULT_WINDOW_MAX_BLOCKS = 8
 DEFAULT_TAIL_K = 2
 DEFAULT_SUMMARY_K = 2
+
+
+def _llm_config_projection(config: LLMConfig) -> dict[str, Any]:
+    return {
+        "model": config.model,
+        "temperature": config.temperature,
+        "seed": config.seed,
+        "reasoning_effort": config.reasoning_effort,
+        "verbosity": config.verbosity,
+        "max_output_tokens": config.max_output_tokens,
+        "daily_token_cap": config.daily_token_cap,
+        "prompt_token_cap": config.prompt_token_cap,
+        "pricing": dict(sorted(config.pricing.items())),
+    }
+
+
+@dataclass(frozen=True)
+class RealStageSpec:
+    stage: str
+    provider: str
+    prompt_id: str
+    prompt_text: str
+    prompt_sha256: str
+    model_config: dict[str, Any]
+    model_config_hash: str
+    response_format: dict[str, Any]
+    executor_contract_version: str = REAL_EXECUTOR_VERSION
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        stage: str,
+        prompt_id: str,
+        prompt_text: str,
+        config: LLMConfig,
+        provider: str = "openai",
+    ) -> "RealStageSpec":
+        if stage not in REQUEST_SHAPE_CONTRACT:
+            raise ValueError(f"unsupported real Builder-v3 stage: {stage}")
+        marker = f"Prompt version: {prompt_id}."
+        if marker not in prompt_text:
+            raise ValueError(f"loaded prompt lacks its version marker: {prompt_id}")
+        if not provider.strip():
+            raise ValueError("real Builder-v3 provider cannot be empty")
+        projection = _llm_config_projection(config)
+        return cls(
+            stage=stage,
+            provider=provider.strip(),
+            prompt_id=prompt_id,
+            prompt_text=prompt_text,
+            prompt_sha256=sha256(prompt_text.encode("utf-8")).hexdigest(),
+            model_config=projection,
+            model_config_hash=canonical_hash(projection),
+            response_format=deepcopy(RESPONSE_FORMAT_JSON),
+        )
+
+    def contract_payload(self) -> dict[str, Any]:
+        return {
+            "stage": self.stage,
+            "provider": self.provider,
+            "prompt_id": self.prompt_id,
+            "prompt_sha256": self.prompt_sha256,
+            "model_config": deepcopy(self.model_config),
+            "model_config_hash": self.model_config_hash,
+            "response_format": deepcopy(self.response_format),
+            "executor_contract_version": self.executor_contract_version,
+        }
+
+
+def real_execution_contract_hash(specs: Mapping[str, RealStageSpec]) -> str:
+    return canonical_hash(
+        {stage: specs[stage].contract_payload() for stage in sorted(specs)}
+    )
+
+
+def _execution_contract(
+    *,
+    execution_mode: str,
+    real_stage_specs: Mapping[str, RealStageSpec] | None,
+    required_stages: set[str],
+) -> tuple[dict[str, RealStageSpec], str | None]:
+    specs = dict(real_stage_specs or {})
+    if execution_mode == EXECUTION_MODE_SYNTHETIC:
+        if specs:
+            raise ValueError("synthetic Builder-v3 run cannot carry real stage specs")
+        return {}, None
+    if execution_mode != EXECUTION_MODE_REAL_API:
+        raise ValueError(f"unsupported Builder-v3 execution mode: {execution_mode}")
+    if set(specs) != required_stages:
+        raise ValueError(
+            "real Builder-v3 stage specs mismatch: "
+            f"missing={sorted(required_stages-set(specs))}, "
+            f"extra={sorted(set(specs)-required_stages)}"
+        )
+    for stage, spec in specs.items():
+        if spec.stage != stage:
+            raise ValueError(f"real stage spec key mismatch: {stage} != {spec.stage}")
+    return specs, real_execution_contract_hash(specs)
 
 
 WIRE_SHAPE_CONTRACTS: dict[str, dict[str, Any]] = {
@@ -81,32 +183,6 @@ WIRE_SHAPE_CONTRACTS: dict[str, dict[str, Any]] = {
         "nullable": [],
         "fields": {"context_only": "literal:true", "direction": "previous|next"},
     },
-    "B0SceneClaimView": {
-        "type": "object",
-        "required": [
-            "cast_claim_id",
-            "surface",
-            "surface_kind",
-            "referent_kind_claim",
-            "role_hint",
-            "source_block_ids",
-            "anchor",
-            "scene_range",
-            "trust",
-        ],
-        "nullable": [],
-        "fields": {
-            "cast_claim_id": "str",
-            "surface": "str",
-            "surface_kind": "str",
-            "referent_kind_claim": "str",
-            "role_hint": "str",
-            "source_block_ids": "list[str]",
-            "anchor": "SourceAnchorWire",
-            "scene_range": "tuple[str,str]",
-            "trust": "literal:untrusted",
-        },
-    },
     "WindowMentionView": {
         "type": "object",
         "required": [
@@ -125,23 +201,6 @@ WIRE_SHAPE_CONTRACTS: dict[str, dict[str, Any]] = {
             "referent_kind_claim": "str",
             "block_id": "str",
             "anchor": "SourceAnchorWire",
-        },
-    },
-    "B0TypedProjection": {
-        "type": "object",
-        "required": ["setting", "neutral_premise"],
-        "nullable": [],
-        "fields": {
-            "setting": "dict",
-            "neutral_premise": {
-                "type": "object",
-                "required": ["value", "trust", "evidence_eligible"],
-                "fields": {
-                    "value": "str",
-                    "trust": "literal:gist_only",
-                    "evidence_eligible": "literal:false",
-                },
-            },
         },
     },
     "OccurrenceRosterRow": {
@@ -230,14 +289,6 @@ WIRE_SHAPE_CONTRACTS: dict[str, dict[str, Any]] = {
 
 
 REQUEST_SHAPE_CONTRACT: dict[str, dict[str, Any]] = {
-    "b0": {
-        "version": REQUEST_CONTRACT_VERSION,
-        "sections": {
-            "chapter_blocks": {"type": "array", "items": "BlockView", "required": True},
-        },
-        "wire_shapes": {"BlockView": WIRE_SHAPE_CONTRACTS["BlockView"]},
-        "ordering": {"chapter_blocks": "source_order"},
-    },
     "b1": {
         "version": REQUEST_CONTRACT_VERSION,
         "sections": {
@@ -258,17 +309,15 @@ REQUEST_SHAPE_CONTRACT: dict[str, dict[str, Any]] = {
         "sections": {
             "active_window_blocks": {"type": "array", "items": "BlockView", "required": True},
             "context_only_tail": {"type": "array", "items": "ContextBlockView", "required": True},
-            "b0_scene_projection": {"type": "array", "items": "B0SceneClaimView", "required": True},
             "window_mentions": {"type": "array", "items": "WindowMentionView", "required": True},
         },
         "wire_shapes": {
             name: WIRE_SHAPE_CONTRACTS[name]
-            for name in ("SourceAnchorWire", "BlockView", "ContextBlockView", "B0SceneClaimView", "WindowMentionView")
+            for name in ("SourceAnchorWire", "BlockView", "ContextBlockView", "WindowMentionView")
         },
         "ordering": {
             "active_window_blocks": "source_order",
             "context_only_tail": "source_order",
-            "b0_scene_projection": "min_source_order_then_cast_claim_id",
             "window_mentions": "block_order_then_anchor_then_id",
         },
     },
@@ -276,14 +325,13 @@ REQUEST_SHAPE_CONTRACT: dict[str, dict[str, Any]] = {
         "version": REQUEST_CONTRACT_VERSION,
         "sections": {
             "chapter_blocks": {"type": "array", "items": "BlockView", "required": True},
-            "b0_typed_projection": {"type": "B0TypedProjection", "required": True},
             "occurrence_roster": {"type": "array", "items": "OccurrenceRosterRow", "required": True},
             "prior_rolling_summaries": {"type": "array", "items": "RollingSummaryView", "required": True},
             "b2_events_compact": {"type": "array", "items": "B2EventCompact", "required": True},
         },
         "wire_shapes": {
             name: WIRE_SHAPE_CONTRACTS[name]
-            for name in ("SourceAnchorWire", "BlockView", "B0TypedProjection", "OccurrenceRosterRow", "EndpointCompact", "B2EventCompact", "RollingSummaryView")
+            for name in ("SourceAnchorWire", "BlockView", "OccurrenceRosterRow", "EndpointCompact", "B2EventCompact", "RollingSummaryView")
         },
         "ordering": {
             "chapter_blocks": "source_order",
@@ -413,6 +461,161 @@ class SyntheticStageExecutor:
             from_cache=False,
             execution_mode=EXECUTION_MODE_SYNTHETIC,
             transport_meta={"executor_version": SYNTHETIC_EXECUTOR_VERSION},
+            error=None,
+        )
+
+
+class RealStageExecutor:
+    """Injectable real transport adapter; construction itself never reads a key."""
+
+    def __init__(self, clients: Mapping[str, Any], *, slice_cache_root: Path) -> None:
+        self._clients = dict(clients)
+        self._slice_cache_root = Path(slice_cache_root).resolve()
+        if "literary_m4f_s5c_slice" not in self._slice_cache_root.parts:
+            raise ValueError("real Builder-v3 cache root is outside the S5C slice")
+        for stage, client in self._clients.items():
+            cache_path = getattr(client, "cache_path", None)
+            if cache_path is None:
+                raise ValueError(f"real Builder-v3 client lacks cache_path: {stage}")
+            resolved = Path(cache_path).resolve()
+            if (
+                self._slice_cache_root != resolved.parent
+                and self._slice_cache_root not in resolved.parents
+            ):
+                raise ValueError(f"real Builder-v3 cache escapes slice root: {stage}")
+        self.call_log: list[dict[str, Any]] = []
+
+    def execute(
+        self,
+        request: V3StageRequest,
+        *,
+        attempt_no: int,
+        bypass_cache: bool = False,
+    ) -> StageAttemptResult:
+        body = request.body()
+        if canonical_hash(body) != request.request_fingerprint:
+            raise ValueError("RealStageExecutor received a mismatched request fingerprint")
+        if body.get("execution_mode") != EXECUTION_MODE_REAL_API:
+            raise ValueError("RealStageExecutor received a non-real request")
+        stage = str(body.get("stage") or "")
+        client = self._clients.get(stage)
+        if client is None:
+            return StageAttemptResult(
+                raw_payload=None,
+                raw_text=None,
+                usage=_zero_usage(),
+                from_cache=False,
+                execution_mode=EXECUTION_MODE_REAL_API,
+                transport_meta={"executor_version": REAL_EXECUTOR_VERSION, "attempts": []},
+                error={"type": "MissingRealClient", "message": stage},
+            )
+        if int(getattr(client, "max_retries", -1)) != 0:
+            raise ValueError("real Builder-v3 clients must set max_retries=0")
+        client_config = getattr(client, "config", None)
+        if not isinstance(client_config, LLMConfig):
+            raise ValueError("real Builder-v3 client lacks a pinned LLMConfig")
+        expected_config = dict(body.get("transport_config") or {})
+        if _llm_config_projection(client_config) != expected_config:
+            raise ValueError("real Builder-v3 client config differs from persisted request")
+        expected_config_hash = str(body.get("model_config_hash") or "")
+        cache_path = Path(getattr(client, "cache_path")).resolve()
+        if not expected_config_hash or expected_config_hash[:16] not in cache_path.stem:
+            raise ValueError("real Builder-v3 cache is not namespaced by model config")
+        provider = str(body.get("provider") or "")
+        if not provider:
+            raise ValueError("real Builder-v3 request lacks provider metadata")
+        messages = body.get("rendered_messages")
+        response_format = body.get("response_format")
+        if not isinstance(messages, list) or response_format != RESPONSE_FORMAT_JSON:
+            raise ValueError("real Builder-v3 request lacks persisted messages/JSON format")
+
+        transport_attempts: list[dict[str, Any]] = []
+        result: Any | None = None
+        for transport_attempt in range(1, 3):
+            try:
+                result = client.call(
+                    deepcopy(messages),
+                    response_format=deepcopy(response_format),
+                    tag=f"builder_v3_{stage}",
+                    bypass_cache=bool(bypass_cache or transport_attempt > 1),
+                )
+                transport_attempts.append({"attempt": transport_attempt, "status": "ok"})
+                break
+            except Exception as exc:  # transport taxonomy is persisted, never hidden
+                transport_attempts.append(
+                    {
+                        "attempt": transport_attempt,
+                        "status": "error",
+                        "error_type": type(exc).__name__,
+                        "message": str(exc),
+                    }
+                )
+                if transport_attempt == 2:
+                    return StageAttemptResult(
+                        raw_payload=None,
+                        raw_text=None,
+                        usage=_zero_usage(),
+                        from_cache=False,
+                        execution_mode=EXECUTION_MODE_REAL_API,
+                        transport_meta={
+                            "executor_version": REAL_EXECUTOR_VERSION,
+                            "attempts": transport_attempts,
+                        },
+                        error={"type": type(exc).__name__, "message": str(exc)},
+                    )
+
+        parsed = getattr(result, "parsed_json", None)
+        raw_text = getattr(result, "text", None)
+        usage = getattr(result, "usage", None)
+        if not isinstance(parsed, Mapping) or usage is None:
+            return StageAttemptResult(
+                raw_payload=None,
+                raw_text=str(raw_text) if raw_text is not None else None,
+                usage=_zero_usage(),
+                from_cache=bool(getattr(result, "from_cache", False)),
+                execution_mode=EXECUTION_MODE_REAL_API,
+                transport_meta={
+                    "executor_version": REAL_EXECUTOR_VERSION,
+                    "provider": provider,
+                    "attempts": transport_attempts,
+                    "model": str(getattr(result, "model", "")),
+                },
+                error={
+                    "type": "RealJSONParseError",
+                    "message": str(getattr(result, "json_error", "missing parsed JSON")),
+                },
+            )
+        usage_payload = {
+            "prompt_tokens": int(getattr(usage, "prompt_tokens", 0) or 0),
+            "cached_tokens": int(getattr(usage, "cached_tokens", 0) or 0),
+            "completion_tokens": int(getattr(usage, "completion_tokens", 0) or 0),
+            "reasoning_tokens": int(getattr(usage, "reasoning_tokens", 0) or 0),
+            "cost_usd": float(getattr(result, "cost_usd", 0.0) or 0.0),
+        }
+        transport_meta = {
+            "executor_version": REAL_EXECUTOR_VERSION,
+            "provider": provider,
+            "attempts": transport_attempts,
+            "model": str(getattr(result, "model", "")),
+            "system_fingerprint": getattr(result, "system_fingerprint", None),
+            "cache_key": str(getattr(result, "cache_key", "")),
+            "latency_ms": int(getattr(result, "latency_ms", 0) or 0),
+        }
+        self.call_log.append(
+            {
+                "stage": stage,
+                "request_fingerprint": request.request_fingerprint,
+                "rendered_messages": deepcopy(messages),
+                "transport_meta": deepcopy(transport_meta),
+            }
+        )
+        return StageAttemptResult(
+            raw_payload=_json_clone(dict(parsed)),
+            raw_text=str(raw_text) if raw_text is not None else canonical_json(parsed),
+            usage=usage_payload,
+            from_cache=bool(getattr(result, "from_cache", False)),
+            execution_mode=EXECUTION_MODE_REAL_API,
+            transport_meta=transport_meta,
             error=None,
         )
 
@@ -619,11 +822,17 @@ def _build_request(
     lineage_manifest: Iterable[Mapping[str, Any]],
     upstream_checkpoint_identity_hashes: Mapping[str, str] | None = None,
     execution_mode: str = EXECUTION_MODE_SYNTHETIC,
+    real_spec: RealStageSpec | None = None,
 ) -> V3StageRequest:
     if stage not in REQUEST_SHAPE_CONTRACT:
         raise ValueError(f"unsupported Builder-v3 request stage: {stage}")
-    if execution_mode != EXECUTION_MODE_SYNTHETIC:
-        raise ValueError("Step-3 Builder-v3 requests support synthetic execution only")
+    if execution_mode not in {EXECUTION_MODE_SYNTHETIC, EXECUTION_MODE_REAL_API}:
+        raise ValueError(f"unsupported Builder-v3 execution mode: {execution_mode}")
+    if execution_mode == EXECUTION_MODE_SYNTHETIC and real_spec is not None:
+        raise ValueError("synthetic Builder-v3 request cannot carry a real stage spec")
+    if execution_mode == EXECUTION_MODE_REAL_API:
+        if real_spec is None or real_spec.stage != stage:
+            raise ValueError(f"real Builder-v3 request lacks the {stage} stage spec")
     expected_sections = set(REQUEST_SHAPE_CONTRACT[stage]["sections"])
     actual_sections = {str(key) for key in allowlisted_sections}
     if actual_sections != expected_sections:
@@ -641,7 +850,7 @@ def _build_request(
         ),
         default=-1,
     )
-    body = {
+    body: dict[str, Any] = {
         "stage": stage,
         "chapter_id": chapter_id,
         "window_id": window_id,
@@ -659,6 +868,32 @@ def _build_request(
         "allowlisted_sections": _json_clone(allowlisted_sections),
         "lineage_manifest": lineage,
     }
+    if execution_mode == EXECUTION_MODE_REAL_API:
+        assert real_spec is not None
+        model_input = {
+            "stage": stage,
+            "chapter_id": chapter_id,
+            "window_id": window_id,
+            "allowlisted_sections": _json_clone(allowlisted_sections),
+        }
+        rendered_messages = [
+            {"role": "system", "content": real_spec.prompt_text},
+            {"role": "user", "content": canonical_json(model_input)},
+        ]
+        body.update(
+            {
+                "system_prompt_ref": real_spec.prompt_id,
+                "provider": real_spec.provider,
+                "system_prompt_sha256": real_spec.prompt_sha256,
+                "system_prompt_text": real_spec.prompt_text,
+                "executor_contract_version": real_spec.executor_contract_version,
+                "transport_config": deepcopy(real_spec.model_config),
+                "model_config_hash": real_spec.model_config_hash,
+                "response_format": deepcopy(real_spec.response_format),
+                "rendered_messages": rendered_messages,
+                "selection_universe_hash": canonical_hash(allowlisted_sections),
+            }
+        )
     encoded = canonical_json(body)
     return V3StageRequest(encoded, canonical_hash(body))
 
@@ -706,15 +941,51 @@ class _AuditSession:
 
         validation_path = attempt_dir / "validation.json"
         transport_contract_errors: list[str] = []
-        if result.execution_mode != EXECUTION_MODE_SYNTHETIC:
+        request_body = request.body()
+        expected_mode = str(request_body.get("execution_mode") or "")
+        expected_executor = (
+            SYNTHETIC_EXECUTOR_VERSION
+            if expected_mode == EXECUTION_MODE_SYNTHETIC
+            else REAL_EXECUTOR_VERSION
+        )
+        if result.execution_mode != expected_mode:
             transport_contract_errors.append("execution_mode")
-        if result.transport_meta.get("executor_version") != SYNTHETIC_EXECUTOR_VERSION:
+        if result.transport_meta.get("executor_version") != expected_executor:
             transport_contract_errors.append("executor_version")
-        if any(float(value or 0) != 0 for value in result.usage.values()):
-            transport_contract_errors.append("synthetic_usage")
+        if expected_mode == EXECUTION_MODE_SYNTHETIC:
+            if any(float(value or 0) != 0 for value in result.usage.values()):
+                transport_contract_errors.append("synthetic_usage")
+        elif expected_mode == EXECUTION_MODE_REAL_API:
+            expected_provider = str(request_body.get("provider") or "")
+            expected_model = str((request_body.get("transport_config") or {}).get("model") or "")
+            if (
+                not expected_provider
+                or str(result.transport_meta.get("provider") or "")
+                != expected_provider
+            ):
+                transport_contract_errors.append("provider")
+            if str(result.transport_meta.get("model") or "") != expected_model:
+                transport_contract_errors.append("model")
+            if not str(result.transport_meta.get("cache_key") or ""):
+                transport_contract_errors.append("cache_key")
+            attempts = result.transport_meta.get("attempts")
+            if not isinstance(attempts, list) or not 1 <= len(attempts) <= 2:
+                transport_contract_errors.append("attempts")
+            for key in (
+                "prompt_tokens",
+                "cached_tokens",
+                "completion_tokens",
+                "reasoning_tokens",
+                "cost_usd",
+            ):
+                value = result.usage.get(key)
+                if not isinstance(value, (int, float)) or float(value) < 0:
+                    transport_contract_errors.append(f"usage:{key}")
+        else:
+            transport_contract_errors.append("request_execution_mode")
         if result.error is not None or result.raw_payload is None or transport_contract_errors:
             error = deepcopy(result.error) or {
-                "type": "SyntheticTransportContractError",
+                "type": "StageTransportContractError",
                 "message": ",".join(transport_contract_errors),
             }
             validation_record = {
@@ -736,6 +1007,7 @@ class _AuditSession:
                 raw_path=raw_path,
                 validation_path=validation_path,
                 operational_upstream_checkpoint_hashes=operational_upstream_checkpoint_hashes,
+                result=result,
             )
             raise V3RunHalt(
                 f"{stage} transport failed: {error}",
@@ -768,6 +1040,7 @@ class _AuditSession:
             raw_path=raw_path,
             validation_path=validation_path,
             operational_upstream_checkpoint_hashes=operational_upstream_checkpoint_hashes,
+            result=result,
         )
         if not validated.report.ok:
             raise V3RunHalt(
@@ -794,6 +1067,7 @@ def _audit_ref(
     raw_path: Path,
     validation_path: Path,
     operational_upstream_checkpoint_hashes: Mapping[str, str] | None,
+    result: StageAttemptResult,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     def relative(path: Path) -> str:
         return path.resolve().relative_to(root.resolve()).as_posix()
@@ -822,6 +1096,10 @@ def _audit_ref(
             sorted((operational_upstream_checkpoint_hashes or {}).items())
         ),
     }
+    if result.execution_mode == EXECUTION_MODE_REAL_API:
+        ref["usage"] = deepcopy(result.usage)
+        ref["from_cache"] = bool(result.from_cache)
+        ref["transport_meta"] = deepcopy(result.transport_meta)
     logical_prefix = f"{stage}/{chapter_id}/{window_id or 'chapter'}"
     artifacts = [
         {"role": f"{logical_prefix}/request", "path": request_path},
@@ -831,64 +1109,19 @@ def _audit_ref(
     return ref, artifacts
 
 
+def _usage_from_request_refs(rows: Iterable[Mapping[str, Any]]) -> dict[str, int | float]:
+    result = _zero_usage()
+    for row in rows:
+        for key in result:
+            result[key] = result[key] + (row.get("usage") or {}).get(key, 0)
+    return result
+
+
 def _block_order_map(chapter: Mapping[str, Any]) -> dict[str, int]:
     return {
         str(block["block_id"]): int(block.get("order_index") or 0)
         for block in _ordered_blocks(chapter)
     }
-
-
-def _scene_block_ids(
-    scene_range: Sequence[Any],
-    chapter: Mapping[str, Any],
-) -> list[str]:
-    if len(scene_range) != 2:
-        return []
-    coverage = [str(block["block_id"]) for block in _ordered_blocks(chapter) if _non_heading(block)]
-    try:
-        start = coverage.index(str(scene_range[0]))
-        end = coverage.index(str(scene_range[1]))
-    except ValueError:
-        return []
-    if start > end:
-        return []
-    return coverage[start : end + 1]
-
-
-def _b0_scene_projection(
-    brief: Mapping[str, Any],
-    *,
-    chapter: Mapping[str, Any],
-    active_block_ids: Iterable[str],
-) -> list[dict[str, Any]]:
-    active = {str(value) for value in active_block_ids}
-    order = _block_order_map(chapter)
-    rows: list[dict[str, Any]] = []
-    for value in brief.get("cast_claims") or []:
-        claim = dict(value)
-        scene_ids = _scene_block_ids(claim.get("scene_range") or [], chapter)
-        if not active.intersection(scene_ids):
-            continue
-        rows.append(
-            {
-                "cast_claim_id": str(claim.get("cast_claim_id") or ""),
-                "surface": str(claim.get("surface") or ""),
-                "surface_kind": str(claim.get("surface_kind") or ""),
-                "referent_kind_claim": str(claim.get("referent_kind_claim") or ""),
-                "role_hint": str(claim.get("role_hint") or ""),
-                "source_block_ids": [str(item) for item in claim.get("source_block_ids") or []],
-                "anchor": _json_clone(claim.get("anchor")),
-                "scene_range": [str(item) for item in claim.get("scene_range") or []],
-                "trust": "untrusted",
-            }
-        )
-    rows.sort(
-        key=lambda row: (
-            min((order.get(block_id, 10**9) for block_id in row["source_block_ids"]), default=10**9),
-            row["cast_claim_id"],
-        )
-    )
-    return rows
 
 
 def _window_mentions(
@@ -914,17 +1147,6 @@ def _window_mentions(
         )
     )
     return rows
-
-
-def _b0_typed_projection(brief: Mapping[str, Any]) -> dict[str, Any]:
-    return {
-        "setting": _json_clone(brief.get("setting") or {}),
-        "neutral_premise": {
-            "value": str(brief.get("neutral_premise") or ""),
-            "trust": "gist_only",
-            "evidence_eligible": False,
-        },
-    }
 
 
 def _iter_endpoints(payload: Mapping[str, Any]) -> Iterable[dict[str, Any]]:
@@ -1032,23 +1254,11 @@ def _reference_record(
 def _m1_reference_index(
     *,
     chapter: Mapping[str, Any],
-    b0_payload: Mapping[str, Any],
     b1_by_window: Sequence[Mapping[str, Any]],
     b2_by_window: Sequence[Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
     chapter_id = str(chapter.get("chapter_id") or "")
     rows: list[dict[str, Any]] = []
-    for claim in b0_payload.get("cast_claims") or []:
-        rows.append(
-            _reference_record(
-                identifier=str(claim.get("cast_claim_id") or ""),
-                kind="cast_claim",
-                owner_stage="b0",
-                chapter_id=chapter_id,
-                window_id=None,
-                anchor=claim.get("anchor") or {},
-            )
-        )
     for window_row in b1_by_window:
         window_id = str(window_row.get("window_id") or "")
         for mention in (window_row.get("payload") or {}).get("character_mentions") or []:
@@ -1233,6 +1443,11 @@ def _occurrence_roster(
 
 def _validate_m1_closure(state: Mapping[str, Any]) -> None:
     references = {str(row.get("id") or ""): row for row in state.get("reference_index") or []}
+    if any(
+        row.get("kind") == "cast_claim" or row.get("owner_stage") == "b0"
+        for row in references.values()
+    ):
+        raise V3RunHalt("B0 reference survived in the B0-less M1 state", stage="b1")
     for window_row in state.get("b2_by_window") or []:
         window_id = str(window_row.get("window_id") or "")
         for endpoint in _iter_endpoints(window_row.get("payload") or {}):
@@ -1298,22 +1513,6 @@ def _merge_counts(target: Counter[str], report: Mapping[str, Any]) -> None:
         target[str(key)] += int(value)
 
 
-def _strict_forward_reference_result(
-    result: ValidationResult[dict[str, Any]],
-) -> ValidationResult[dict[str, Any]]:
-    counts = dict(result.report.counts)
-    if int(counts.get("dropped_unresolved_mention_ref") or 0) == 0:
-        return result
-    report = ValidationReport(
-        name=result.report.name,
-        ok=False,
-        errors=[*result.report.errors, "foreign mention_ref is fatal in Builder-v3 orchestration"],
-        warnings=list(result.report.warnings),
-        counts=counts,
-    )
-    return ValidationResult(_json_clone(result.payload), report)
-
-
 def _m1_semantic_projection(state: Mapping[str, Any]) -> dict[str, Any]:
     projection = _json_clone(state)
     projection.pop("request_manifest", None)
@@ -1337,6 +1536,8 @@ def _validate_restored_state(state: Mapping[str, Any], *, stage: str) -> None:
     )
     if state.get("schema_version") != expected_version:
         raise CheckpointError(f"restored {stage} state has wrong schema_version")
+    if stage == "m1v3" and "b0_payload" in state:
+        raise CheckpointError("restored m1v3 state carries retired b0_payload")
     projection = (
         _m1_semantic_projection(state) if stage == "m1v3" else _m2_semantic_projection(state)
     )
@@ -1378,6 +1579,7 @@ def _checkpoint_common_expected(
     tail_k: int,
     summary_k: int,
     input_m1v3_identity_hash: str | None = None,
+    execution_contract_hash: str | None = None,
 ) -> dict[str, Any]:
     expected = {
         "stage": stage,
@@ -1403,6 +1605,10 @@ def _checkpoint_common_expected(
     }
     if stage == "m2v3":
         expected["input_m1v3_identity_hash"] = input_m1v3_identity_hash
+    if execution_mode == EXECUTION_MODE_REAL_API:
+        if not execution_contract_hash:
+            raise ValueError("real Builder-v3 checkpoint lacks execution contract hash")
+        expected["execution_contract_hash"] = execution_contract_hash
     return expected
 
 
@@ -1420,6 +1626,7 @@ def _identity_base(
     tail_k: int,
     summary_k: int,
     input_m1v3_identity_hash: str | None = None,
+    execution_contract_hash: str | None = None,
 ) -> dict[str, Any]:
     return {
         **_checkpoint_common_expected(
@@ -1434,6 +1641,7 @@ def _identity_base(
             tail_k=tail_k,
             summary_k=summary_k,
             input_m1v3_identity_hash=input_m1v3_identity_hash,
+            execution_contract_hash=execution_contract_hash,
         ),
         "request_manifest_hash": request_manifest_hash,
     }
@@ -1464,11 +1672,15 @@ def run_m1_v3(
     window_max_blocks: int = DEFAULT_WINDOW_MAX_BLOCKS,
     tail_k: int = DEFAULT_TAIL_K,
     resume: bool = False,
+    real_stage_specs: Mapping[str, RealStageSpec] | None = None,
 ) -> dict[str, Any]:
     if knowledge_mode != KNOWLEDGE_MODE:
         raise ValueError("Builder-v3 Step 3 accepts whole_book_frozen only")
-    if execution_mode != EXECUTION_MODE_SYNTHETIC:
-        raise ValueError("Builder-v3 Step 3 accepts synthetic execution only")
+    specs, execution_contract_hash = _execution_contract(
+        execution_mode=execution_mode,
+        real_stage_specs=real_stage_specs,
+        required_stages={"b1", "b2"},
+    )
     whole, selected = _selected_chapters(document, chapters)
     _require_prefix(whole, selected)
     selected_ids = [str(row.get("chapter_id") or "") for row in selected]
@@ -1489,6 +1701,9 @@ def run_m1_v3(
         "checkpoint_identity_hashes": {},
         "stopping_error": None,
     }
+    if execution_mode == EXECUTION_MODE_REAL_API:
+        report["execution_contract_hash"] = execution_contract_hash
+        report["usage"] = _zero_usage()
     counts: Counter[str] = Counter()
     audit = _AuditSession.create(Path(out_dir))
     parent_identity: str | None = None
@@ -1516,6 +1731,7 @@ def run_m1_v3(
                             window_max_blocks=window_max_blocks,
                             tail_k=tail_k,
                             summary_k=0,
+                            execution_contract_hash=execution_contract_hash,
                         ),
                     )
                     if checkpoint is None:
@@ -1535,6 +1751,12 @@ def run_m1_v3(
                     report["checkpoint_paths"][chapter_id] = str(
                         current_pointer_path(Path(out_dir), "m1v3", chapter_id)
                     )
+                    if execution_mode == EXECUTION_MODE_REAL_API:
+                        for usage_key, usage_value in (
+                            checkpoint.get("accounting") or {}
+                        ).items():
+                            if usage_key in report["usage"]:
+                                report["usage"][usage_key] += usage_value
                     parent_identity = str(checkpoint["checkpoint_identity_hash"])
                     parent_operational = str(checkpoint["checkpoint_hash"])
                     start_index = absolute_index + 1
@@ -1552,33 +1774,6 @@ def run_m1_v3(
                 request_refs: list[dict[str, Any]] = []
                 audit_artifacts: list[dict[str, Any]] = []
                 request_fingerprints: list[str] = []
-
-                b0_request = _build_request(
-                    stage="b0",
-                    chapter_id=chapter_id,
-                    window_id=None,
-                    allowlisted_sections={
-                        "chapter_blocks": [_block_view(block) for block in ordered_blocks]
-                    },
-                    lineage_manifest=_block_lineage(ordered_blocks, "chapter_block"),
-                )
-                try:
-                    b0_payload, b0_report, audit_ref, artifacts = audit.execute(
-                        request=b0_request,
-                        executor=executor,
-                        validator=lambda payload: validate_chapter_brief_v3(
-                            payload, blocks=ordered_blocks
-                        ),
-                        stage="b0",
-                        chapter_id=chapter_id,
-                        window_id=None,
-                    )
-                except V3RunHalt as exc:
-                    raise exc
-                request_refs.append(audit_ref)
-                audit_artifacts.extend(artifacts)
-                request_fingerprints.append(b0_request.request_fingerprint)
-                _merge_counts(counts, b0_report)
 
                 b1_by_window: list[dict[str, Any]] = []
                 b2_by_window: list[dict[str, Any]] = []
@@ -1607,6 +1802,8 @@ def run_m1_v3(
                                 "context_only_tail_block",
                             ),
                         ],
+                        execution_mode=execution_mode,
+                        real_spec=specs.get("b1"),
                     )
                     b1_payload, b1_report, audit_ref, artifacts = audit.execute(
                         request=b1_request,
@@ -1624,11 +1821,6 @@ def run_m1_v3(
                     _merge_counts(counts, b1_report)
                     b1_by_window.append({"window_id": window_id, "payload": b1_payload})
 
-                    scene_projection = _b0_scene_projection(
-                        b0_payload,
-                        chapter=chapter,
-                        active_block_ids=window.spec["active_block_ids"],
-                    )
                     mentions = _window_mentions(b1_payload, chapter)
                     b2_request = _build_request(
                         stage="b2",
@@ -1639,7 +1831,6 @@ def run_m1_v3(
                                 _block_view(block) for block in active_blocks
                             ],
                             "context_only_tail": tail_rows,
-                            "b0_scene_projection": scene_projection,
                             "window_mentions": mentions,
                         },
                         lineage_manifest=[
@@ -1648,18 +1839,17 @@ def run_m1_v3(
                                 [*window.previous_tail, *window.next_tail],
                                 "context_only_tail_block",
                             ),
-                            _request_lineage_row(b0_request, "b0_request"),
                             _request_lineage_row(b1_request, "b1_request"),
                         ],
+                        execution_mode=execution_mode,
+                        real_spec=specs.get("b2"),
                     )
                     b2_payload, b2_report, audit_ref, artifacts = audit.execute(
                         request=b2_request,
                         executor=executor,
                         validator=lambda payload, active=active_blocks, rows=b1_payload[
                             "character_mentions"
-                        ]: _strict_forward_reference_result(
-                            validate_narrative_v3(payload, blocks=active, mentions=rows)
-                        ),
+                        ]: validate_narrative_v3(payload, blocks=active, mentions=rows),
                         stage="b2",
                         chapter_id=chapter_id,
                         window_id=window_id,
@@ -1672,7 +1862,6 @@ def run_m1_v3(
 
                 reference_index = _m1_reference_index(
                     chapter=chapter,
-                    b0_payload=b0_payload,
                     b1_by_window=b1_by_window,
                     b2_by_window=b2_by_window,
                 )
@@ -1681,7 +1870,6 @@ def run_m1_v3(
                     "chapter_id": chapter_id,
                     "contract_versions": contract_versions(),
                     "windows": [_json_clone(window.spec) for window in windows],
-                    "b0_payload": _json_clone(b0_payload),
                     "b1_by_window": _json_clone(b1_by_window),
                     "b2_by_window": _json_clone(b2_by_window),
                     "reference_index": reference_index,
@@ -1704,7 +1892,9 @@ def run_m1_v3(
                     window_max_blocks=window_max_blocks,
                     tail_k=tail_k,
                     summary_k=0,
+                    execution_contract_hash=execution_contract_hash,
                 )
+                chapter_usage = _usage_from_request_refs(request_refs)
                 checkpoint = publish_generation(
                     out_dir=Path(out_dir),
                     stage="m1v3",
@@ -1715,11 +1905,14 @@ def run_m1_v3(
                     operational_fields={
                         "parent_checkpoint_hash": parent_operational,
                         "run_id": audit.run_id,
-                        "accounting": _zero_usage(),
+                        "accounting": chapter_usage,
                     },
                     audit_artifacts=audit_artifacts,
                 )
                 report["ran_chapters"].append(chapter_id)
+                if execution_mode == EXECUTION_MODE_REAL_API:
+                    for usage_key, usage_value in chapter_usage.items():
+                        report["usage"][usage_key] += usage_value
                 report["request_manifest_hashes"][chapter_id] = request_manifest_hash
                 report["semantic_state_hashes"][chapter_id] = state["semantic_state_hash"]
                 report["checkpoint_identity_hashes"][chapter_id] = checkpoint[
@@ -1747,6 +1940,7 @@ def _load_m1_chain(
     through_index: int,
     m1v3_dir: Path,
     execution_mode: str,
+    execution_contract_hash: str | None,
 ) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
     whole = _document_chapters(document)
     checkpoints: dict[str, dict[str, Any]] = {}
@@ -1754,27 +1948,32 @@ def _load_m1_chain(
     parent_identity: str | None = None
     for absolute_index, chapter in enumerate(whole[: through_index + 1]):
         chapter_id = str(chapter.get("chapter_id") or "")
+        expected = {
+            "stage": "m1v3",
+            "chapter_id": chapter_id,
+            "schema_version": M1_CHECKPOINT_SCHEMA_VERSION_V3,
+            "builder_schema": BUILDER_SCHEMA_V3,
+            "absolute_chapter_index": absolute_index,
+            "chapter_sequence_prefix": [
+                str(row.get("chapter_id") or "")
+                for row in whole[: absolute_index + 1]
+            ],
+            "source_hash": _v3_chapter_source_hash(chapter),
+            "knowledge_mode": KNOWLEDGE_MODE,
+            "execution_mode": execution_mode,
+            "contract_versions": contract_versions(),
+            "request_contract_hashes": dict(REQUEST_CONTRACT_HASHES),
+            "parent_checkpoint_identity_hash": parent_identity,
+        }
+        if execution_mode == EXECUTION_MODE_REAL_API:
+            if not execution_contract_hash:
+                raise ValueError("real M1 chain load lacks execution contract hash")
+            expected["execution_contract_hash"] = execution_contract_hash
         checkpoint = read_current_checkpoint(
             out_dir=m1v3_dir,
             stage="m1v3",
             chapter_id=chapter_id,
-            expected={
-                "stage": "m1v3",
-                "chapter_id": chapter_id,
-                "schema_version": M1_CHECKPOINT_SCHEMA_VERSION_V3,
-                "builder_schema": BUILDER_SCHEMA_V3,
-                "absolute_chapter_index": absolute_index,
-                "chapter_sequence_prefix": [
-                    str(row.get("chapter_id") or "")
-                    for row in whole[: absolute_index + 1]
-                ],
-                "source_hash": _v3_chapter_source_hash(chapter),
-                "knowledge_mode": KNOWLEDGE_MODE,
-                "execution_mode": execution_mode,
-                "contract_versions": contract_versions(),
-                "request_contract_hashes": dict(REQUEST_CONTRACT_HASHES),
-                "parent_checkpoint_identity_hash": parent_identity,
-            },
+            expected=expected,
         )
         if checkpoint is None:
             raise CheckpointError(f"missing required M1V3 checkpoint: {chapter_id}")
@@ -1821,6 +2020,7 @@ def _load_m2_prefix_context(
     m1_checkpoints: Mapping[str, Mapping[str, Any]],
     execution_mode: str,
     summary_k: int,
+    execution_contract_hash: str | None,
 ) -> tuple[dict[str, dict[str, Any]], str | None, str | None]:
     whole = _document_chapters(document)
     entries: dict[str, dict[str, Any]] = {}
@@ -1848,6 +2048,7 @@ def _load_m2_prefix_context(
                 tail_k=int(m1.get("tail_k") or 0),
                 summary_k=summary_k,
                 input_m1v3_identity_hash=str(m1.get("checkpoint_identity_hash") or ""),
+                execution_contract_hash=execution_contract_hash,
             ),
         )
         if checkpoint is None:
@@ -1863,7 +2064,6 @@ def _load_m2_prefix_context(
 def _b3_lineage(
     *,
     chapter: Mapping[str, Any],
-    b0_projection: Mapping[str, Any],
     roster: Sequence[Mapping[str, Any]],
     events: Sequence[Mapping[str, Any]],
     summaries: Sequence[Mapping[str, Any]],
@@ -1871,15 +2071,6 @@ def _b3_lineage(
 ) -> list[dict[str, Any]]:
     order = _block_order_map(chapter)
     rows = _block_lineage(_ordered_blocks(chapter), "chapter_block")
-    rows.append(
-        _lineage_row(
-            source_channel="b0_typed_projection",
-            source_item_id=str(chapter.get("chapter_id") or ""),
-            value=b0_projection,
-            order_indices=order.values(),
-            upstream_checkpoint_identity_hash=m1_identity_hash,
-        )
-    )
     for row in roster:
         rows.append(
             _lineage_row(
@@ -1927,11 +2118,18 @@ def run_m2_v3(
     execution_mode: str = EXECUTION_MODE_SYNTHETIC,
     summary_k: int = DEFAULT_SUMMARY_K,
     resume: bool = False,
+    real_stage_specs: Mapping[str, RealStageSpec] | None = None,
+    m1_execution_contract_hash: str | None = None,
 ) -> dict[str, Any]:
     if knowledge_mode != KNOWLEDGE_MODE:
         raise ValueError("Builder-v3 Step 3 accepts whole_book_frozen only")
-    if execution_mode != EXECUTION_MODE_SYNTHETIC:
-        raise ValueError("Builder-v3 Step 3 accepts synthetic execution only")
+    specs, execution_contract_hash = _execution_contract(
+        execution_mode=execution_mode,
+        real_stage_specs=real_stage_specs,
+        required_stages={"b3"},
+    )
+    if execution_mode == EXECUTION_MODE_REAL_API and not m1_execution_contract_hash:
+        raise ValueError("real M2V3 requires the M1 execution contract hash")
     if summary_k < 0:
         raise ValueError("summary_k must be non-negative")
     whole, selected = _selected_chapters(document, chapters)
@@ -1961,6 +2159,10 @@ def run_m2_v3(
         "checkpoint_identity_hashes": {},
         "stopping_error": None,
     }
+    if execution_mode == EXECUTION_MODE_REAL_API:
+        report["execution_contract_hash"] = execution_contract_hash
+        report["input_m1_execution_contract_hash"] = m1_execution_contract_hash
+        report["usage"] = _zero_usage()
     counts: Counter[str] = Counter()
     audit = _AuditSession.create(Path(out_dir))
 
@@ -1971,6 +2173,7 @@ def run_m2_v3(
                 through_index=highest_index,
                 m1v3_dir=Path(m1v3_dir),
                 execution_mode=execution_mode,
+                execution_contract_hash=m1_execution_contract_hash,
             )
             context_source = Path(digest_context) if digest_context is not None else Path(out_dir)
             first_index = selected_indices[0]
@@ -1985,6 +2188,7 @@ def run_m2_v3(
                     m1_checkpoints=m1_checkpoints,
                     execution_mode=execution_mode,
                     summary_k=summary_k,
+                    execution_contract_hash=execution_contract_hash,
                 )
 
             start_offset = 0
@@ -2014,6 +2218,7 @@ def run_m2_v3(
                             input_m1v3_identity_hash=str(
                                 m1.get("checkpoint_identity_hash") or ""
                             ),
+                            execution_contract_hash=execution_contract_hash,
                         ),
                     )
                     if checkpoint is None:
@@ -2036,6 +2241,12 @@ def run_m2_v3(
                     report["checkpoint_paths"][chapter_id] = str(
                         current_pointer_path(Path(out_dir), "m2v3", chapter_id)
                     )
+                    if execution_mode == EXECUTION_MODE_REAL_API:
+                        for usage_key, usage_value in (
+                            checkpoint.get("accounting") or {}
+                        ).items():
+                            if usage_key in report["usage"]:
+                                report["usage"][usage_key] += usage_value
                     parent_identity = str(checkpoint["checkpoint_identity_hash"])
                     parent_operational = str(checkpoint["checkpoint_hash"])
                     start_offset = offset + 1
@@ -2081,7 +2292,6 @@ def run_m2_v3(
                 )
                 events = _b2_events_compact(m1_state["b2_by_window"], chapter)
                 event_endpoint_map = _event_endpoint_map(events)
-                b0_projection = _b0_typed_projection(m1_state["b0_payload"])
                 upstream_identity = {
                     "input_m1v3": str(m1_checkpoint["checkpoint_identity_hash"]),
                     **{
@@ -2097,20 +2307,20 @@ def run_m2_v3(
                     window_id=None,
                     allowlisted_sections={
                         "chapter_blocks": [_block_view(block) for block in ordered_blocks],
-                        "b0_typed_projection": b0_projection,
                         "occurrence_roster": roster,
                         "prior_rolling_summaries": summary_views,
                         "b2_events_compact": events,
                     },
                     lineage_manifest=_b3_lineage(
                         chapter=chapter,
-                        b0_projection=b0_projection,
                         roster=roster,
                         events=events,
                         summaries=summary_views,
                         m1_identity_hash=str(m1_checkpoint["checkpoint_identity_hash"]),
                     ),
                     upstream_checkpoint_identity_hashes=upstream_identity,
+                    execution_mode=execution_mode,
+                    real_spec=specs.get("b3"),
                 )
                 mention_ids = {
                     str(row["id"])
@@ -2193,7 +2403,9 @@ def run_m2_v3(
                     input_m1v3_identity_hash=str(
                         m1_checkpoint["checkpoint_identity_hash"]
                     ),
+                    execution_contract_hash=execution_contract_hash,
                 )
+                chapter_usage = _usage_from_request_refs([audit_ref])
                 checkpoint = publish_generation(
                     out_dir=Path(out_dir),
                     stage="m2v3",
@@ -2208,7 +2420,7 @@ def run_m2_v3(
                         ),
                         "run_id": audit.run_id,
                         "input_max_order": int(b3_request.body()["input_max_order"]),
-                        "accounting": _zero_usage(),
+                        "accounting": chapter_usage,
                     },
                     audit_artifacts=audit_artifacts,
                 )
@@ -2216,6 +2428,9 @@ def run_m2_v3(
                     checkpoint=checkpoint, state=state
                 )
                 report["ran_chapters"].append(chapter_id)
+                if execution_mode == EXECUTION_MODE_REAL_API:
+                    for usage_key, usage_value in chapter_usage.items():
+                        report["usage"][usage_key] += usage_value
                 report["request_manifest_hashes"][chapter_id] = request_manifest_hash
                 report["semantic_state_hashes"][chapter_id] = state["semantic_state_hash"]
                 report["checkpoint_identity_hashes"][chapter_id] = checkpoint[
@@ -2238,8 +2453,11 @@ def run_m2_v3(
 
 
 __all__ = [
+    "EXECUTION_MODE_REAL_API",
     "EXECUTION_MODE_SYNTHETIC",
     "KNOWLEDGE_MODE",
+    "RealStageExecutor",
+    "RealStageSpec",
     "REQUEST_CONTRACT_HASHES",
     "REQUEST_SHAPE_CONTRACT",
     "StageAttemptResult",
@@ -2249,4 +2467,5 @@ __all__ = [
     "V3StageRequest",
     "run_m1_v3",
     "run_m2_v3",
+    "real_execution_contract_hash",
 ]

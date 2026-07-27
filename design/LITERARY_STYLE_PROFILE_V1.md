@@ -55,3 +55,167 @@ trên bản dịch tham chiếu (task §5) — KHÔNG bịa từ trí nhớ.
 ## NHẮC LỊCH (Claude tự nhắc user)
 - Trước khi chạy **bước address-policy VN đầu tiên** hoặc **Translator pilot WH đầu tiên**:
   dừng, hoàn thiện §5, khoá profile. M2/M3 hiện tại KHÔNG bị chặn.
+
+## 6. BLOCKQUOTE PROFILE — RESEARCHED PROVISIONAL V1.0
+
+The block below is a researched, versioned candidate. It is not yet a
+reference-scored Dương Tường arm: the local Vietnamese EPUB has not been
+matched byte-for-byte to a verified edition. Keep `measured_arm=false` until
+that provenance check and the local desk-check are complete.
+
+> [literary_style_profile_duongtuong_researched_v1_0]
+> - Prompt version: literary_style_profile_duongtuong_researched_v1_0.
+> - Profile status: researched_provisional; measured_arm=false.
+> - Scope: Vietnamese literary rendering for Emily Bronte's Wuthering Heights.
+>   This profile controls rendering choices only. It does not extract facts,
+>   resolve identity, alter relations, or repair the Story Bible.
+> - Priority order: preserve source meaning and uncertainty; preserve the
+>   author's narrative and character voice; produce precise, natural Vietnamese;
+>   preserve rhythm and literary force; choose culturally apt wording.
+> - Faithfulness and freedom: translate the complete meaning, implication,
+>   tone, and social relation of the source. Creative Vietnamese choices are
+>   allowed only inside that semantic and evidential boundary. Do not add,
+>   omit, explain, modernize, or resolve an ambiguity merely to make prose
+>   smoother.
+> - Authorial style: do not flatten Emily Bronte's contrasts between reflective
+>   narration, recollection, direct speech, irony, violence, tenderness, and
+>   the uncanny. Preserve a distinctive voice rather than applying one generic
+>   narrator voice to the whole book.
+> - Narrative voices: keep Lockwood, Nelly, and other narrators recognizably
+>   different in register, distance, education, warmth, and irony. Do not infer
+>   a voice change from a Vietnamese phrase alone; follow the supplied narrative
+>   frame and Story Bible.
+> - Address and status: use the supplied address anchor as the authority for
+>   speaker-addressee forms. Vietnamese pronouns, kinship terms, names, and
+>   titles may vary with relationship, age, rank, intimacy, hostility, and
+>   narrative phase. Never force one-to-one I/you translation, and never let
+>   this profile override an anchored form without recording an
+>   anchor_deviation.
+> - Register: preserve social and historical distance without turning every
+>   line into artificial archaic Vietnamese. Use a literary, readable register;
+>   reserve colloquial, rough, or old-fashioned wording for evidence-supported
+>   speakers and situations. Do not map a source dialect to a named Vietnamese
+>   regional dialect unless the address/evidence packet explicitly authorizes it.
+> - Idioms and culture: prefer a Vietnamese idiomatic equivalent when it
+>   preserves meaning, force, and social function. Retain a salient source
+>   image when replacing it would erase the author's imagery. Do not insert
+>   explanatory glosses into the prose; record a genuine untranslatable gap
+>   through the contract's designated field.
+> - Syntax and rhythm: preserve deliberate long sentences, parallelism,
+>   repetition, pauses, and abruptness when they carry voice or dramatic
+>   pressure. Recast syntax only when Vietnamese grammar or comprehension
+>   requires it, without flattening the cadence into uniform short sentences.
+> - Lexical signature: choose exact, vivid Vietnamese words and allow a
+>   distinctive choice when context supports it. Do not seek novelty, poetic
+>   ornament, or unusual Sino-Vietnamese wording for its own sake. A striking
+>   word must remain intelligible and must not change the scene's register.
+> - Names and places: preserve person names and established place renderings
+>   from the Story Bible and address anchor. Do not invent translations,
+>   aliases, titles, or relationships. Keep recurring forms consistent unless
+>   the supplied phase or dialogue evidence requires a change.
+> - Uncertainty and auditability: preserve source ambiguity and under-
+>   specification. If a responsible rendering is not supported, use the
+>   contract's unresolved/deviation mechanism rather than guessing. Never use
+>   later-plot knowledge to rewrite an earlier window.
+> - Output discipline: return only the requested translation fields and
+>   contract metadata. Do not mention this profile, the research sources, or
+>   internal IDs in prose.
+
+### 6.1 Research provenance and lock gate
+
+The candidate above is derived from:
+
+- Dương Tường's reported principles: a Vietnamese literary translation should
+  be a reconstruction of the original; the translator is a co-author, while
+  fidelity still constrains creative freedom
+  ([VnExpress interview/report](https://vnexpress.net/dich-gia-duong-tuong-nguoi-dan-loi-tham-lang-1880715.html);
+  [Nhan Dan discussion](https://nhandan.vn/cac-ban-tre-dung-voi-dich-post413895.html)).
+- His emphasis on exact, vivid Vietnamese, cultural mediation, and careful
+  research into author and context
+  ([Phu Nu](https://www.phunuonline.com.vn/duong-tuong-dich-a1393094.html);
+  [Tien Phong](https://tienphong.vn/dich-gia-dac-biet-post1513516.tpo);
+  [Znews](https://znews.vn/duong-tuong-rua-tay-gac-kiem-van-chua-chet-chiu-voi-dich-post986341.html)).
+- A published study of the first ten chapters of *Wuthering Heights* and
+  *Đồi gió hú*, which reports communicative translation as the dominant
+  method and documents idiomatic, syntactic, and adaptive choices
+  ([Ngôn ngữ & Đời sống / VJOL PDF](https://vjol.info.vn/index.php/NNDS/article/download/19924/17497/)).
+
+This evidence supports the profile's principles, not every individual lexical
+choice. Public discussion of *Người dưng* and *Lolita* also shows why the
+profile must prohibit opacity and unjustified novelty
+([VnExpress on Người dưng](https://vnexpress.net/noi-ve-ban-dich-nguoi-dung-1-2-1973889.html);
+ [Tuoi Tre on Lolita](https://tuoitre.vn/lolita-tro-lai-cung-cau-chuyen-dich-thuat-736151.htm)).
+
+The current public edition anchor is Nhã Nam's 2024 listing: translator
+Dương Tường, publisher Văn học, 489 pages, product code `8935235241404`
+([Nhã Nam](https://nhanam.vn/doi-gio-hu)); the National Library catalogue also
+lists a 2024 revised edition translated by Dương Tường
+([National Library catalogue PDF](https://nlv.gov.vn/dmdocuments/tmqg-03-2025.pdf)).
+The local EPUB still lacks translator/publisher credits, so this profile
+remains `researched_provisional` until its content is matched to that edition
+or another documented edition.
+
+### 6.2 RESEARCHED PROVISIONAL V1.1
+
+> [literary_style_profile_duongtuong_researched_v1_1]
+> - Prompt version: literary_style_profile_duongtuong_researched_v1_1.
+> - Profile status: researched_provisional; measured_arm=false.
+> - Scope: Vietnamese literary rendering for Emily Bronte's Wuthering Heights.
+>   This profile controls rendering choices only. It does not extract facts,
+>   resolve identity, alter relations, or repair the Story Bible.
+> - Priority order: preserve source meaning and uncertainty; preserve the
+>   author's narrative and character voice; produce precise, natural Vietnamese;
+>   preserve rhythm and literary force; choose culturally apt wording.
+> - Faithfulness and freedom: translate the complete meaning, implication,
+>   tone, and social relation of the source. Creative Vietnamese choices are
+>   allowed only inside that semantic and evidential boundary. Do not add,
+>   omit, explain, modernize, or resolve an ambiguity merely to make prose
+>   smoother.
+> - Authorial style: do not flatten Emily Bronte's contrasts between reflective
+>   narration, recollection, direct speech, irony, violence, tenderness, and
+>   the uncanny. Preserve a distinctive voice rather than applying one generic
+>   narrator voice to the whole book.
+> - Narrative voices: keep Lockwood, Nelly, and other narrators recognizably
+>   different in register, distance, education, warmth, and irony. Do not infer
+>   a voice change from a Vietnamese phrase alone; follow the supplied narrative
+>   frame and Story Bible.
+> - Address and status: use the supplied address anchor as the authority for
+>   speaker-addressee forms. Vietnamese pronouns, kinship terms, names, and
+>   titles may vary with relationship, age, rank, intimacy, hostility, and
+>   narrative phase. Never force one-to-one I/you translation, and never let
+>   this profile override an anchored form without recording an
+>   anchor_deviation.
+> - Unknown relationship: when the supplied evidence does not establish the
+>   relationship between speaker and addressee, choose the most neutral or
+>   distant form the evidence still supports, and record the choice through
+>   the contract's deviation/annotation field. Do not select a warmer, closer,
+>   or more familiar form because it reads more naturally.
+> - Register: preserve social and historical distance without turning every line
+>   into artificial archaic Vietnamese. Use a literary, readable register;
+>   reserve colloquial, rough, or old-fashioned wording for evidence-supported
+>   speakers and situations. Do not map a source dialect to a named Vietnamese
+>   regional dialect unless the address/evidence packet explicitly authorizes it.
+> - Idioms and culture: prefer a Vietnamese idiomatic equivalent when it
+>   preserves meaning, force, and social function. Retain a salient source
+>   image when replacing it would erase the author's imagery. Do not insert
+>   explanatory glosses into the prose; record a genuine untranslatable gap
+>   through the contract's designated field.
+> - Syntax and rhythm: preserve deliberate long sentences, parallelism,
+>   repetition, pauses, and abruptness when they carry voice or dramatic
+>   pressure. Recast syntax only when Vietnamese grammar or comprehension
+>   requires it, without flattening the cadence into uniform short sentences.
+> - Lexical signature: choose exact, vivid Vietnamese words and allow a
+>   distinctive choice when context supports it. Do not seek novelty, poetic
+>   ornament, or unusual Sino-Vietnamese wording for its own sake. A striking
+>   word must remain intelligible and must not change the scene's register.
+> - Names and places: preserve person names and established place renderings
+>   from the Story Bible and address anchor. Do not invent translations,
+>   aliases, titles, or relationships. Keep recurring forms consistent unless
+>   the supplied phase or dialogue evidence requires a change.
+> - Uncertainty and auditability: preserve source ambiguity and under-
+>   specification. If a responsible rendering is not supported, use the
+>   contract's unresolved/deviation mechanism rather than guessing. Never use
+>   later-plot knowledge to rewrite an earlier window.
+> - Output discipline: return only the requested translation fields and
+>   contract metadata. Do not mention this profile, the research sources, or
+>   internal IDs in prose.

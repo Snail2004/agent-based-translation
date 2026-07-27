@@ -1,0 +1,119 @@
+{
+  "schema_version": "literary_shared_llm_runtime_profile_v1",
+  "profile_id": "literary_shared_llm_phase3_v1",
+  "profile_revision": "shared_runtime_recommended_v1",
+  "backend_mode": "shared_v1",
+  "source_policy": {
+    "selection_mode": "host_resolved_exact_source",
+    "recommended_source_id": "modelapi_shared_v1",
+    "recommended_source_revision": "modelapi_profile_v1",
+    "fallback_enabled": false
+  },
+  "structured_output": {
+    "mode": "required",
+    "schema_dialect": "json_schema_2020_12"
+  },
+  "roles": [
+    {
+      "role_id": "literary.b1.entity_inventory",
+      "preset_id": "literary.b1.entity_inventory.gpt54_recommended_v1",
+      "preset_revision": "v1",
+      "legacy_role_ids": ["literary_b0", "literary_b0_contract_fallback"],
+      "requested_model_id": "gpt-5.4",
+      "generation": {"context_window_tokens": null, "max_input_tokens": 20000, "max_output_tokens": 4096, "temperature": 1.0, "top_p": 1.0, "seed": 20260719, "reasoning_effort": "none", "verbosity": "low"},
+      "limits": {"max_calls": 1, "max_prompt_tokens": 20000, "max_completion_tokens": 4096, "max_total_tokens": 24096, "max_cost_usd": null, "request_timeout_ms": 300000},
+      "transport_retry": {"max_retries": 0, "backoff_policy": "none", "initial_delay_ms": 0, "max_delay_ms": 0, "retryable_codes": []},
+      "semantic_retry": {"max_retries": 0, "retryable_categories": []},
+      "namespaces": {"output": "literary.b1.entity_inventory.output", "checkpoint": "literary.b1.entity_inventory.checkpoint", "cache": "literary.b1.entity_inventory.cache"}
+    },
+    {
+      "role_id": "literary.audit.local_conflict",
+      "preset_id": "literary.audit.local_conflict.gpt54_recommended_v1",
+      "preset_revision": "v1",
+      "legacy_role_ids": ["literary_local_conflict_auditor"],
+      "requested_model_id": "gpt-5.4",
+      "generation": {"context_window_tokens": null, "max_input_tokens": 10000, "max_output_tokens": 4096, "temperature": 1.0, "top_p": 1.0, "seed": 20260719, "reasoning_effort": "none", "verbosity": "low"},
+      "limits": {"max_calls": 1, "max_prompt_tokens": 10000, "max_completion_tokens": 4096, "max_total_tokens": 14096, "max_cost_usd": null, "request_timeout_ms": 300000},
+      "transport_retry": {"max_retries": 0, "backoff_policy": "none", "initial_delay_ms": 0, "max_delay_ms": 0, "retryable_codes": []},
+      "semantic_retry": {"max_retries": 0, "retryable_categories": []},
+      "namespaces": {"output": "literary.audit.local_conflict.output", "checkpoint": "literary.audit.local_conflict.checkpoint", "cache": "literary.audit.local_conflict.cache"}
+    },
+    {
+      "role_id": "literary.audit.stable_claim",
+      "preset_id": "literary.audit.stable_claim.gpt54_recommended_v1",
+      "preset_revision": "v1",
+      "legacy_role_ids": ["literary_stable_claim_auditor"],
+      "requested_model_id": "gpt-5.4",
+      "generation": {"context_window_tokens": null, "max_input_tokens": 10000, "max_output_tokens": 4096, "temperature": 1.0, "top_p": 1.0, "seed": 20260719, "reasoning_effort": "none", "verbosity": "low"},
+      "limits": {"max_calls": 4, "max_prompt_tokens": 40000, "max_completion_tokens": 16384, "max_total_tokens": 56384, "max_cost_usd": null, "request_timeout_ms": 300000},
+      "transport_retry": {"max_retries": 0, "backoff_policy": "none", "initial_delay_ms": 0, "max_delay_ms": 0, "retryable_codes": []},
+      "semantic_retry": {"max_retries": 0, "retryable_categories": []},
+      "namespaces": {"output": "literary.audit.stable_claim.output", "checkpoint": "literary.audit.stable_claim.checkpoint", "cache": "literary.audit.stable_claim.cache"}
+    },
+    {
+      "role_id": "literary.audit.identity_surface",
+      "preset_id": "literary.audit.identity_surface.gpt54_recommended_v1",
+      "preset_revision": "v1",
+      "legacy_role_ids": ["literary_incremental_identity_auditor"],
+      "requested_model_id": "gpt-5.4",
+      "generation": {"context_window_tokens": null, "max_input_tokens": 10000, "max_output_tokens": 4096, "temperature": 1.0, "top_p": 1.0, "seed": 20260719, "reasoning_effort": "none", "verbosity": "low"},
+      "limits": {"max_calls": 4, "max_prompt_tokens": 40000, "max_completion_tokens": 16384, "max_total_tokens": 56384, "max_cost_usd": null, "request_timeout_ms": 300000},
+      "transport_retry": {"max_retries": 0, "backoff_policy": "none", "initial_delay_ms": 0, "max_delay_ms": 0, "retryable_codes": []},
+      "semantic_retry": {"max_retries": 0, "retryable_categories": []},
+      "namespaces": {"output": "literary.audit.identity_surface.output", "checkpoint": "literary.audit.identity_surface.checkpoint", "cache": "literary.audit.identity_surface.cache"}
+    },
+    {
+      "role_id": "literary.b2.frame",
+      "preset_id": "literary.b2.frame.gpt54_recommended_v1",
+      "preset_revision": "v1",
+      "legacy_role_ids": ["literary_b2_frame"],
+      "requested_model_id": "gpt-5.4",
+      "generation": {"context_window_tokens": null, "max_input_tokens": 20000, "max_output_tokens": 2500, "temperature": 1.0, "top_p": 1.0, "seed": 20260719, "reasoning_effort": "none", "verbosity": "low"},
+      "limits": {"max_calls": 1, "max_prompt_tokens": 20000, "max_completion_tokens": 2500, "max_total_tokens": 22500, "max_cost_usd": null, "request_timeout_ms": 300000},
+      "transport_retry": {"max_retries": 0, "backoff_policy": "none", "initial_delay_ms": 0, "max_delay_ms": 0, "retryable_codes": []},
+      "semantic_retry": {"max_retries": 0, "retryable_categories": []},
+      "namespaces": {"output": "literary.b2.frame.output", "checkpoint": "literary.b2.frame.checkpoint", "cache": "literary.b2.frame.cache"}
+    },
+    {
+      "role_id": "literary.b2.interaction",
+      "preset_id": "literary.b2.interaction.gpt54_recommended_v1",
+      "preset_revision": "v1",
+      "legacy_role_ids": ["literary_b2_interaction"],
+      "requested_model_id": "gpt-5.4",
+      "generation": {"context_window_tokens": null, "max_input_tokens": 16000, "max_output_tokens": 6000, "temperature": 1.0, "top_p": 1.0, "seed": 20260719, "reasoning_effort": "none", "verbosity": "low"},
+      "limits": {"max_calls": 6, "max_prompt_tokens": 96000, "max_completion_tokens": 36000, "max_total_tokens": 132000, "max_cost_usd": null, "request_timeout_ms": 300000},
+      "transport_retry": {"max_retries": 0, "backoff_policy": "none", "initial_delay_ms": 0, "max_delay_ms": 0, "retryable_codes": []},
+      "semantic_retry": {"max_retries": 0, "retryable_categories": []},
+      "namespaces": {"output": "literary.b2.interaction.output", "checkpoint": "literary.b2.interaction.checkpoint", "cache": "literary.b2.interaction.cache"}
+    },
+    {
+      "role_id": "literary.b2.registry_recovery",
+      "preset_id": "literary.b2.registry_recovery.gpt54_recommended_v1",
+      "preset_revision": "v1",
+      "legacy_role_ids": ["literary_local_conflict_auditor"],
+      "requested_model_id": "gpt-5.4",
+      "generation": {"context_window_tokens": null, "max_input_tokens": 12000, "max_output_tokens": 8000, "temperature": 1.0, "top_p": 1.0, "seed": 20260719, "reasoning_effort": "none", "verbosity": "low"},
+      "limits": {"max_calls": 4, "max_prompt_tokens": 48000, "max_completion_tokens": 32000, "max_total_tokens": 80000, "max_cost_usd": null, "request_timeout_ms": 300000},
+      "transport_retry": {"max_retries": 0, "backoff_policy": "none", "initial_delay_ms": 0, "max_delay_ms": 0, "retryable_codes": []},
+      "semantic_retry": {"max_retries": 0, "retryable_categories": []},
+      "namespaces": {"output": "literary.b2.registry_recovery.output", "checkpoint": "literary.b2.registry_recovery.checkpoint", "cache": "literary.b2.registry_recovery.cache"}
+    },
+    {
+      "role_id": "literary.b2.event_review",
+      "preset_id": "literary.b2.event_review.gpt54_recommended_v1",
+      "preset_revision": "v1",
+      "legacy_role_ids": ["literary_local_conflict_auditor"],
+      "requested_model_id": "gpt-5.4",
+      "generation": {"context_window_tokens": null, "max_input_tokens": 20000, "max_output_tokens": 12000, "temperature": 1.0, "top_p": 1.0, "seed": 20260719, "reasoning_effort": "none", "verbosity": "low"},
+      "limits": {"max_calls": 6, "max_prompt_tokens": 120000, "max_completion_tokens": 72000, "max_total_tokens": 192000, "max_cost_usd": null, "request_timeout_ms": 300000},
+      "transport_retry": {"max_retries": 0, "backoff_policy": "none", "initial_delay_ms": 0, "max_delay_ms": 0, "retryable_codes": []},
+      "semantic_retry": {"max_retries": 0, "retryable_categories": []},
+      "namespaces": {"output": "literary.b2.event_review.output", "checkpoint": "literary.b2.event_review.checkpoint", "cache": "literary.b2.event_review.cache"}
+    }
+  ],
+  "safety": {
+    "provider_fallback_allowed": false,
+    "application_response_cache_enabled": false,
+    "production_publish_enabled": false
+  }
+}

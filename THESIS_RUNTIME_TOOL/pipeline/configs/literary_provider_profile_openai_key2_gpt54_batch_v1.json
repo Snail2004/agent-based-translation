@@ -1,0 +1,24 @@
+{
+  "schema_version": "thesis_provider_profile_v1",
+  "profile_id": "literary_openai_key2_gpt54_batch_v1",
+  "credentials": {
+    "openai-row2": {
+      "provider": "openai",
+      "credential_revision": "openai-key2-literary-20260719-v1",
+      "relative_file": "OPENAI-KEY-2.txt",
+      "nonempty_line": 1,
+      "enabled": true,
+      "base_url": null,
+      "request_timeout_ms": 300000
+    }
+  },
+  "roles": {
+    "literary_local_conflict_auditor": {
+      "provider": "openai",
+      "model_id": "gpt-5.4",
+      "bucket_order": [
+        "openai-row2"
+      ]
+    }
+  }
+}

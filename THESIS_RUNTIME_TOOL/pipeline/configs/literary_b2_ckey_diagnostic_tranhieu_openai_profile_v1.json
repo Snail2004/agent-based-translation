@@ -1,0 +1,19 @@
+{
+  "schema_version": "literary_b2_ckey_diagnostic_profile_v1",
+  "profile_id": "literary_b2_ckey_tranhieu_openai_transport_diagnostic_v1",
+  "provider_profile": "literary_provider_profile_b2_ckey_tranhieu_openai_v1.json",
+  "role_id": "literary_b2_interaction",
+  "limits": {
+    "max_calls": 4,
+    "max_retries_per_call": 0,
+    "hard_visible_token_cap": 50000,
+    "prompt_token_cap": 18000,
+    "default_output_token_cap": 8000
+  },
+  "safety": {
+    "provider_fallback_allowed": false,
+    "production_publish_enabled": false,
+    "semantic_output_publish_enabled": false,
+    "stop_on_first_failed_probe": true
+  }
+}
