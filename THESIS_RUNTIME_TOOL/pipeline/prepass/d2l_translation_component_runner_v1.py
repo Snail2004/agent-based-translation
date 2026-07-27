@@ -404,6 +404,42 @@ class ComponentPlan:
             scoring_handoff_fragment_ref=fragment_ref,
         )
 
+
+def _stage_definitions_match_sealed_plan(
+    current_stages: Sequence[Mapping[str, Any]],
+    plan_stages: Sequence[StagePlan],
+) -> bool:
+    """Match a manifest to its sealed stage plan without reinterpreting stages.
+
+    Runner-plan ``v1_2`` historically declared the Translator unit as
+    ``windows`` while the live executor persisted its observational progress in
+    accepted source ``blocks``.  Accept only that exact legacy representation;
+    every other stage, producer, ordering, or unit difference remains a drift.
+    """
+    if len(current_stages) != len(plan_stages):
+        return False
+    for current, planned in zip(current_stages, plan_stages, strict=True):
+        if (
+            current.get("stage_id") != planned.stage_id
+            or current.get("producer") != planned.producer
+        ):
+            return False
+        progress = current.get("progress")
+        if not isinstance(progress, Mapping):
+            return False
+        observed_unit = progress.get("unit")
+        if observed_unit == planned.unit:
+            continue
+        if (
+            planned.stage_id == "translator"
+            and planned.unit == "windows"
+            and observed_unit == "blocks"
+        ):
+            continue
+        return False
+    return True
+
+
 class D2LTranslationComponentRunner:
     """Execute an explicit D2L stage plan and publish a component package."""
 
@@ -1653,15 +1689,9 @@ class D2LTranslationComponentRunner:
         }
         if any(current[key] != expected for key, expected in expected_immutable.items()):
             raise ComponentRunnerError("resume identity does not match the sealed plan")
-        current_stage_definitions = [
-            (row["stage_id"], row["producer"], row["progress"]["unit"])
-            for row in current["stages"]
-        ]
-        plan_stage_definitions = [
-            (stage.stage_id, stage.producer, stage.unit)
-            for stage in self.plan.stages
-        ]
-        if current_stage_definitions != plan_stage_definitions:
+        if not _stage_definitions_match_sealed_plan(
+            current["stages"], self.plan.stages
+        ):
             raise ComponentRunnerError("resume stage plan does not match the sealed component")
         if current["status"] != "paused":
             raise ComponentRunnerError("only a paused component can be resumed")

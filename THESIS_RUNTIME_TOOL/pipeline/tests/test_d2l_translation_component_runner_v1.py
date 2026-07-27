@@ -366,6 +366,47 @@ def test_runner_pause_resume_increments_component_attempt(tmp_path: Path) -> Non
     assert [row["component_attempt_id"] for row in events if row["event"] == "run_resumed"] == [2]
 
 
+def test_resume_stage_definitions_accept_legacy_translator_block_progress_unit() -> None:
+    raw_plan = _plan(attempt_id=2)
+    translator = next(
+        stage for stage in raw_plan["stages"] if stage["stage_id"] == "translator"
+    )
+    translator["unit"] = "windows"
+    plan = ComponentPlan.from_mapping(raw_plan)
+    current_stages = [
+        {
+            "stage_id": stage.stage_id,
+            "producer": stage.producer,
+            "progress": {
+                "unit": "blocks" if stage.stage_id == "translator" else stage.unit,
+            },
+        }
+        for stage in plan.stages
+    ]
+
+    assert runner_module._stage_definitions_match_sealed_plan(
+        current_stages, plan.stages
+    )
+
+
+def test_resume_stage_definitions_reject_unexpected_progress_unit() -> None:
+    plan = ComponentPlan.from_mapping(_plan(attempt_id=2))
+    current_stages = [
+        {
+            "stage_id": stage.stage_id,
+            "producer": stage.producer,
+            "progress": {
+                "unit": "windows" if stage.stage_id == "preflight" else stage.unit,
+            },
+        }
+        for stage in plan.stages
+    ]
+
+    assert not runner_module._stage_definitions_match_sealed_plan(
+        current_stages, plan.stages
+    )
+
+
 def test_resume_attempt_preparer_fails_before_component_mutation(
     tmp_path: Path,
 ) -> None:
