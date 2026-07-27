@@ -56,10 +56,17 @@ def build_post_morphology_index(
         raise ConsolidationPlanError("Stage-1 draft crossed production boundary")
     if stage1_draft.get("pending_components"):
         raise ConsolidationPlanError("Stage-1 morphology is still pending")
-    if stage1_draft.get("pending_admission") or stage1_draft.get(
-        "rejected_ledger"
+    # B2's sealed index can legitimately carry review/reject ledgers.  The
+    # morphology draft must carry those rows forward unchanged; only a drift
+    # from the stage-1 plan is invalid.  Rejecting every non-empty ledger here
+    # made the all-components-complete path fail after all provider work had
+    # already been accepted.
+    if (stage1_draft.get("pending_admission") or []) != (
+        stage1_plan.get("pending_admission") or []
+    ) or (stage1_draft.get("rejected_ledger") or []) != (
+        stage1_plan.get("rejected_ledger") or []
     ):
-        raise ConsolidationPlanError("Stage-1 draft contains unexpected ledgers")
+        raise ConsolidationPlanError("Stage-1 draft nonadmitted ledger drift")
 
     source_rows = {
         str(row["candidate_id"]): row

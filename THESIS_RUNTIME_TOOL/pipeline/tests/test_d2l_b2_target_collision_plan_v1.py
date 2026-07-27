@@ -9,6 +9,7 @@ from pipeline.prepass.d2l_b2_consolidation_plan_v1 import (
     ConsolidationPlanError,
     _index_counts,
     _sha256_json,
+    _to_nonadmitted_ledger,
     packetize_components,
 )
 from pipeline.prepass.d2l_b2_target_collision_plan_v1 import (
@@ -283,6 +284,47 @@ def test_pending_morphology_blocks_stage2() -> None:
     )
 
     with pytest.raises(ConsolidationPlanError, match="still pending"):
+        build_post_morphology_index(
+            source_index=source, stage1_plan=stage1, stage1_draft=draft
+        )
+
+
+def test_preserves_sealed_nonadmitted_ledgers() -> None:
+    source, stage1, draft = _fixture()
+    rejected = _to_nonadmitted_ledger(source["decisions"][-1])
+    stage1["rejected_ledger"] = [rejected]
+    stage1["plan_sha256"] = _sha256_json(
+        {key: value for key, value in stage1.items() if key != "plan_sha256"}
+    )
+    draft["source_plan_sha256"] = stage1["plan_sha256"]
+    draft["rejected_ledger"] = [deepcopy(rejected)]
+    draft["draft_sha256"] = _sha256_json(
+        {key: value for key, value in draft.items() if key != "draft_sha256"}
+    )
+
+    current = build_post_morphology_index(
+        source_index=source, stage1_plan=stage1, stage1_draft=draft
+    )
+
+    assert [row["candidate_id"] for row in current["decisions"] if row["decision"] == "reject"] == [
+        "cand_noise"
+    ]
+
+
+def test_rejects_nonadmitted_ledger_drift() -> None:
+    source, stage1, draft = _fixture()
+    rejected = _to_nonadmitted_ledger(source["decisions"][-1])
+    stage1["rejected_ledger"] = [rejected]
+    stage1["plan_sha256"] = _sha256_json(
+        {key: value for key, value in stage1.items() if key != "plan_sha256"}
+    )
+    draft["source_plan_sha256"] = stage1["plan_sha256"]
+    draft["rejected_ledger"] = [{**rejected, "decision_rationale": "drift"}]
+    draft["draft_sha256"] = _sha256_json(
+        {key: value for key, value in draft.items() if key != "draft_sha256"}
+    )
+
+    with pytest.raises(ConsolidationPlanError, match="nonadmitted ledger drift"):
         build_post_morphology_index(
             source_index=source, stage1_plan=stage1, stage1_draft=draft
         )
