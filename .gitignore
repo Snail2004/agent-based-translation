@@ -6,6 +6,8 @@ __pycache__/
 .pytest_cache/
 
 # Secrets — KHÔNG BAO GIỜ commit
+API-Key/
+*.env
 API-KEY.txt
 OPENAI-KEY-*.txt
 GEMINI-KEY.txt
